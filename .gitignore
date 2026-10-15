@@ -1,0 +1,6 @@
+.DS_Store
+# Never commit a real player workspace. Keep yours outside this repo.
+my-workspace/
+*.zip
+__pycache__/
+*.pyc

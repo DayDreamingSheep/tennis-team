@@ -1,0 +1,2 @@
+date,report_id,claim_or_question,verdict,confidence,evidence_ids,assessment,assignment_decision
+2026-10-15,NOTE-2026-10-15-01,"Calling 'short' out loud is the key for moving in",partly aligned,medium,MARIA-DIRECT-001|MARIA-P01,"Matches MARIA-P01 (step forward on recognition). Overreach: 'the key' rests on one drill session that broke under fatigue; the call is the player's trigger, not Maria's cue.",T2 validate

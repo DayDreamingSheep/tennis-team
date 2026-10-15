@@ -1,0 +1,12 @@
+date,report_id,cycle_id,assignment_slot,priority,decision,reason,evidence_ids,next_review
+2026-10-15,NOTE-2026-10-14-01,CYCLE-2026-10-SECONDSERVE,T1,P0,validate,"Maria's target (body, less pace) conflicts with the setup cue (deep); cue and signal replaced under rule 6",NOTE-2026-10-14-01|MARIA-P04,2026-10-19
+2026-10-15,NOTE-2026-10-14-01,CYCLE-2026-10-SECONDSERVE,T2,P0,keep,Cue replaced by MARIA-P01; no performance evidence yet,NOTE-2026-10-14-01|MARIA-P01,2026-10-19
+2026-10-15,NOTE-2026-10-14-01,CYCLE-2026-10-SECONDSERVE,T3,P1,keep,Cue replaced by MARIA-P03; no performance evidence yet,NOTE-2026-10-14-01|MARIA-P03,2026-10-19
+2026-10-15,NOTE-2026-10-15-01,CYCLE-2026-10-SECONDSERVE,T1,P0,keep,"14/20 deep-ish, but aimed deep, not at the body (new signal); mixed",NOTE-2026-10-15-01,2026-10-19
+2026-10-15,NOTE-2026-10-15-01,CYCLE-2026-10-SECONDSERVE,T2,P0,validate,"7/10 in drill with the verbal call; broke under fatigue; no live test",NOTE-2026-10-15-01|MARIA-P01,2026-10-19
+2026-10-15,NOTE-2026-10-15-01,CYCLE-2026-10-SECONDSERVE,T3,P1,keep,"Still rushed and jammed; no count",NOTE-2026-10-15-01,2026-10-19
+2026-10-15,NOTE-2026-10-15-01,CYCLE-2026-10-SECONDSERVE,PHY,P2,keep,"Calf tightness mild: monitor under rule 9",NOTE-2026-10-15-01,2026-10-19
+2026-10-15,REVIEW-2026-10-15,CYCLE-2026-10-SECONDSERVE,T1,P0,validate,"Brush works in drill (14/20) but not yet aimed at the body or tested under score",NOTE-2026-10-15-01|MARIA-P04,2026-10-26
+2026-10-15,REVIEW-2026-10-15,CYCLE-2026-10-SECONDSERVE,T2,P0,validate,"7/10 in drill with the verbal call; broke under fatigue; needs a live-point test",NOTE-2026-10-15-01|MARIA-P01,2026-10-26
+2026-10-15,REVIEW-2026-10-15,CYCLE-2026-10-SECONDSERVE,T3,P1,keep,"No improvement yet; new Maria cue untested",NOTE-2026-10-15-01|MARIA-P03,2026-10-26
+2026-10-15,REVIEW-2026-10-15,CYCLE-2026-10-SECONDSERVE,PHY,P2,keep,"Mild calf tightness: monitor",NOTE-2026-10-15-01,2026-10-26

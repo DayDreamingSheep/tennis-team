@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice Coach</title>
+<style>
+  :root {
+    --bg: #f6f7f2; --card: #ffffff; --ink: #1d2320; --muted: #5d6762; --line: #dfe3dc;
+    --accent: #2f6d3a; --accent-ink: #ffffff; --accent-soft: #e4efe3; --ball: #c9d72f;
+    --me: #2f6d3a; --me-ink: #ffffff; --rec: #c2412d; --rec-soft: #f8e3df;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121613; --card: #1c211e; --ink: #edf1ec; --muted: #a2aca5; --line: #2e3530;
+      --accent: #7cc489; --accent-ink: #0f1a12; --accent-soft: #223428; --ball: #d6e24a;
+      --me: #2f6d3a; --me-ink: #ffffff; --rec: #f07a66; --rec-soft: #3b2420;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", sans-serif;
+    display: flex; flex-direction: column;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--card);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .ball { width: 28px; height: 28px; border-radius: 50%; background: var(--ball); flex-shrink: 0;
+          background-image: radial-gradient(circle at 30% 30%, rgba(255,255,255,.5), transparent 45%); }
+  .brand h1 { font-size: 17px; margin: 0; line-height: 1.2; }
+  .brand small { color: var(--muted); font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .btn { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px;
+         padding: 8px 14px; font: inherit; font-size: 14px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn[disabled] { opacity: .5; cursor: default; }
+  main { flex: 1; overflow-y: auto; }
+  .feed { max-width: 720px; margin: 0 auto; padding: 20px 16px 8px; display: flex; flex-direction: column; gap: 14px; }
+  .bubble { max-width: 88%; padding: 12px 16px; border-radius: 18px; overflow-wrap: anywhere; }
+  .me { align-self: flex-end; background: var(--me); color: var(--me-ink); border-bottom-right-radius: 6px; }
+  .coach { align-self: flex-start; background: var(--card); border: 1px solid var(--line); border-bottom-left-radius: 6px; }
+  .coach p { margin: 0 0 8px; } .coach p:last-child { margin-bottom: 0; }
+  .coach ul, .coach ol { margin: 4px 0 8px; padding-left: 22px; }
+  .coach .who { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .steps { list-style: none; margin: 8px 0 0; padding: 0; font-size: 14px; color: var(--muted); }
+  .steps li { display: flex; gap: 8px; align-items: center; padding: 2px 0; }
+  .steps li::before { content: "✓"; color: var(--accent); font-weight: 700; }
+  .steps li.now::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--ball);
+                          animation: pulse 1s ease-in-out infinite; margin: 0 2px; }
+  @keyframes pulse { 50% { transform: scale(.5); opacity: .5; } }
+  .welcome { text-align: center; color: var(--muted); padding: 28px 8px 8px; }
+  .welcome strong { color: var(--ink); display: block; font-size: 20px; margin-bottom: 6px; }
+  .error { align-self: center; background: var(--rec-soft); color: var(--ink); border-radius: 12px; padding: 10px 14px; font-size: 14px; }
+  footer { border-top: 1px solid var(--line); background: var(--card); }
+  .composer { max-width: 720px; margin: 0 auto; padding: 12px 16px 16px; display: grid; gap: 10px; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .chips .btn { flex-shrink: 0; }
+  .live { min-height: 24px; color: var(--muted); font-size: 15px; text-align: center; }
+  .live.on { color: var(--ink); }
+  .row { display: flex; align-items: center; gap: 12px; }
+  .mic {
+    width: 76px; height: 76px; border-radius: 50%; border: none; cursor: pointer; flex-shrink: 0;
+    background: var(--accent); color: var(--accent-ink); display: grid; place-items: center;
+    box-shadow: 0 6px 18px rgba(47,109,58,.35); transition: transform .15s;
+  }
+  .mic:active { transform: scale(.96); }
+  .mic svg { width: 32px; height: 32px; }
+  .mic.rec { background: var(--rec); box-shadow: 0 0 0 0 var(--rec); animation: ring 1.4s infinite; }
+  .mic[disabled] { opacity: .5; cursor: default; animation: none; }
+  @keyframes ring { 0% { box-shadow: 0 0 0 0 rgba(194,65,45,.5); } 100% { box-shadow: 0 0 0 18px rgba(194,65,45,0); } }
+  textarea {
+    flex: 1; resize: none; border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px;
+    font: inherit; background: var(--bg); color: var(--ink); min-height: 52px; max-height: 160px;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .settings { display: flex; gap: 14px; align-items: center; justify-content: center; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+  .settings select { font: inherit; font-size: 13px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 3px 6px; }
+  .settings label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  .hint { text-align: center; font-size: 13px; color: var(--muted); }
+  @media (max-width: 480px) { .mic { width: 64px; height: 64px; } .brand small { max-width: 140px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="ball" aria-hidden="true"></div>
+    <div><h1>Voice Coach</h1><small id="ws">Your tennis team</small></div>
+  </div>
+  <a class="btn" id="planBtn" target="_blank" rel="noopener">My plan</a>
+</header>
+
+<main id="scroller">
+  <div class="feed" id="feed">
+    <div class="welcome" id="welcome">
+      <strong>How did tennis go?</strong>
+      Tap the green button and just talk - a practice, a match, a lesson, anything.
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="composer">
+    <div class="chips" id="chips">
+      <button class="btn" data-say="What should I work on this week?">What should I work on?</button>
+      <button class="btn" data-say="How am I doing?">How am I doing?</button>
+      <button class="btn" data-say="Help">Help</button>
+    </div>
+    <div class="live" id="live" aria-live="polite"></div>
+    <div class="row">
+      <button class="mic" id="mic" aria-label="Tap to talk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10a7 7 0 0 0 14 0"></path><path d="M12 17v5"></path>
+        </svg>
+      </button>
+      <textarea id="text" rows="1" placeholder="Or type here..."></textarea>
+      <button class="btn primary" id="send">Send</button>
+    </div>
+    <div class="settings">
+      <label>Language
+        <select id="lang">
+          <option value="en-US">English</option>
+          <option value="zh-TW">中文 (台灣)</option>
+          <option value="zh-CN">中文 (简体)</option>
+          <option value="es-ES">Español</option>
+          <option value="fr-FR">Français</option>
+          <option value="ja-JP">日本語</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="speak" checked> Read replies aloud</label>
+      <button class="btn" id="newchat" style="padding:3px 10px;font-size:13px">New conversation</button>
+    </div>
+    <div class="hint" id="hint"></div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var token = new URLSearchParams(location.search).get("t") || "";
+  var $ = function (id) { return document.getElementById(id); };
+  var feed = $("feed"), scroller = $("scroller"), live = $("live"), text = $("text"), mic = $("mic");
+  var sendBtn = $("send"), langSel = $("lang"), speakBox = $("speak"), hint = $("hint");
+  var busy = false;
+
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  if (store.get("vc-lang")) langSel.value = store.get("vc-lang");
+  if (store.get("vc-speak") === "0") speakBox.checked = false;
+  langSel.onchange = function () { store.set("vc-lang", langSel.value); if (rec) rec.lang = langSel.value; };
+  speakBox.onchange = function () { store.set("vc-speak", speakBox.checked ? "1" : "0"); if (!speakBox.checked) speechSynthesis.cancel(); };
+  $("planBtn").href = "/plan?t=" + encodeURIComponent(token);
+
+  function api(path, body) {
+    var opts = body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {};
+    return fetch(path + (path.indexOf("?") < 0 ? "?" : "&") + "t=" + encodeURIComponent(token), opts)
+      .then(function (r) { return r.json(); });
+  }
+  api("/api/status").then(function (s) {
+    $("ws").textContent = s.ready ? "Team folder: " + s.workspace : "New team - your first note sets everything up";
+  }).catch(function () { $("ws").textContent = "Not connected - restart the voice coach"; });
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function inline(s) {
+    return esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*])\*(?!\s)(.+?)\*/g, "$1<em>$2</em>");
+  }
+  function md(src) {
+    var out = [], list = null;
+    String(src).split(/\n/).forEach(function (line) {
+      var m = line.match(/^\s*(?:[-*•]|(\d+)[.)])\s+(.*)$/);
+      if (m) {
+        var type = m[1] ? "ol" : "ul";
+        if (!list || list.type !== type) { if (list) out.push("</" + list.type + ">"); list = { type: type }; out.push("<" + type + ">"); }
+        out.push("<li>" + inline(m[2]) + "</li>");
+        return;
+      }
+      if (list) { out.push("</" + list.type + ">"); list = null; }
+      line = line.replace(/^#+\s*/, "");
+      if (line.trim()) out.push("<p>" + inline(line) + "</p>");
+    });
+    if (list) out.push("</" + list.type + ">");
+    return out.join("");
+  }
+  function plain(src) {
+    return String(src).replace(/\*\*|__|[*_`#>]/g, "").replace(/^\s*[-•]\s+/gm, "").replace(/\n+/g, ". ");
+  }
+  function scrollDown() { scroller.scrollTop = scroller.scrollHeight; }
+  function add(cls, html) {
+    var w = $("welcome"); if (w) w.remove();
+    var el = document.createElement("div"); el.className = "bubble " + cls; el.innerHTML = html;
+    feed.appendChild(el); scrollDown(); return el;
+  }
+
+  function speak(reply) {
+    if (!speakBox.checked || !("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(plain(reply));
+    u.lang = langSel.value;
+    var voices = speechSynthesis.getVoices().filter(function (v) { return v.lang && v.lang.replace("_", "-").indexOf(langSel.value.slice(0, 2)) === 0; });
+    if (voices.length) u.voice = voices.filter(function (v) { return v.lang.replace("_", "-") === langSel.value; })[0] || voices[0];
+    u.rate = 1.02;
+    speechSynthesis.speak(u);
+  }
+
+  function setBusy(b) {
+    busy = b; sendBtn.disabled = b; mic.disabled = b;
+    document.querySelectorAll("#chips .btn").forEach(function (x) { x.disabled = b; });
+  }
+
+  function ask(message) {
+    message = (message || "").trim();
+    if (!message || busy) return;
+    speechSynthesis && speechSynthesis.cancel();
+    add("me", esc(message).replace(/\n/g, "<br>"));
+    text.value = ""; live.textContent = ""; autosize();
+    setBusy(true);
+    var bubble = add("coach", '<div class="who">Your coach</div><ul class="steps"><li class="now">Your coach is listening</li></ul>');
+    api("/api/ask", { text: message }).then(function (r) {
+      if (!r.id) throw new Error(r.error || "Could not send");
+      poll(r.id, bubble);
+    }).catch(function (e) { fail(bubble, e.message); });
+  }
+
+  function renderSteps(steps, done) {
+    var shown = steps.slice(-3), hidden = steps.length - shown.length;
+    return '<ul class="steps">' +
+      (hidden > 0 ? "<li>" + hidden + " step" + (hidden > 1 ? "s" : "") + " done</li>" : "") +
+      shown.map(function (s, i) {
+        return '<li class="' + (!done && i === shown.length - 1 ? "now" : "") + '">' + esc(s) + "</li>";
+      }).join("") + "</ul>";
+  }
+
+  function poll(id, bubble) {
+    api("/api/job/" + id).then(function (j) {
+      if (!j.done) {
+        bubble.innerHTML = '<div class="who">Your coach</div>' + renderSteps(j.steps, false);
+        scrollDown();
+        return setTimeout(function () { poll(id, bubble); }, 900);
+      }
+      if (j.error) return fail(bubble, j.error);
+      bubble.innerHTML = '<div class="who">Your coach</div>' + md(j.reply || "");
+      scrollDown(); setBusy(false); speak(j.reply || "");
+    }).catch(function (e) { fail(bubble, e.message); });
+  }
+
+  function fail(bubble, msg) {
+    bubble.remove();
+    var el = document.createElement("div"); el.className = "error";
+    el.textContent = "Something went wrong: " + msg;
+    feed.appendChild(el); scrollDown(); setBusy(false);
+  }
+
+  // Speech recognition
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, recording = false, finalText = "";
+  if (!SR) {
+    mic.disabled = true; mic.title = "Voice needs Chrome, Edge, or Safari";
+    hint.textContent = "Voice isn't supported in this browser - open this page in Chrome, Edge, or Safari, or just type.";
+  } else {
+    rec = new SR(); rec.continuous = true; rec.interimResults = true; rec.lang = langSel.value;
+    rec.onresult = function (e) {
+      var interim = "";
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript + " ";
+        else interim += e.results[i][0].transcript;
+      }
+      live.textContent = (finalText + interim).trim() || "Listening...";
+    };
+    rec.onerror = function (e) {
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        hint.textContent = "Microphone blocked - allow mic access for this page in your browser settings.";
+        stopRec(false);
+      }
+    };
+    rec.onend = function () { if (recording) { try { rec.start(); } catch (err) {} } };
+  }
+  function startRec() {
+    if (!rec || busy) return;
+    speechSynthesis && speechSynthesis.cancel();
+    finalText = ""; recording = true; rec.lang = langSel.value;
+    try { rec.start(); } catch (err) {}
+    mic.classList.add("rec"); mic.setAttribute("aria-label", "Tap to finish");
+    live.className = "live on"; live.textContent = "Listening... tap again when you're done";
+    hint.textContent = "";
+  }
+  function stopRec(send) {
+    recording = false;
+    if (rec) { try { rec.stop(); } catch (err) {} }
+    mic.classList.remove("rec"); mic.setAttribute("aria-label", "Tap to talk"); live.className = "live";
+    var said = (finalText || "").trim() || (live.textContent.indexOf("Listening") === 0 ? "" : live.textContent.trim());
+    if (send && said) setTimeout(function () { ask(said); }, 250);
+    else if (send) live.textContent = "I didn't catch that - try again, or type below.";
+  }
+  mic.onclick = function () { recording ? stopRec(true) : startRec(); };
+
+  function autosize() { text.style.height = "auto"; text.style.height = Math.min(text.scrollHeight, 160) + "px"; }
+  text.addEventListener("input", autosize);
+  text.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(text.value); } });
+  sendBtn.onclick = function () { ask(text.value); };
+  document.querySelectorAll("#chips .btn").forEach(function (b) { b.onclick = function () { ask(b.getAttribute("data-say")); }; });
+  $("newchat").onclick = function () {
+    api("/api/reset", {}).then(function () {
+      feed.innerHTML = ""; add("coach", '<div class="who">Your coach</div><p>Fresh start. Your notes and plan are all still saved.</p>');
+    });
+  };
+  if ("speechSynthesis" in window) speechSynthesis.getVoices();
+})();
+</script>
+</body>
+</html>

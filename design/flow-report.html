@@ -1,0 +1,791 @@
+<title>Tennis Team Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky section index on the left (desktop), one reading column of sections; diagrams sit on their own light "court" panels. */
+:root {
+  --bg: #f3f5f0;
+  --surface: #ffffff;
+  --surface-2: #e8ece4;
+  --ink: #18201b;
+  --muted: #59645d;
+  --line: #d6dcd2;
+  --court: #24563a;
+  --court-soft: #dcebdf;
+  --clay: #b5532a;
+  --clay-soft: #f6e3d8;
+  --ball: #c9d72f;
+  --sky: #2b5f9e;
+  --sky-soft: #e1eaf6;
+  --diagram-bg: #fbfcfa;
+  --good: #2f7a45;
+  --warn: #a0620a;
+  --warn-soft: #fbefd9;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111613; --surface: #192019; --surface-2: #222a24; --ink: #e9eee8; --muted: #a2ada5; --line: #2e3831;
+    --court: #7cc489; --court-soft: #1f3326; --clay: #ec8f63; --clay-soft: #3a2519; --ball: #d6e24a;
+    --sky: #8fb6ef; --sky-soft: #1d2a3d; --diagram-bg: #e9ede6; --good: #7cc489; --warn: #f0b85c; --warn-soft: #3a2f1c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111613; --surface: #192019; --surface-2: #222a24; --ink: #e9eee8; --muted: #a2ada5; --line: #2e3831;
+  --court: #7cc489; --court-soft: #1f3326; --clay: #ec8f63; --clay-soft: #3a2519; --ball: #d6e24a;
+  --sky: #8fb6ef; --sky-soft: #1d2a3d; --diagram-bg: #e9ede6; --good: #7cc489; --warn: #f0b85c; --warn-soft: #3a2f1c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15.5px/1.6 var(--body); }
+.wrap { max-width: 1200px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 80px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 44px; }
+@media (max-width: 900px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding-inline: 16px; } nav.toc { display: none; } }
+
+/* Index */
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; font-size: 13.5px; }
+nav.toc .brand { font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: .02em; display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+nav.toc .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--ball); box-shadow: inset -3px -3px 0 rgba(0,0,0,.12); }
+nav.toc ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; counter-reset: s; }
+nav.toc li a { display: grid; grid-template-columns: 26px 1fr; padding: 5px 8px; border-radius: 8px; color: var(--muted); text-decoration: none; }
+nav.toc li a:hover, nav.toc li a:focus-visible { background: var(--surface-2); color: var(--ink); outline: none; }
+nav.toc li a span { font-family: var(--mono); font-size: 12px; color: var(--court); padding-top: 1px; }
+nav.toc .grp { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 14px 8px 4px; }
+
+/* Masthead */
+header.mast { padding-block: 6px 26px; border-bottom: 3px solid var(--court); margin-bottom: 8px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(40px, 6vw, 64px); line-height: .98; letter-spacing: .005em; margin: 10px 0 14px; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--court); }
+.lede { font-size: 18px; max-width: 64ch; margin: 0; color: var(--ink); }
+.meta { display: flex; gap: 8px 18px; flex-wrap: wrap; margin-top: 16px; font-size: 13px; color: var(--muted); }
+.meta b { color: var(--ink); font-weight: 600; }
+
+/* Sections */
+section { padding-block: 40px 8px; scroll-margin-top: 16px; }
+.sec-head { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: baseline; margin-bottom: 14px; }
+.sec-no { font-family: var(--display); font-weight: 700; font-size: 34px; color: var(--court); line-height: 1; min-width: 44px; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 32px; line-height: 1.05; margin: 0; text-wrap: balance; }
+.sec-sub { grid-column: 2; color: var(--muted); margin: 2px 0 0; max-width: 70ch; }
+h3 { font-size: 16px; font-weight: 600; margin: 22px 0 8px; }
+p { max-width: 70ch; }
+.small { font-size: 13.5px; color: var(--muted); }
+code, .path { font-family: var(--mono); font-size: .88em; background: var(--surface-2); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+
+/* Diagram panels */
+.diagram { background: var(--diagram-bg); border: 1px solid var(--line); border-radius: 14px; padding: 18px; overflow-x: auto; margin: 12px 0; }
+.diagram pre.mermaid { margin: 0; background: transparent; display: flex; justify-content: center; min-width: 560px; font-family: var(--body); color: #18201b; }
+.diagram.tall pre.mermaid { min-width: 720px; }
+.cap { font-size: 13px; color: var(--muted); margin: -4px 0 14px; }
+
+/* Grids, cards, tables */
+.grid { display: grid; gap: 14px; }
+.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 720px) { .g2, .g3 { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+.card h4 { margin: 0 0 6px; font-size: 15px; }
+.card p { margin: 0; font-size: 14.5px; }
+.persona { display: grid; gap: 10px; }
+.persona .who { display: flex; gap: 12px; align-items: center; }
+.av { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 20px; color: #fff; flex-shrink: 0; }
+.persona dl { margin: 0; display: grid; grid-template-columns: 92px 1fr; gap: 4px 10px; font-size: 14px; }
+.persona dt { color: var(--muted); } .persona dd { margin: 0; }
+.quote { font-size: 14px; border-left: 3px solid var(--ball); padding-left: 10px; color: var(--ink); font-style: italic; }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); margin: 12px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 640px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; background: var(--surface-2); }
+tr:last-child td { border-bottom: none; }
+td.num, th.num { text-align: center; font-variant-numeric: tabular-nums; }
+.pill { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 99px; white-space: nowrap; }
+.p-built { background: var(--court-soft); color: var(--court); }
+.p-proto { background: var(--sky-soft); color: var(--sky); }
+.p-soon { background: var(--surface-2); color: var(--muted); }
+.p-warn { background: var(--warn-soft); color: var(--warn); }
+.p-clay { background: var(--clay-soft); color: var(--clay); }
+.callout { border-radius: 12px; padding: 12px 14px; font-size: 14.5px; background: var(--court-soft); margin: 12px 0; max-width: 78ch; }
+.callout.warn { background: var(--warn-soft); }
+.callout b { font-weight: 600; }
+
+/* Phone wireframe */
+.wire-wrap { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start; margin-top: 10px; }
+@media (max-width: 720px) { .wire-wrap { grid-template-columns: minmax(0, 1fr); } }
+.phone { width: 100%; max-width: 300px; border: 8px solid var(--ink); border-radius: 30px; background: var(--bg); overflow: hidden; font-size: 11.5px; display: grid; grid-template-rows: auto auto 1fr auto auto; height: 560px; justify-self: center; }
+.ph-head { background: var(--surface); padding: 10px 10px 8px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; }
+.ph-head b { font-size: 12.5px; display: block; }
+.ph-head small { color: var(--muted); }
+.stack { display: flex; margin-left: auto; } .stack i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--surface); margin-left: -6px; display: block; }
+.ph-strip { background: var(--court-soft); padding: 6px 10px; font-size: 11px; display: flex; gap: 6px; align-items: center; }
+.ph-strip u { margin-left: auto; color: var(--court); }
+.ph-feed { padding: 10px; display: grid; gap: 8px; align-content: start; overflow: hidden; }
+.bub { background: var(--surface); border: 1px solid var(--line); border-radius: 12px 12px 12px 4px; padding: 7px 9px; max-width: 92%; }
+.bub .by { color: var(--muted); font-size: 10px; margin-bottom: 2px; }
+.bub.me { background: var(--court); color: #fff; border: none; border-radius: 12px 12px 4px 12px; justify-self: end; }
+.why { color: var(--court); text-decoration: underline; }
+.ph-chips { display: flex; gap: 5px; padding: 6px 10px; overflow: hidden; }
+.ph-chips span { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 3px 8px; white-space: nowrap; font-size: 10.5px; }
+.ph-comp { background: var(--surface); border-top: 1px solid var(--line); padding: 8px 10px; display: flex; gap: 8px; align-items: center; }
+.ph-mic { width: 36px; height: 36px; border-radius: 50%; background: var(--court); flex-shrink: 0; display: grid; place-items: center; color: #fff; font-size: 15px; }
+.ph-in { flex: 1; border: 1px solid var(--line); border-radius: 99px; padding: 7px 10px; color: var(--muted); }
+.anno { display: grid; gap: 10px; counter-reset: a; }
+.anno div { display: grid; grid-template-columns: 26px 1fr; gap: 10px; font-size: 14.5px; }
+.anno div::before { counter-increment: a; content: counter(a); width: 22px; height: 22px; border-radius: 50%; background: var(--ball); color: #18201b; font-weight: 700; font-size: 12px; display: grid; place-items: center; margin-top: 1px; }
+.anno b { font-weight: 600; }
+
+/* Scoreboard */
+.score { overflow-x: auto; border-radius: 14px; background: #10261a; color: #eaf3e6; padding: 4px; margin: 12px 0; }
+.score table { min-width: 560px; font-family: var(--display); font-size: 18px; }
+.score th { background: transparent; color: #9cc8a6; font-family: var(--mono); font-size: 11px; border-color: #24402e; }
+.score td { border-color: #24402e; font-weight: 600; letter-spacing: .02em; }
+.score td.final { color: var(--ball); font-size: 22px; }
+.score td.name { font-weight: 700; }
+.score small { font-family: var(--body); font-weight: 400; font-size: 12px; color: #9cc8a6; letter-spacing: 0; }
+
+/* Folder tree */
+.tree { font-family: var(--mono); font-size: 13px; line-height: 1.75; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; overflow-x: auto; white-space: pre; }
+.tree .c { color: var(--muted); }
+.tree .w { color: var(--court); }
+.tree .k { color: var(--clay); }
+
+/* Roadmap */
+.road { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 760px) { .road { grid-template-columns: minmax(0, 1fr); } }
+.road .card { border-top: 4px solid var(--court); }
+.road .card.next { border-top-color: var(--sky); } .road .card.later { border-top-color: var(--muted); }
+.road ul { margin: 8px 0 0; padding-left: 18px; font-size: 14px; } .road li { margin: 3px 0; }
+.road .when { font-family: var(--display); font-size: 22px; font-weight: 700; line-height: 1.1; }
+
+ul.clean { padding-left: 18px; margin: 6px 0; } ul.clean li { margin: 4px 0; }
+a { color: var(--court); }
+footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+html { scroll-behavior: smooth; }
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Report sections">
+  <div class="brand"><span class="dot" aria-hidden="true"></span>Tennis Team</div>
+  <div class="grp">Product</div>
+  <ol>
+    <li><a href="#overview"><span>01</span>At a glance</a></li>
+    <li><a href="#personas"><span>02</span>Personas and tasks</a></li>
+    <li><a href="#system"><span>03</span>System structure</a></li>
+    <li><a href="#team"><span>04</span>The coaching team</a></li>
+  </ol>
+  <div class="grp">Flows</div>
+  <ol>
+    <li><a href="#journey"><span>05</span>End-to-end journey</a></li>
+    <li><a href="#launch"><span>06</span>Launch and first run</a></li>
+    <li><a href="#onboarding"><span>07</span>Onboarding interview</a></li>
+    <li><a href="#board"><span>08</span>Plan board rules</a></li>
+    <li><a href="#home"><span>09</span>Conversation-first Home</a></li>
+    <li><a href="#daily"><span>10</span>Daily training loop</a></li>
+    <li><a href="#weekly"><span>11</span>Weekly review</a></li>
+    <li><a href="#tournament"><span>12</span>Tournament lifecycle</a></li>
+    <li><a href="#parent"><span>13</span>Parent mode</a></li>
+    <li><a href="#health"><span>14</span>Health and safety</a></li>
+    <li><a href="#voice"><span>15</span>Voice pipeline</a></li>
+  </ol>
+  <div class="grp">Structure</div>
+  <ol>
+    <li><a href="#ia"><span>16</span>Screen map</a></li>
+    <li><a href="#data"><span>17</span>Workspace and data</a></li>
+    <li><a href="#tests"><span>18</span>Test results</a></li>
+    <li><a href="#roadmap"><span>19</span>Roadmap</a></li>
+    <li><a href="#decisions"><span>20</span>Decisions and open items</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="mast">
+  <div class="eyebrow">Flow and structure report · v3 tested · Oct 15, 2026</div>
+  <h1>A whole tennis team, <em>one conversation away</em></h1>
+  <p class="lede">How the Tennis Team plugin is put together and every path a player or parent walks through it: from the first launch, through the coaching interview and daily training, to tournaments and the weekly review.</p>
+  <div class="meta">
+    <span><b>Status:</b> v0.1 plugin built · v2 and v3 prototypes tested with personas · v0.2 build next</span>
+    <span><b>Personas:</b> Sam (adult) · Mei, parent of Alex (14)</span>
+    <span><b>Repo:</b> <span class="path">~/tennis-team</span></span>
+  </div>
+</header>
+
+<!-- 01 -->
+<section id="overview">
+  <div class="sec-head"><div class="sec-no">01</div><h2>At a glance</h2><p class="sec-sub">The promise, the principles every screen follows, and where each part stands today.</p></div>
+  <div class="callout"><b>The promise.</b> Someone who has never typed a command starts Claude, the app is already on screen, and within about five minutes they have talked to their coach, watched their plan take shape with reasons, and know their one thing for this week.</div>
+  <div class="grid g3">
+    <div class="card"><h4>The page is the product</h4><p>Nobody types commands or skill names. Claude Code or Cowork runs behind a local web app that opens on its own.</p></div>
+    <div class="card"><h4>A coach, not a dashboard</h4><p>The conversation is the main surface. The mic and text box are always one tap away, and replies are signed by the team member who wrote them.</p></div>
+    <div class="card"><h4>Every plan item has a Why</h4><p>Each focus links to the player's own words, the team member who decided it, and a success target. First-week plans are labelled as starters.</p></div>
+    <div class="card"><h4>Never wait on the AI to move on</h4><p>Questions, chips and the plan board respond instantly. The slow AI step (20–60 s per run) happens in the background and arrives as a card.</p></div>
+    <div class="card"><h4>Small, honest load</h4><p>At most three tennis focuses and one fitness block per week. Top priorities first. One good session is a candidate pattern, not proof.</p></div>
+    <div class="card"><h4>Health comes first</h4><p>Tightness means monitor, pain means pause and see a professional, limping mid-match means stop now. Juniors get growth guardrails.</p></div>
+  </div>
+  <h3>Build status by layer</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>What exists</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Plugin skills</td><td><code>coach</code>, <code>setup</code>, <code>log-note</code>, <code>coach-analysis</code>, <code>weekly-review</code>, <code>voice</code></td><td><span class="pill p-built">Built · v0.1</span></td></tr>
+      <tr><td>Workspace templates</td><td>TEAM.md rules, journal, training, coaches, plan page, instant init script</td><td><span class="pill p-built">Built · v0.1</span></td></tr>
+      <tr><td>Voice Coach server</td><td>Local server, browser speech-to-text, live team steps, read-aloud replies</td><td><span class="pill p-built">Built · v0.1</span></td></tr>
+      <tr><td>App v2 prototype</td><td>Onboarding, task Home, templates, Calendar, Plan, Tournaments, Team, Health &amp; Load</td><td><span class="pill p-proto">Prototype · tested 3 rounds</span></td></tr>
+      <tr><td>App v3 prototype</td><td>Interview + live plan board, team huddle, plan review with Why, conversation-first Home, free-text routing</td><td><span class="pill p-proto">Prototype · tested 3 rounds</span></td></tr>
+      <tr><td>Strategy, Tournament coaches, auto-open hook</td><td>Designed in the brief and prototypes</td><td><span class="pill p-soon">v0.2 build</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 02 -->
+<section id="personas">
+  <div class="sec-head"><div class="sec-no">02</div><h2>Personas and their tasks</h2><p class="sec-sub">Two personas, three people. Juniors are parent-operated in v0.2 because Claude consumer accounts are for adults.</p></div>
+  <div class="grid g3">
+    <div class="card persona">
+      <div class="who"><div class="av" style="background:var(--court)">S</div><div><b>Sam, 44</b><div class="small">Recreational adult · NTRP 3.5 → 4.0</div></div></div>
+      <dl><dt>Plays</dt><dd>League doubles Tue, hitting Sat, lesson every other week with Maria</dd><dt>Tech</dt><dd>Medium. Has never opened a terminal</dd><dt>Success</dt><dd>Knows his one thing; talks 60 s after a match and the coach remembers</dd></dl>
+      <div class="quote">"If I have to type it, I won't."</div>
+    </div>
+    <div class="card persona">
+      <div class="who"><div class="av" style="background:var(--clay)">M</div><div><b>Mei, 46</b><div class="small">Parent who runs the app for Alex</div></div></div>
+      <dl><dt>Handles</dt><dd>Entries, deadlines, travel, school, physio</dd><dt>Tech</dt><dd>Low to medium. Quits at the first error</dd><dt>Success</dt><dd>One page shows what's due and whether Alex's body is OK</dd></dl>
+      <div class="quote">"Tell me what to say in the car, and what not to."</div>
+    </div>
+    <div class="card persona">
+      <div class="who"><div class="av" style="background:var(--sky)">A</div><div><b>Alex, 14</b><div class="small">Competitive junior · UTR 7.4 · Sever's history</div></div></div>
+      <dl><dt>Plays</dt><dd>Academy 4–5 days, tournaments most weekends</dd><dt>In v0.2</dt><dd>Talks to the coach with Mei present ("hand Alex the mic")</dd><dt>Success</dt><dd>His own game plan; his words count most</dd></dl>
+      <div class="quote">"Can it just tell me what to do against lefties?"</div>
+    </div>
+  </div>
+  <h3>Hero tasks and where they start</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Persona</th><th>Task</th><th>Trigger</th><th>Entry point</th><th>Handled by</th></tr></thead>
+    <tbody>
+      <tr><td>Sam</td><td>Tell my coach how it went</td><td>Walking off court</td><td>Chip "How did practice go?" · mic</td><td>Head Coach → Journal Keeper</td></tr>
+      <tr><td>Sam</td><td>Know my one thing</td><td>10 min before playing</td><td>Today strip (instant)</td><td>Head Coach</td></tr>
+      <tr><td>Sam</td><td>Save what my coach taught</td><td>After a lesson</td><td>Chip "After my lesson"</td><td>Coach Analyst</td></tr>
+      <tr><td>Sam</td><td>Get ready for a match</td><td>Day before</td><td>Chip "Match coming up?" · calendar prompt</td><td>Tournament Coach</td></tr>
+      <tr><td>Sam</td><td>See if I'm improving</td><td>Sunday</td><td>"Your weekly check-in is ready"</td><td>Progress Coordinator</td></tr>
+      <tr><td>Mei</td><td>Plan the tournament schedule</td><td>New events announced</td><td>"Add a tournament" with overload check</td><td>Tournament Coach</td></tr>
+      <tr><td>Mei</td><td>Is Alex OK?</td><td>After a heavy weekend</td><td>Health &amp; Load tab · "Load &amp; body"</td><td>Head Coach (health rule)</td></tr>
+      <tr><td>Mei</td><td>Sideline note</td><td>In the stands</td><td>Chip "Sideline note"</td><td>Journal Keeper (observer evidence)</td></tr>
+      <tr><td>Mei</td><td>How to talk about today</td><td>Before the car ride</td><td>Chip "How do I talk about today?"</td><td>Head Coach (parent guidance)</td></tr>
+      <tr><td>Mei + Alex</td><td>Debrief a match</td><td>Hours after</td><td>"Hand Alex the mic"</td><td>Tournament Coach → Journal Keeper</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 03 -->
+<section id="system">
+  <div class="sec-head"><div class="sec-no">03</div><h2>System structure</h2><p class="sec-sub">Everything runs on the player's own computer. The workspace folder is the memory; conversations are disposable.</p></div>
+  <div class="diagram tall"><pre class="mermaid">
+flowchart LR
+  P["Player or parent"] -->|"talks or types"| APP["Tennis Team app<br/>local web page"]
+  APP -->|"speech to text"| STT["Browser recognition<br/>or on-device Whisper"]
+  APP -->|"instant actions:<br/>answers, ticks, notes"| SRV["voice_server.py<br/>127.0.0.1 + secret token"]
+  SRV -->|"one job per message"| CL["claude -p<br/>with the plugin"]
+  CL --> SK["Skills: coach, setup, log-note,<br/>coach-analysis, weekly-review,<br/>strategy*, tournament*"]
+  SK <-->|"read and write"| WS[("Workspace folder<br/>markdown + CSV")]
+  SRV -->|"plan data, replies"| APP
+  APP -->|"read aloud"| TTS["Best installed voice"]
+  HK["SessionStart hook<br/>async"] -->|"starts server,<br/>opens page"| SRV
+  WS -.->|"iCloud or Drive sync"| PH["Phone voice memos<br/>into inbox/"]
+  </pre></div>
+  <p class="cap">* designed, built in v0.2. The server only lets <code>claude -p</code> use file tools (read, write, edit), never shell commands.</p>
+  <div class="grid g3">
+    <div class="card"><h4>Plugin (public repo)</h4><p>Skills, workspace templates, the voice server and the launch hook. No personal data. Installs from a GitHub marketplace.</p></div>
+    <div class="card"><h4>Workspace (private folder)</h4><p>One folder per player. Notes, patterns, plan, coach evidence, tournaments. Plain files the player owns.</p></div>
+    <div class="card"><h4>App page (localhost)</h4><p>Reads plan data instantly, writes onboarding answers and quick actions without AI, and queues AI jobs that never block the mic.</p></div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="team">
+  <div class="sec-head"><div class="sec-no">04</div><h2>The coaching team</h2><p class="sec-sub">One front door, specialists behind it. Members join the visible team when they become relevant to the player.</p></div>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  M["Message, voice memo,<br/>or task chip"] --> HC["Head Coach<br/>front door + housekeeping"]
+  HC -->|"practice, match, lesson note"| JK["Journal Keeper"]
+  HC -->|"coach advice or material"| CA["Coach Analyst"]
+  HC -->|"week ended, how am I doing"| PC["Progress Coordinator"]
+  HC -->|"goal, long-term plan"| SC["Strategy Coach"]
+  HC -->|"event, match prep, debrief"| TC["Tournament Coach"]
+  HC -->|"first contact"| TM["Team Manager<br/>setup"]
+  JK -->|"lesson notes"| CA
+  JK --> D[("Decisions log")]
+  PC --> D
+  CA --> D
+  D --> PLAN["Plan page data"]
+  </pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Member</th><th>Skill</th><th>Owns</th><th>Writes to</th><th>Joins the team when</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>🎾 Head Coach</td><td><code>coach</code></td><td>Routing, tone, housekeeping, health-first replies</td><td><code>_system/plan-data.js</code></td><td>Always</td><td><span class="pill p-built">Built</span></td></tr>
+      <tr><td>🧰 Team Manager</td><td><code>setup</code></td><td>Workspace, profile, starter plan</td><td><code>player/</code>, <code>training/</code></td><td>First run</td><td><span class="pill p-built">Built</span></td></tr>
+      <tr><td>📓 Journal Keeper</td><td><code>log-note</code></td><td>Clean entries, patterns, assignment decisions</td><td><code>journal/</code>, decisions CSV</td><td>Always</td><td><span class="pill p-built">Built</span></td></tr>
+      <tr><td>🔍 Coach Analyst</td><td><code>coach-analysis</code></td><td>Coach evidence, principles vs hypotheses, verdicts</td><td><code>coaches/&lt;slug&gt;/</code></td><td>Player names a coach</td><td><span class="pill p-built">Built</span></td></tr>
+      <tr><td>📈 Progress Coordinator</td><td><code>weekly-review</code></td><td>Keep / level up / simplify / rest / swap / test</td><td>Weekly plan, decisions</td><td>Always</td><td><span class="pill p-built">Built</span></td></tr>
+      <tr><td>🗺 Strategy Coach</td><td><code>roadmap</code></td><td>Final goal, phases, monthly on-track check</td><td><code>player/goals.md</code>, <code>training/roadmap.md</code></td><td>Player states a goal</td><td><span class="pill p-proto">Designed</span></td></tr>
+      <tr><td>🏆 Tournament Coach</td><td><code>tournament</code></td><td>Calendar, guides, taper, match cards, reflections</td><td><code>tournaments/</code></td><td>An event or match is mentioned</td><td><span class="pill p-proto">Designed</span></td></tr>
+      <tr><td>💪 Fitness · 🥗 Nutrition · 📊 Stats · ⭐ Scout</td><td>—</td><td>Load-aware fitness, fueling, stats import, idol analysis</td><td>—</td><td>Later</td><td><span class="pill p-soon">Joining soon</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 05 -->
+<section id="journey">
+  <div class="sec-head"><div class="sec-no">05</div><h2>End-to-end journey</h2><p class="sec-sub">From install to a steady weekly rhythm. The three loops (daily, weekly, tournament) all write to the same workspace, so every tab agrees.</p></div>
+  <div class="diagram tall"><pre class="mermaid">
+flowchart LR
+  subgraph S1["First run · about 5 min"]
+    A["Install plugin"] --> B["First Claude session<br/>app opens itself"]
+    B --> C["Welcome +<br/>choose folder"]
+    C --> D["Who is this for?"]
+    D --> E["Coach interview<br/>+ live plan board"]
+    E --> F["Team huddle<br/>AI builds plan"]
+    F --> G["Plan review<br/>with Why"]
+  end
+  subgraph S2["Every week"]
+    H["Home conversation"] --> I["Practice and matches<br/>logged by voice"]
+    I --> J["Sunday check-in<br/>weekly review"]
+    J --> H
+  end
+  subgraph S3["Tournament cycle"]
+    K["Add event<br/>overload check"] --> L["Guide + taper week"]
+    L --> M["Match cards"]
+    M --> N["Debriefs +<br/>event reflection"]
+  end
+  G --> H
+  H --> K
+  N --> J
+  </pre></div>
+</section>
+
+<!-- 06 -->
+<section id="launch">
+  <div class="sec-head"><div class="sec-no">06</div><h2>Launch and first run</h2><p class="sec-sub">A SessionStart hook opens the app; it can't prompt, so every "ask first" choice lives in the page as a flag file the hook reads.</p></div>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  A["Claude session starts<br/>matcher: startup"] --> X{"no-autoopen<br/>flag set?"}
+  X -->|"yes"| Z["Stay silent"]
+  X -->|"no"| B{".onboarded<br/>marker?"}
+  B -->|"missing"| W["Start server, open Welcome<br/>wherever Claude started"]
+  W --> WF["Choose folder<br/>Documents/Tennis or iCloud/Tennis"]
+  WF --> OB["Onboarding"] --> MK["Write .onboarded<br/>show 'next time' tip"]
+  B -->|"present"| C{"TEAM.md in this folder<br/>or a subfolder?"}
+  C -->|"no"| Z
+  C -->|"yes"| D{"Server already<br/>running?"}
+  D -->|"yes"| Z
+  D -->|"no"| H["Start server, open Home"]
+  L["Double-click<br/>Open Tennis Team"] --> H
+  </pre></div>
+  <div class="grid g2">
+    <div class="card"><h4>Verified platform facts</h4><ul class="clean"><li>Plugin <code>hooks/hooks.json</code> with an async SessionStart hook runs in the CLI, the desktop Code tab and Cowork.</li><li>No install-time hook: the app first opens at the first session after install.</li><li>Paths available: <code>CLAUDE_PLUGIN_ROOT</code>, <code>CLAUDE_PLUGIN_DATA</code>, <code>CLAUDE_PROJECT_DIR</code>.</li></ul></div>
+    <div class="card"><h4>Opt-out and backups</h4><ul class="clean"><li>Welcome: "Don't open this automatically".</li><li>Settings switch "Open automatically when I start Claude in my tennis folder". Both write <code>no-autoopen</code>.</li><li>Backup doors: a launcher file in the folder, and <code>/tennis</code>.</li></ul></div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section id="onboarding">
+  <div class="sec-head"><div class="sec-no">07</div><h2>Onboarding: the coach interview (v3, tested)</h2><p class="sec-sub">Replaces five quick screens and a hidden AI job. The player watches their plan and team take shape while they talk, so the plan never arrives without reasons.</p></div>
+  <div class="diagram tall"><pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor P as Player
+  participant HC as Head Coach (scripted, instant)
+  participant BD as Plan board (local rules)
+  participant AI as Team (claude -p, background)
+  HC->>P: How long have you played, and what level?
+  P->>HC: Eight years, about a 4.0
+  HC-->>BD: Level card 4.0
+  HC->>P: What's your goal, and by when?
+  P->>HC: 4.5 within a year
+  HC-->>BD: Goal card 4.0 to 4.5 by Oct 2027
+  HC->>P: What loses you the most points?
+  P->>HC: Returns, and my second serve
+  HC-->>BD: Top priorities: Returns, Second serve (quotes attached)
+  HC->>P: Any matches or tournaments coming up?
+  P->>HC: Club championship Nov 8
+  HC-->>BD: Tournament Coach joins
+  HC->>P: When do you play? Anything sore? Who coaches you?
+  P->>HC: Tue, Thu, Sat. Knee fine. Coach Maria
+  HC-->>BD: Schedule strip, Coach Analyst joins
+  HC->>AI: One job with all answers
+  Note over P,AI: Team huddle, about 1 min: each member presents their part with a reason
+  AI-->>P: Plan review: 1 to 3 focuses, each with Why, target, Looks good / Too much / Change this
+  P->>HC: Looks good
+  HC-->>P: Home opens on the coach's plan summary
+  </pre></div>
+  <h3>Interview script (adult)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th class="num">#</th><th>Coach asks</th><th>Quick replies</th><th>Board updates</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>"How long have you played, and roughly what level are you?"</td><td>Beginner · Club · 3.5 · 4.0 · 4.5+ · UTR…</td><td>Level card</td></tr>
+      <tr><td class="num">2</td><td>"What's your goal with tennis, and by when?"</td><td>Move up a level · Win league · A tournament · Stay healthy · 3 / 12 months</td><td>Goal card, Strategy Coach presents the phase</td></tr>
+      <tr><td class="num">3</td><td>"What loses you the most points right now?"</td><td>Returns · Second serve · Backhand · Net · Consistency · Nerves</td><td>Priority cards with "because you said…"</td></tr>
+      <tr><td class="num">3b</td><td>Follow-up when vague: "Which shot lets you down most when it gets tight?"</td><td>Chips from #3</td><td>Refines the top priority</td></tr>
+      <tr><td class="num">4</td><td>"Any matches or tournaments coming up?"</td><td>None · League · Tournament + date</td><td>Tournament Coach joins, calendar entry</td></tr>
+      <tr><td class="num">5</td><td>"When and how often do you play?"</td><td>Day chips: practice / match / lesson</td><td>Schedule strip</td></tr>
+      <tr><td class="num">6</td><td>"Anything sore or injured I should know about?"</td><td>No · Tight · It hurts + body part</td><td>Body card (monitor or pause)</td></tr>
+      <tr><td class="num">7</td><td>"Do you work with a coach?" then "Anything else I should know?"</td><td>Name · No coach</td><td>Coach Analyst joins</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid g2">
+    <div class="card"><h4>Team huddle (hides the AI wait)</h4><p>Members speak in turn while the job runs: "Strategy Coach: phase 1 is about stopping free points." "Tournament Coach: we ease off the week of Nov 2." A progress bar, then the review.</p></div>
+    <div class="card"><h4>Plan review</h4><p>Labelled "Starter plan, adjusted after your first 2 sessions". Each focus has a <b>Why?</b> (reason, the player's quote, who decided), a target, and Looks good / Too much / Change this.</p></div>
+  </div>
+  <div class="callout warn"><b>Skipping.</b> Every question can be skipped. "Skip interview" produces a starter plan clearly labelled as generic, and the coach fills gaps from later notes, asking at most one profile question per weekly review.</div>
+</section>
+
+<!-- 08 -->
+<section id="board">
+  <div class="sec-head"><div class="sec-no">08</div><h2>Plan board rules</h2><p class="sec-sub">Instant, local rules turn answers into visible cards. The AI job later confirms or adjusts them; the board never invents facts the player didn't say.</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>When the player says…</th><th>Card that appears</th><th>Reason shown</th><th>Team effect</th></tr></thead>
+    <tbody>
+      <tr><td>A level ("about a 4.0", "UTR 7")</td><td>Level · 4.0</td><td>"You said: about a 4.0"</td><td>—</td></tr>
+      <tr><td>A goal with a time ("4.5 within a year")</td><td>Goal · 4.0 → 4.5 by Oct 2027</td><td>Quote</td><td>Strategy Coach presents phase 1</td></tr>
+      <tr><td>Point-losers ("returns", "second serve")</td><td>Top priority cards, max 2</td><td>"Because you said returns cost you the most points"</td><td>—</td></tr>
+      <tr><td>An event or match date</td><td>Tournament card with countdown</td><td>Quote + date</td><td>🏆 Tournament Coach joins</td></tr>
+      <tr><td>Play days</td><td>Schedule strip</td><td>Chips chosen</td><td>Calendar seeded</td></tr>
+      <tr><td>Tight, sore</td><td>Body card · monitor</td><td>Quote</td><td>Fitness kept light</td></tr>
+      <tr><td>Pain, injury</td><td>Body card · pause related work</td><td>Quote + "see a professional"</td><td>Related focus paused</td></tr>
+      <tr><td>"No", "not injured", "nothing hurts"</td><td>No card (negation handled)</td><td>—</td><td>Fixes "Paused: rest your" bug</td></tr>
+      <tr><td>A coach's name</td><td>Coach card</td><td>"You work with Coach Maria"</td><td>🔍 Coach Analyst joins</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 09 -->
+<section id="home">
+  <div class="sec-head"><div class="sec-no">09</div><h2>Conversation-first Home</h2><p class="sec-sub">The player opens the app to their coach, not a menu. Tasks become suggestions; the plan stays one tap away with its reasons.</p></div>
+  <div class="wire-wrap">
+    <div class="phone" role="img" aria-label="Phone wireframe of the conversation-first Home">
+      <div class="ph-head"><div><b>Jordan's Tennis Team</b><small>4.0 → 4.5</small></div><div class="stack"><i style="background:#24563a"></i><i style="background:#2b5f9e"></i><i style="background:#b5532a"></i><i style="background:#7a4fb5"></i></div></div>
+      <div class="ph-strip">📍 Today: Practice · <b>"Short swing, deep middle"</b><u>Why?</u></div>
+      <div class="ph-feed">
+        <div class="bub"><div class="by">Head Coach with Progress Coordinator</div>Here's your starter plan. Returns first, because you said they cost you the most points. <span class="why">Why?</span></div>
+        <div class="bub me">Practice today, returns felt better, 6 of 10 deep</div>
+        <div class="bub"><div class="by">Journal Keeper</div>6 of 10 is up from 4. Keep the short swing; next time test it in real points.<br>☐ Sat: 10 live returns, count deep ones</div>
+      </div>
+      <div class="ph-chips"><span>How did practice go?</span><span>Today's focus</span><span>Match coming up?</span><span>More</span></div>
+      <div class="ph-comp"><div class="ph-mic">🎙</div><div class="ph-in">Talk or type to your team…</div></div>
+    </div>
+    <div class="anno">
+      <div><span><b>Team presence.</b> Header shows the player's name, level path and the avatars of active team members. Tapping it opens the Team tab.</span></div>
+      <div><span><b>Today strip.</b> Today's session and the one cue for the week, with a Why? that explains where the cue came from.</span></div>
+      <div><span><b>The conversation.</b> Starts with the plan summary from the plan review. Replies are signed by the member who wrote them and end with up to three tickable next steps.</span></div>
+      <div><span><b>Suggestion chips.</b> Three chips that change with context (after a scheduled practice, before a match, on Sunday). "More" opens the full task list.</span></div>
+      <div><span><b>Pinned composer.</b> Big mic and text box always visible. The mic stays live while the team works; new notes queue behind the running job.</span></div>
+    </div>
+  </div>
+  <h3>Before and after</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>v2</th><th>v3 (tested)</th><th>Why it changed</th></tr></thead>
+    <tbody>
+      <tr><td>Today card, coach reply, then a 5-tile grid; mic at the bottom of the page</td><td>Conversation fills the screen; mic and text pinned; 3 chips + More</td><td>"Voice and text must come first. I want to feel a team is standing by."</td></tr>
+      <tr><td>Plan appears after setup with no explanation</td><td>Plan built on screen during the interview; every item has a Why</td><td>"I have no idea where this plan came from."</td></tr>
+      <tr><td>Team visible only on the Team tab</td><td>Avatars in the header; members join during the interview; replies signed</td><td>The team should feel present, not hidden in a tab</td></tr>
+      <tr><td>Typed messages got a generic reply</td><td>Free text routed by intent: log a session, update the body, car talk, add a tournament from one sentence, answer a question</td><td>"Alex told it his heel was sore and it talked about his forehand."</td></tr>
+      <tr><td>Task templates opened full-screen</td><td>"How did practice go?" runs inline as coach bubbles with chip answers</td><td>Stay inside the conversation</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 10 -->
+<section id="daily">
+  <div class="sec-head"><div class="sec-no">10</div><h2>Daily training loop</h2><p class="sec-sub">Guided questions run in the page with no AI wait between them; one background job does the thinking; every tab updates from the same store.</p></div>
+  <div class="diagram tall"><pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor P as Player
+  participant H as Home
+  participant T as Guided template (in page)
+  participant Q as Job queue
+  participant AI as Team (claude -p)
+  participant S as Workspace + store
+  H->>P: Today strip: Practice, cue "Short swing, deep middle"
+  Note over P: plays the session
+  H->>P: Chip appears: How did practice go?
+  P->>T: Practice, match or lesson?
+  P->>T: How did your one thing go? 6 of 10
+  P->>T: What cost you the most points? Return errors
+  P->>T: Anything sore? A little, left calf
+  T->>P: Review screen with Edit links, then Send
+  T->>Q: One note
+  Q->>AI: Run (mic stays live)
+  AI->>S: Entry, patterns, decision, actions, plan data
+  AI-->>H: Reply card: calf first, then 6 of 10 feedback, up to 3 next steps
+  S-->>H: Calendar Done, Plan "How it's going", Team "Latest" refresh
+  P->>H: Ticks a next step (no AI call)
+  </pre></div>
+  <div class="grid g3">
+    <div class="card"><h4>How did it go?</h4><p>Type · what happened (matches) · your one thing out of 10 · what cost points (chips) · body check. Losses get a different reply than wins.</p></div>
+    <div class="card"><h4>After my lesson</h4><p>Which coach · what they told you, in their words · anything to check you understood. Journaled first, then the Coach Analyst sorts principles from ideas to test.</p></div>
+    <div class="card"><h4>Today's focus</h4><p>Instant, no AI. Reads the current assignments; after a session is logged, "Next" moves to the following one.</p></div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="weekly">
+  <div class="sec-head"><div class="sec-no">11</div><h2>Weekly review and assignment decisions</h2><p class="sec-sub">Runs automatically the first time the player opens the app after the plan's week ends. Every assignment gets exactly one decision.</p></div>
+  <div class="grid g2">
+    <div class="diagram"><pre class="mermaid">
+stateDiagram-v2
+  [*] --> New: created this week
+  New --> Keep: evidence sparse or mixed
+  Keep --> Test: promising but felt-only
+  Test --> LevelUp: target met in real points
+  Keep --> LevelUp: target met repeatably
+  Keep --> Simplify: too complex or tiring
+  Keep --> Rest: pain or clash
+  Rest --> Keep: cleared
+  Keep --> Swap: no transfer after a fair trial
+  LevelUp --> Keep: new, harder target
+  Swap --> [*]
+    </pre></div>
+    <div>
+      <div class="tbl"><table>
+        <thead><tr><th>File term</th><th>Player sees</th><th>Rule</th></tr></thead>
+        <tbody>
+          <tr><td><code>new</code></td><td>New this week</td><td>Setup or review only</td></tr>
+          <tr><td><code>keep</code></td><td>Keep going</td><td>The default when evidence is thin</td></tr>
+          <tr><td><code>validate</code></td><td>Test it in real points</td><td>No live or pressure evidence yet</td></tr>
+          <tr><td><code>progress</code></td><td>Level up</td><td>Target met repeatably in live play</td></tr>
+          <tr><td><code>reduce</code></td><td>Simplify</td><td>Complexity or recovery is poor</td></tr>
+          <tr><td><code>pause</code></td><td>Rest it</td><td>Pain, illness, higher priority</td></tr>
+          <tr><td><code>replace</code></td><td>Swap it</td><td>Only with a stated reason</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small">Caps: 3 tennis + 1 fitness per week, at least one top priority every week, at most 3 open next steps, and no new technique while the current model is being tested, unless a coach prescribed it directly.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="tournament">
+  <div class="sec-head"><div class="sec-no">12</div><h2>Tournament lifecycle</h2><p class="sec-sub">From the moment an event is added to the reflection afterwards. The load check runs before the player commits, not after.</p></div>
+  <div class="diagram tall"><pre class="mermaid">
+flowchart LR
+  A["Add a tournament<br/>name + date chips +<br/>entry deadline + format"] --> B{"Load check<br/>before Add"}
+  B -->|"3 weekends in a row,<br/>hours jump over 30%,<br/>logged pain"| W["Heads-up card<br/>add anyway or skip"]
+  B -->|"OK"| C["Saved everywhere:<br/>Tournaments, Calendar<br/>all days, Home, Load"]
+  W --> C
+  C --> D["Guide opens<br/>prep, game plan, match day,<br/>between points, after"]
+  D --> E["Entry deadline prompt<br/>5 days before"]
+  E --> F["Taper week<br/>lighter, more points,<br/>no new technique"]
+  F --> G["Match card<br/>serve plan, return plan,<br/>reset cue, linked to date"]
+  G --> H["Match day"]
+  H --> I["Debrief per match<br/>score, what worked,<br/>did the plan work?"]
+  I --> J["Event reflection<br/>result, best moment,<br/>train next"]
+  J --> K["Weekly review<br/>adjusts the plan"]
+  </pre></div>
+  <div class="grid g3">
+    <div class="card"><h4>T−21 to T−7</h4><p>Normal training with practice sets. Match-play focus increases. Scouting checklist if enabled.</p></div>
+    <div class="card"><h4>T−7 to T−1</h4><p>Taper (configurable 3 days to 1 week). Light hitting, serve routine rehearsal, early nights.</p></div>
+    <div class="card"><h4>T and after</h4><p>Match cards, between-points reset, debrief chips, scores-differ check, then one event reflection under Played.</p></div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section id="parent">
+  <div class="sec-head"><div class="sec-no">13</div><h2>Parent mode</h2><p class="sec-sub">Same skeleton, different job: logistics and support, not training. The parent runs the app; the junior speaks with the parent present.</p></div>
+  <div class="diagram tall"><pre class="mermaid">
+flowchart LR
+  A["Welcome"] --> B["Who is this for?<br/>My child"]
+  B --> C["Interview about Alex<br/>age band, level, season goals,<br/>tournaments + deadlines,<br/>school + training load,<br/>growth + injury history"]
+  C --> D["Hand Alex the mic<br/>Alex, what's your game?"]
+  D --> E["Plan board<br/>+ deadlines + load guardrails"]
+  E --> F["Team huddle"]
+  F --> G["Plan review"]
+  G --> H["Family Home"]
+  H --> H1["This week's brief"]
+  H --> H2["Health and Load"]
+  H --> H3["Sideline note"]
+  H --> H4["How do I talk about today?"]
+  H --> H5["Alex's debrief"]
+  </pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Area</th><th>Adult</th><th>Parent</th></tr></thead>
+    <tbody>
+      <tr><td>Home chips</td><td>How did it go · Today's focus · Match coming up</td><td>Add a tournament · This week's brief · Load &amp; body · Sideline note · How do I talk about today · Alex's debrief</td></tr>
+      <tr><td>Evidence weight</td><td>Player's words · direct coach · public material</td><td>Alex's words outrank parent-reported fields; sideline notes are lower-weight observer evidence</td></tr>
+      <tr><td>Extra tab</td><td>—</td><td>Health &amp; Load: weekly hours, matches per weekend, body flags, injury history, rest-day suggestions</td></tr>
+      <tr><td>Guardrails</td><td>Health rule</td><td>Health rule + growth guardrails, no weight or diet goals, nutrition is general fueling only</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 14 -->
+<section id="health">
+  <div class="sec-head"><div class="sec-no">14</div><h2>Health and safety decisions</h2><p class="sec-sub">Applied before any coaching content in a reply. Always labelled "not medical advice".</p></div>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  R["Body mentioned in a note,<br/>debrief, sideline note or intro"] --> N{"Negated?<br/>no, not injured"}
+  N -->|"yes"| OK["No health card"]
+  N -->|"no"| L{"Limping or pain<br/>during a match?"}
+  L -->|"yes"| STOP["Stop playing now,<br/>get it checked"]
+  L -->|"no"| P{"Pain or injury?"}
+  P -->|"yes"| PA["Pause related work,<br/>see a professional,<br/>log body flag"]
+  P -->|"no, tight or sore"| MO["Monitor, keep load,<br/>reduce if it repeats"]
+  PA --> J{"Junior with<br/>growth history?"}
+  MO --> J
+  J -->|"yes, e.g. Sever's"| JR["Less impact and jumping,<br/>physio before next event,<br/>flag in tournament load check"]
+  J -->|"no"| E["Reply leads with<br/>the body, then tennis"]
+  JR --> E
+  </pre></div>
+  <div class="grid g2">
+    <div class="card"><h4>Junior load guardrails</h4><ul class="clean"><li>Warn at 2+ tournament weekends in a row, or more than 4 singles matches in a day.</li><li>Warn when planned weekly hours jump by more than 30%, or exceed about one hour per year of age.</li><li>Suggest rest after back-to-back match days; rest days replace training.</li></ul></div>
+    <div class="card"><h4>Wellbeing</h4><p>Signs of distress, burnout, self-harm or disordered eating pause tennis coaching. The coach replies warmly and plainly, encourages talking to a trusted adult, and shows crisis resources. The team never contacts anyone.</p></div>
+  </div>
+</section>
+
+<!-- 15 -->
+<section id="voice">
+  <div class="sec-head"><div class="sec-no">15</div><h2>Voice pipeline</h2><p class="sec-sub">Talking should feel as easy as leaving a voice message for a coach. Decided: clean-up pass now, on-device Whisper as an optional upgrade.</p></div>
+  <div class="diagram tall"><pre class="mermaid">
+flowchart LR
+  M["Tap mic"] --> R{"Better recognition<br/>set up?"}
+  R -->|"no"| B["Browser speech-to-text<br/>live words on screen"]
+  R -->|"yes"| W["On-device Whisper<br/>primed with tennis words,<br/>player and coach names"]
+  B --> C["Clean-up pass<br/>labels to level,<br/>valley to volley"]
+  W --> C
+  C --> E["Editable transcript<br/>Here's what I heard + Undo"]
+  E --> S["Send to the team"]
+  S --> A["claude -p<br/>also repairs names<br/>from context"]
+  A --> T["Reply on screen"]
+  T --> V["Read aloud<br/>best natural voice,<br/>sentence by sentence"]
+  </pre></div>
+  <div class="grid g3">
+    <div class="card"><h4>Recognition</h4><p>Browser recognition for the live preview. Optional Whisper download (about 500 MB) for accents and mixed Chinese and English; private and offline.</p></div>
+    <div class="card"><h4>Correction</h4><p>Tap any word to fix it; the mic adds to the end. Likely tennis mishearings are fixed and highlighted with Undo.</p></div>
+    <div class="card"><h4>Speaking</h4><p>Novelty voices hidden; Premium, Natural and Google voices preferred; choice remembered; Chrome's dropped and stalled speech handled.</p></div>
+  </div>
+</section>
+
+<!-- 16 -->
+<section id="ia">
+  <div class="sec-head"><div class="sec-no">16</div><h2>Screen map</h2><p class="sec-sub">Five tabs per mode. Overlays (flows, sheets, panels) sit above them; Settings always sits on top.</p></div>
+  <div class="diagram tall"><pre class="mermaid">
+flowchart TB
+  subgraph AD["Adult mode"]
+    A1["Home<br/>conversation"] --- A2["Plan<br/>goal, roadmap, block, week"] --- A3["Calendar<br/>month and list"] --- A4["Tournaments<br/>guide, cards, played"] --- A5["Team<br/>members, knowledge"]
+  end
+  subgraph PA["Parent mode"]
+    P1["Family Home<br/>conversation + brief"] --- P2["Calendar<br/>+ deadlines, travel"] --- P3["Tournaments<br/>entries, checklist"] --- P4["Health and Load"] --- P5["Team"]
+  end
+  subgraph OV["Overlays"]
+    O1["Onboarding interview"]
+    O2["Guided templates"]
+    O3["Member panel<br/>settings, knows, teach, sources"]
+    O4["Day detail"]
+    O5["Settings<br/>voice, recognition, auto-open"]
+  end
+  </pre></div>
+</section>
+
+<!-- 17 -->
+<section id="data">
+  <div class="sec-head"><div class="sec-no">17</div><h2>Workspace and data</h2><p class="sec-sub">Plain files the player owns. Green marks files the AI team writes; orange marks files the app writes instantly without AI.</p></div>
+<div class="tree">My Tennis Team/
+├── <span class="w">TEAM.md</span>                       <span class="c"># rules every member follows</span>
+├── My Tennis Plan.html             <span class="c"># static page, reads _system/plan-data.js</span>
+├── player/
+│   ├── <span class="w">profile.md</span>                <span class="c"># fills in over time from notes</span>
+│   ├── <span class="w">goals.md</span>                  <span class="c"># Strategy Coach</span>
+│   └── <span class="k">onboarding.json</span>           <span class="c"># interview answers, by role</span>
+├── journal/
+│   ├── <span class="w">intake_log.md</span>             <span class="c"># verbatim notes with IDs</span>
+│   ├── <span class="w">entries.md</span>                <span class="c"># cleaned entries</span>
+│   ├── <span class="w">patterns.md</span>               <span class="c"># candidate → confirmed</span>
+│   └── <span class="w">master_summary.md</span>
+├── training/
+│   ├── <span class="w">priorities.md</span> · <span class="w">roadmap.md</span> · <span class="w">current_cycle.md</span>
+│   ├── <span class="w">weekly_assignments.md</span>     <span class="c"># max 3 tennis + 1 fitness</span>
+│   ├── <span class="w">assignment_decisions.csv</span>
+│   └── <span class="k">action_tracker.csv</span>        <span class="c"># ticks write here instantly</span>
+├── tournaments/
+│   ├── <span class="k">calendar.md</span>               <span class="c"># events + deadlines</span>
+│   └── <span class="w">2026-11-08-club-championship.md</span>
+├── coaches/maria/                   <span class="c"># sources, principles, hypotheses, feedback</span>
+├── family/                          <span class="c"># parent mode: sharing, logistics</span>
+├── inbox/                           <span class="c"># phone voice memos land here</span>
+└── _system/
+    ├── <span class="w">plan-data.js</span>              <span class="c"># everything the app renders</span>
+    ├── <span class="k">conversation.jsonl</span>        <span class="c"># Home conversation survives reloads</span>
+    └── coach/                       <span class="c"># template for new coaches</span></div>
+  <h3>Evidence order</h3>
+  <div class="grid g3">
+    <div class="card"><h4>1 · Direct</h4><p>Coaching given to this player (lesson notes, a coach's feedback). Can create principles.</p></div>
+    <div class="card"><h4>2 · Player</h4><p>The player's own notes and words. In parent mode, Alex's words outrank parent-reported fields.</p></div>
+    <div class="card"><h4>3 · Public and general</h4><p>A coach's public material, then general tennis knowledge. Fills gaps, never silently overrides.</p></div>
+  </div>
+</section>
+
+<!-- 18 -->
+<section id="tests">
+  <div class="sec-head"><div class="sec-no">18</div><h2>Test results</h2><p class="sec-sub">Two persona agents walked the whole journey; a designer agent fixed what they found between rounds. v2 ran three rounds, v3 two rounds plus a polish pass. Smoothness out of 5.</p></div>
+  <div class="score"><table>
+    <thead><tr><th>Player</th><th>Stage</th><th class="num">Round 1</th><th class="num">Round 2</th><th class="num">Round 3</th></tr></thead>
+    <tbody>
+      <tr><td class="name" rowspan="3">SAM<br><small>adult · desktop</small></td><td>Onboarding</td><td class="num">3</td><td class="num">4.5</td><td class="num final">4.5</td></tr>
+      <tr><td>Daily training</td><td class="num">2</td><td class="num">4</td><td class="num final">4</td></tr>
+      <tr><td>Tournaments</td><td class="num">2</td><td class="num">3.5</td><td class="num final">4</td></tr>
+      <tr><td class="name" rowspan="3">MEI<br><small>parent · phone</small></td><td>Onboarding</td><td class="num">3</td><td class="num">4</td><td class="num final">4.5</td></tr>
+      <tr><td>Weekly / daily</td><td class="num">3</td><td class="num">4</td><td class="num final">4.5</td></tr>
+      <tr><td>Tournaments</td><td class="num">2</td><td class="num">4</td><td class="num final">4.5</td></tr>
+    </tbody>
+  </table></div>
+  <h3>v3 prototype: interview + conversation-first Home</h3>
+  <div class="score"><table>
+    <thead><tr><th>Player</th><th>Stage</th><th class="num">v3 first test</th><th class="num">v3 final</th></tr></thead>
+    <tbody>
+      <tr><td class="name" rowspan="4">SAM<br><small>adult · desktop</small></td><td>Interview</td><td class="num">4.5</td><td class="num final">4</td></tr>
+      <tr><td>Plan review</td><td class="num">4</td><td class="num final">4.5</td></tr>
+      <tr><td>Home and daily</td><td class="num">3.5</td><td class="num final">4.5</td></tr>
+      <tr><td>Tournaments</td><td class="num">4</td><td class="num final">4.5</td></tr>
+      <tr><td class="name" rowspan="4">MEI<br><small>parent · phone</small></td><td>Interview</td><td class="num">4</td><td class="num final">4</td></tr>
+      <tr><td>Plan review</td><td class="num">4</td><td class="num final">4.5</td></tr>
+      <tr><td>Family Home</td><td class="num">2</td><td class="num final">4.5</td></tr>
+      <tr><td>Tournaments and health</td><td class="num">4</td><td class="num final">4.5</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">Both personas answered "yes, ready to show" on the final v3 run. A last polish pass after it fixed: chips shifting under the finger, a lost level not reaching the header, "Also an academy" read as a coach, limping in the interview not pausing the heel, the Today strip covering messages, duplicate practice logs, and a "lighter" target that was harder. Sam: "Finally, I just talk and it gets it."</p>
+  <h3>v2 prototype</h3>
+  <div class="grid g2">
+    <div class="card"><h4>Biggest fixes</h4><ul class="clean"><li>Mic could not be tapped (ring drawn over the button).</li><li>Entries vanished; one shared store now feeds every tab.</li><li>Replies ignored answers; now built from score, x/10, body part.</li><li>Pain ignored; health now leads every reply.</li><li>Fake history for new users; now empty and seeded from answers.</li><li>Rest days stacked on training; overload checked only after booking.</li></ul></div>
+    <div class="card"><h4>Product owner's own test (led to v3)</h4><ul class="clean"><li>Plan appeared with no reasons → interview + plan board + Why.</li><li>Mic buried under tiles → conversation-first Home.</li><li>Transcript not editable → tap any word to fix it.</li><li>Recognition weak → clean-up pass + optional Whisper.</li><li>"change" link and Preview silent → fixed (layering, Chrome speech bugs).</li><li>"Paused: rest your" → negation handling.</li></ul></div>
+  </div>
+</section>
+
+<!-- 19 -->
+<section id="roadmap">
+  <div class="sec-head"><div class="sec-no">19</div><h2>Roadmap</h2><p class="sec-sub">Prototype first, then the real build. Each phase has a goal the personas can feel.</p></div>
+  <div class="road">
+    <div class="card"><div class="when">Now · v0.2</div><div class="small">App-first · to end of Nov 2026</div><ul><li>Auto-open hook, launcher, folder picker</li><li>Interview + plan board + plan review</li><li>Conversation-first Home, job queue, persisted conversation</li><li>Strategy Coach and Tournament Coach skills</li><li>Parent mode on one device, Health &amp; Load, guardrails</li><li>Transcript clean-up; optional Whisper</li></ul><p class="small" style="margin-top:8px">Target: 80% reach Home in 5 min; 70% of notes from chips or voice.</p></div>
+    <div class="card next"><div class="when">Next · v0.3</div><div class="small">Family on the go · Dec 2026 – Feb 2027</div><ul><li>Two devices via shared iCloud or Drive folder</li><li>Phone capture: synced voice memos first</li><li>Family brief, deadlines, travel and school checklist</li><li>ICS calendar export, manual UTR trend</li><li>Fitness Coach with growth-aware load</li></ul></div>
+    <div class="card later"><div class="when">Later · v0.4+</div><div class="small">Connected team · 2027</div><ul><li>Opt-in hosted sync and phone app</li><li>Read-only weekly brief for a real coach</li><li>Stats Analyst and Player Scout</li><li>Nutrition (adults first)</li><li>Teen role after a policy review on minors</li></ul></div>
+  </div>
+</section>
+
+<!-- 20 -->
+<section id="decisions">
+  <div class="sec-head"><div class="sec-no">20</div><h2>Decisions and open items</h2><p class="sec-sub">What the product owner has decided, and what still needs a call.</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Topic</th><th>Decision</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Juniors</td><td>Parent-operated in v0.2; teen role and private notes wait for a policy review</td><td><span class="pill p-built">Decided</span></td></tr>
+      <tr><td>Auto-open</td><td>First session after install opens Welcome once; afterwards only in a tennis folder; in-app opt-out</td><td><span class="pill p-built">Decided</span></td></tr>
+      <tr><td>Onboarding</td><td>Interview + live plan board + team huddle + plan review with Why</td><td><span class="pill p-built">Decided</span></td></tr>
+      <tr><td>Home</td><td>Conversation-first: pinned mic and text, 3 chips + More, Today strip, Why everywhere</td><td><span class="pill p-built">Decided</span></td></tr>
+      <tr><td>Voice recognition</td><td>Clean-up pass + optional on-device Whisper; no cloud speech API for now</td><td><span class="pill p-built">Decided</span></td></tr>
+      <tr><td>Sideline notes</td><td>Lower-weight observer evidence</td><td><span class="pill p-clay">Default, confirm</span></td></tr>
+      <tr><td>Phone</td><td>Synced voice memos before any LAN or hosted access</td><td><span class="pill p-clay">Default, confirm</span></td></tr>
+      <tr><td>Workspaces</td><td>One folder per player; siblings and playing parents get their own</td><td><span class="pill p-clay">Default, confirm</span></td></tr>
+    </tbody>
+  </table></div>
+  <footer>Sources: <span class="path">design/design-brief.md</span>, <span class="path">prototypes/app-v2.html</span>, <span class="path">prototypes/app-v3.html</span>, persona test reports (v2: 3 rounds, v3: 2 rounds), and the v0.1 plugin in <span class="path">~/tennis-team</span>. People and data in examples are fictional.</footer>
+</section>
+</main>
+</div>

@@ -1,0 +1,6 @@
+created_date,source_id,action,priority,status,due_or_review_date,outcome
+2026-10-15,SETUP-2026-10-15,Log the first practice with a score for T1 and T2,P0,done,2026-10-19,NOTE-2026-10-15-01: T2 7/10; T1 14/20 deep-ish
+2026-10-15,SETUP-2026-10-15,Bring the lesson notes from Coach Maria to coach-analysis,P0,done,2026-10-19,Ingested as NOTE-2026-10-14-01 / MARIA-DIRECT-001
+2026-10-15,NOTE-2026-10-14-01,"Ask Maria what ""go through the ball"" means (MARIA-H01)",P0,open,2026-10-21,
+2026-10-15,NOTE-2026-10-15-01,"Next session: call ""short"" aloud in 10 live points; count forward first steps, including late",P0,open,2026-10-19,
+2026-10-15,NOTE-2026-10-15-01,Rate left calf tightness 0-10 after each session; pain means pause and seek qualified guidance,P2,open,2026-10-19,

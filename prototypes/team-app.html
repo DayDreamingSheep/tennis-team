@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tennis Team</title>
+<!-- PROTOTYPE: static demo data (fictional player "Sam"). Talk flow is simulated; voice playback is real. -->
+<style>
+  :root {
+    --bg: #f5f6f1; --surface: #ffffff; --surface-2: #eef1ea; --ink: #1b211e; --muted: #5f6964; --line: #dde2da;
+    --accent: #2f6d3a; --accent-ink: #fff; --accent-soft: #e2eee1; --ball: #c9d72f; --rec: #c2412d;
+    --warn: #9a5b00; --warn-soft: #fbf0dd; --shadow: 0 1px 2px rgba(20,30,25,.06), 0 6px 20px rgba(20,30,25,.06);
+    --m-head: #2f6d3a; --m-journal: #2a5db0; --m-analyst: #7a4fb5; --m-progress: #c26a1c;
+    --m-strategy: #0f7d78; --m-tournament: #b23a54; --m-manager: #5f6964;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111513; --surface: #1a1f1c; --surface-2: #222824; --ink: #ecf0eb; --muted: #a0aaa4; --line: #2c332e;
+      --accent: #7cc489; --accent-ink: #0f1a12; --accent-soft: #213327; --ball: #d6e24a; --rec: #f07a66;
+      --warn: #f0b85c; --warn-soft: #3a2f1c; --shadow: none;
+      --m-head: #7cc489; --m-journal: #8db4f2; --m-analyst: #c2a1ef; --m-progress: #f0a463;
+      --m-strategy: #5fd0c8; --m-tournament: #f08aa0; --m-manager: #a0aaa4;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", sans-serif; }
+  button { font: inherit; color: inherit; }
+  .app { display: flex; flex-direction: column; height: 100%; }
+
+  /* Header + tabs */
+  header { background: var(--surface); border-bottom: 1px solid var(--line); }
+  .bar { max-width: 980px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+  .ball { width: 30px; height: 30px; border-radius: 50%; background: var(--ball); flex-shrink: 0;
+          background-image: radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), transparent 45%); }
+  .brand { flex: 1; min-width: 0; }
+  .brand b { display: block; font-size: 17px; line-height: 1.2; }
+  .brand span { color: var(--muted); font-size: 13px; }
+  .icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; width: 38px; height: 38px;
+              display: grid; place-items: center; cursor: pointer; }
+  nav.tabs { max-width: 980px; margin: 0 auto; padding: 0 8px; display: flex; gap: 4px; }
+  nav.tabs button { border: none; background: none; padding: 10px 12px 12px; cursor: pointer; color: var(--muted);
+                    border-bottom: 3px solid transparent; font-weight: 600; font-size: 15px; display: flex; gap: 6px; align-items: center; }
+  nav.tabs button.on { color: var(--ink); border-bottom-color: var(--accent); }
+  main { flex: 1; overflow-y: auto; }
+  .page { display: none; max-width: 980px; margin: 0 auto; padding: 20px 16px 32px; }
+  .page.on { display: block; }
+  @media (max-width: 640px) {
+    nav.tabs { position: fixed; bottom: 0; left: 0; right: 0; max-width: none; background: var(--surface);
+               border-top: 1px solid var(--line); z-index: 5; justify-content: space-around; padding: 0; }
+    nav.tabs button { flex-direction: column; gap: 0; font-size: 12px; border-bottom: none; border-top: 3px solid transparent; padding: 8px 4px 10px; flex: 1; }
+    nav.tabs button.on { border-top-color: var(--accent); }
+    nav.tabs .ti { font-size: 20px; }
+    main { padding-bottom: 64px; }
+    .page { padding-top: 14px; }
+  }
+
+  /* Shared */
+  h2.sec { font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 26px 0 10px; }
+  h2.sec:first-child { margin-top: 0; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
+  .grid { display: grid; gap: 12px; }
+  .chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+          background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .chip.blue { background: color-mix(in srgb, var(--m-journal) 16%, transparent); color: var(--m-journal); }
+  .muted { color: var(--muted); }
+  .av { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; flex-shrink: 0;
+        background: color-mix(in srgb, var(--c) 16%, var(--surface)); border: 2px solid color-mix(in srgb, var(--c) 45%, transparent); }
+  .av.sm { width: 26px; height: 26px; font-size: 13px; border-width: 1.5px; }
+  .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; cursor: pointer; font-size: 14px; white-space: nowrap; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  /* TALK */
+  #talk { display: none; padding: 0; max-width: none; height: 100%; }
+  #talk.on { display: flex; flex-direction: column; }
+  .roster { background: var(--surface); border-bottom: 1px solid var(--line); }
+  .roster-in { max-width: 980px; margin: 0 auto; padding: 10px 16px 12px; display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; align-items: flex-start; }
+  .member { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 70px; flex-shrink: 0; text-align: center; transition: opacity .25s; }
+  .member small { font-size: 11px; line-height: 1.2; color: var(--muted); }
+  .roster.busy .member { opacity: .38; }
+  .roster.busy .member.active { opacity: 1; }
+  .member.active .av { box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 30%, transparent); animation: glow 1.2s ease-in-out infinite; }
+  .member.active small { color: var(--ink); font-weight: 600; }
+  @keyframes glow { 50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--c) 10%, transparent); } }
+  .roster-label { font-size: 12px; color: var(--muted); max-width: 980px; margin: 0 auto; padding: 8px 16px 0; }
+  .feed-wrap { flex: 1; overflow-y: auto; }
+  .feed { max-width: 760px; margin: 0 auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 14px; }
+  .msg { max-width: 88%; }
+  .msg.me { align-self: flex-end; background: var(--accent); color: var(--accent-ink); padding: 11px 15px; border-radius: 18px 18px 6px 18px; }
+  @media (prefers-color-scheme: dark) { .msg.me { background: #2f6d3a; color: #fff; } }
+  .msg.team { align-self: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 18px 18px 18px 6px; padding: 12px 15px; box-shadow: var(--shadow); }
+  .from { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; color: var(--muted); }
+  .stack { display: flex; }
+  .stack .av { margin-left: -8px; } .stack .av:first-child { margin-left: 0; }
+  .msg.team p { margin: 0 0 8px; } .msg.team p:last-child { margin-bottom: 0; }
+  .msg.team ul { margin: 4px 0 8px; padding-left: 20px; }
+  .work { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+  .work li { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .work li .t { color: var(--muted); }
+  .work li.now .t { color: var(--ink); }
+  .work li.now::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ball); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .3; transform: scale(.6); } }
+  .speaking { display: inline-flex; gap: 3px; align-items: flex-end; height: 14px; margin-left: 6px; }
+  .speaking i { width: 3px; background: var(--accent); border-radius: 2px; animation: eq .9s infinite ease-in-out; }
+  .speaking i:nth-child(2) { animation-delay: .15s; } .speaking i:nth-child(3) { animation-delay: .3s; }
+  @keyframes eq { 0%,100% { height: 4px; } 50% { height: 14px; } }
+  .welcome { text-align: center; padding: 18px 8px; color: var(--muted); }
+  .welcome b { display: block; color: var(--ink); font-size: 20px; margin-bottom: 4px; }
+  .composer-wrap { background: var(--surface); border-top: 1px solid var(--line); }
+  .composer { max-width: 760px; margin: 0 auto; padding: 10px 16px 14px; display: grid; gap: 10px; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .live { text-align: center; min-height: 22px; font-size: 15px; color: var(--muted); }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .mic { width: 72px; height: 72px; border-radius: 50%; border: none; background: var(--accent); color: var(--accent-ink); cursor: pointer;
+         display: grid; place-items: center; flex-shrink: 0; box-shadow: 0 6px 18px rgba(47,109,58,.3); }
+  .mic svg { width: 30px; height: 30px; }
+  .mic.rec { background: var(--rec); animation: ring 1.4s infinite; }
+  @keyframes ring { 0% { box-shadow: 0 0 0 0 rgba(194,65,45,.5); } 100% { box-shadow: 0 0 0 18px rgba(194,65,45,0); } }
+  textarea { flex: 1; resize: none; border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; font: inherit;
+             background: var(--bg); color: var(--ink); min-height: 50px; }
+  @media (max-width: 640px) { .mic { width: 60px; height: 60px; } }
+
+  /* PLAN */
+  .goal { background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), var(--surface));
+          border: 1px solid var(--line); border-radius: 20px; padding: 20px; box-shadow: var(--shadow); }
+  .goal .k { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .goal h3 { font-size: 24px; line-height: 1.25; margin: 4px 0 12px; }
+  .goal-grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
+  @media (min-width: 640px) { .goal-grid { grid-template-columns: repeat(3, 1fr); } }
+  .goal-grid > div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .goal-grid small { color: var(--muted); display: block; font-size: 12px; }
+  .bar-track { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin-top: 12px; }
+  .bar-fill { height: 100%; background: var(--accent); border-radius: 99px; }
+  .timeline { display: grid; gap: 10px; }
+  @media (min-width: 760px) { .timeline { grid-template-columns: repeat(4, 1fr); } }
+  .phase { border-radius: 14px; padding: 14px; border: 1px solid var(--line); background: var(--surface); position: relative; }
+  .phase .when { font-size: 12px; color: var(--muted); }
+  .phase b { display: block; margin: 2px 0 4px; line-height: 1.3; }
+  .phase .f { font-size: 14px; color: var(--muted); }
+  .phase.now { border: 2px solid var(--accent); }
+  .phase.done { opacity: .6; }
+  .phase .chip { position: absolute; top: 12px; right: 12px; }
+  .block { display: grid; gap: 12px; }
+  @media (min-width: 760px) { .block { grid-template-columns: 1.2fr 1fr; } }
+  .checks { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
+  .checks li { display: flex; gap: 10px; align-items: flex-start; }
+  .checks .mk { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--line); flex-shrink: 0; margin-top: 2px; display: grid; place-items: center; font-size: 12px; }
+  .checks .mk.ok { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .assign { display: grid; gap: 12px; }
+  @media (min-width: 760px) { .assign { grid-template-columns: repeat(2, 1fr); } }
+  .a-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .a-top .area { font-size: 13px; color: var(--muted); }
+  .a-top b { display: block; font-size: 17px; line-height: 1.3; margin-top: 2px; }
+  dl { margin: 10px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 15px; }
+  dt { color: var(--muted); } dd { margin: 0; }
+  .cues { display: grid; gap: 8px; }
+  .cue { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--ball); border-radius: 12px; padding: 12px 14px; font-weight: 600; font-size: 17px; }
+
+  /* TOURNAMENTS */
+  .next-t { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .next-t { grid-template-columns: 220px 1fr; } }
+  .count { text-align: center; background: var(--surface-2); border-radius: 16px; padding: 18px; }
+  .count .n { font-size: 52px; font-weight: 700; line-height: 1; color: var(--m-tournament); }
+  .count small { color: var(--muted); }
+  details.g { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); margin-bottom: 10px; }
+  details.g summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; gap: 12px; align-items: center; font-weight: 600; }
+  details.g summary::-webkit-details-marker { display: none; }
+  details.g summary .when { margin-left: auto; font-weight: 500; font-size: 13px; color: var(--muted); }
+  details.g summary::after { content: "+"; font-size: 20px; color: var(--muted); width: 16px; text-align: center; }
+  details.g[open] summary::after { content: "–"; }
+  details.g .body { padding: 0 16px 14px 60px; }
+  details.g ul { margin: 0; padding-left: 18px; } details.g li { margin: 4px 0; }
+  .tlist { display: grid; gap: 10px; }
+  .trow { display: flex; gap: 14px; align-items: center; }
+  .date { width: 54px; text-align: center; border-radius: 12px; background: var(--surface-2); padding: 6px 0; flex-shrink: 0; }
+  .date b { display: block; font-size: 20px; line-height: 1.1; } .date small { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+  .trow .info { flex: 1; min-width: 0; } .trow .info b { display: block; }
+
+  /* TEAM */
+  .team-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 640px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 900px) { .team-grid { grid-template-columns: repeat(3, 1fr); } }
+  .tm { display: flex; flex-direction: column; gap: 10px; }
+  .tm-top { display: flex; gap: 12px; align-items: center; }
+  .tm-top b { display: block; line-height: 1.2; } .tm-top small { color: var(--muted); }
+  .tm p { margin: 0; font-size: 15px; }
+  .last { font-size: 13px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 8px; }
+  .tm.soon { opacity: .55; }
+  .tm .btn { align-self: flex-start; }
+
+  /* Settings */
+  .sheet { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; align-items: flex-end; justify-content: center; z-index: 20; }
+  .sheet.on { display: flex; }
+  @media (min-width: 640px) { .sheet { align-items: center; } }
+  .sheet-in { background: var(--surface); width: 100%; max-width: 460px; border-radius: 20px 20px 0 0; padding: 20px; display: grid; gap: 14px; }
+  @media (min-width: 640px) { .sheet-in { border-radius: 20px; } }
+  .sheet-in h3 { margin: 0; }
+  .field { display: grid; gap: 6px; font-size: 14px; }
+  .field select, .field input[type=range] { width: 100%; font: inherit; padding: 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  .tip { font-size: 13px; background: var(--warn-soft); border-radius: 12px; padding: 10px 12px; }
+  .quality { font-size: 13px; }
+
+  /* Setup & training */
+  .overlay { position: fixed; inset: 0; background: rgba(10,16,12,.45); display: none; z-index: 30; align-items: center; justify-content: center; padding: 16px; }
+  .overlay.on { display: flex; }
+  .wizard { background: var(--surface); border-radius: 22px; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; padding: 22px; display: grid; gap: 16px; }
+  .dots { display: flex; gap: 6px; } .dots i { width: 28px; height: 5px; border-radius: 9px; background: var(--line); } .dots i.on { background: var(--accent); }
+  .wizard h3 { font-size: 22px; margin: 0; line-height: 1.25; }
+  .wizard p.lead { margin: 0; color: var(--muted); }
+  .pick { display: grid; gap: 8px; }
+  .pick label { display: flex; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; cursor: pointer; }
+  .pick label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+  .pick input { accent-color: var(--accent); width: 18px; height: 18px; flex-shrink: 0; }
+  .pick .txt { flex: 1; min-width: 0; } .pick .txt b { display: block; line-height: 1.25; } .pick .txt small { color: var(--muted); }
+  .pick label.dis { opacity: .5; cursor: default; }
+  .pick label.core { cursor: default; background: var(--surface-2); border-color: transparent; }
+  .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .opt { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; cursor: pointer; font-size: 15px; }
+  .opt.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .seg button { border: none; background: var(--surface); padding: 8px 14px; cursor: pointer; font-size: 14px; border-right: 1px solid var(--line); }
+  .seg button:last-child { border-right: none; }
+  .seg button.on { background: var(--accent); color: var(--accent-ink); }
+  .input { width: 100%; font: inherit; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  .wiz-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .link { background: none; border: none; color: var(--muted); cursor: pointer; text-decoration: underline; font-size: 14px; padding: 0; }
+  .sample { border: 1px dashed var(--line); border-radius: 14px; padding: 12px 14px; font-size: 15px; background: var(--bg); }
+  .sample .from { margin-bottom: 4px; }
+
+  /* Member panel */
+  .panel { position: fixed; top: 0; right: 0; bottom: 0; width: 100%; max-width: 520px; background: var(--bg); z-index: 31; transform: translateX(105%);
+           transition: transform .25s ease; overflow-y: auto; box-shadow: -10px 0 40px rgba(0,0,0,.15); }
+  .panel.on { transform: none; }
+  .panel-head { position: sticky; top: 0; background: var(--surface); border-bottom: 1px solid var(--line); padding: 14px 16px; display: flex; gap: 12px; align-items: center; z-index: 1; }
+  .panel-head .t { flex: 1; min-width: 0; } .panel-head b { display: block; font-size: 18px; line-height: 1.2; } .panel-head small { color: var(--muted); }
+  .panel-body { padding: 4px 16px 32px; }
+  .set-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .set-row:last-child { border-bottom: none; }
+  .set-row .l b { display: block; font-size: 15px; } .set-row .l small { color: var(--muted); font-size: 13px; }
+  .switch { width: 46px; height: 28px; border-radius: 99px; background: var(--line); border: none; position: relative; cursor: pointer; flex-shrink: 0; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: left .2s; }
+  .switch.on { background: var(--accent); } .switch.on::after { left: 21px; }
+  .know { display: grid; gap: 8px; }
+  .k-item { display: flex; gap: 10px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .k-item .k-t { flex: 1; min-width: 0; font-size: 15px; } .k-item .k-t small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .k-item .x { border: none; background: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 2px; }
+  .k-item.new { border-color: var(--accent); background: var(--accent-soft); }
+  .teach { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .teach button { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 12px; text-align: left; cursor: pointer; display: grid; gap: 2px; }
+  .teach button:hover { border-color: var(--accent); }
+  .teach button b { font-size: 15px; } .teach button small { color: var(--muted); font-size: 12px; }
+  .status { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; white-space: nowrap; }
+  .status.ready { background: var(--accent-soft); color: var(--accent); }
+  .status.needs { background: var(--warn-soft); color: var(--warn); }
+  .coach-row { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+  .coach-row .t { flex: 1; } .coach-row b { display: block; } .coach-row small { color: var(--muted); }
+  .teach-box { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--accent); border-radius: 14px; padding: 12px; margin-top: 10px; }
+  .teach-box textarea { min-height: 90px; }
+  .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px;
+           font-size: 14px; opacity: 0; transition: all .25s; z-index: 50; pointer-events: none; max-width: 90%; text-align: center; }
+  .toast.on { opacity: 1; transform: translateX(-50%); }
+
+  /* Reply feedback */
+  .fb { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  .fb button { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 4px 10px; font-size: 13px; cursor: pointer; color: var(--muted); }
+  .fb button:hover { color: var(--ink); border-color: var(--accent); }
+  .fb.done button { display: none; } .fb .thanks { font-size: 13px; color: var(--accent); }
+  .tm .row2 { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Knowledge library */
+  .lib-in { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+  .link-row { display: flex; gap: 8px; align-items: center; }
+  .link-row .input { flex: 1; }
+  .detect { font-size: 13px; min-height: 18px; color: var(--muted); }
+  .detect b { color: var(--ink); }
+  .drop { border: 2px dashed var(--line); border-radius: 14px; padding: 16px; text-align: center; color: var(--muted); font-size: 14px; cursor: pointer; transition: all .15s; }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+  .drop b { color: var(--ink); }
+  .types { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  .types span { font-size: 12px; background: var(--surface-2); border-radius: 99px; padding: 2px 8px; }
+  .alt { display: flex; gap: 8px; }
+  .alt .btn { flex: 1; }
+  .ideas { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ideas button { border: 1px dashed var(--line); background: none; border-radius: 99px; padding: 5px 10px; font-size: 13px; cursor: pointer; color: var(--muted); }
+  .ideas button:hover { color: var(--ink); border-color: var(--accent); }
+  .src { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; }
+  .src .ic { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; flex-shrink: 0; background: var(--surface-2); }
+  .src .ic.video { background: #fde7e4; } .src .ic.doc { background: #e3ecfa; } .src .ic.file { background: #efe7f8; } .src .ic.web { background: #e2eee1; }
+  @media (prefers-color-scheme: dark) { .src .ic.video { background: #3b2420; } .src .ic.doc { background: #1f2b40; } .src .ic.file { background: #2c2238; } .src .ic.web { background: #213327; } }
+  .src .t { flex: 1; min-width: 0; } .src .t b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .src .t small { color: var(--muted); font-size: 12px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .src .sync { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--muted); }
+  .src .sync .switch { width: 38px; height: 22px; } .src .sync .switch::after { width: 16px; height: 16px; } .src .sync .switch.on::after { left: 19px; }
+  .src.working { border-color: var(--accent); }
+  .spin { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--accent); border-right-color: transparent; display: inline-block; animation: rot .8s linear infinite; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+  .empty-src { font-size: 14px; color: var(--muted); padding: 8px 2px; }
+
+  /* Calendar */
+  .cal-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .cal-top h3 { margin: 0; font-size: 22px; min-width: 150px; }
+  .cal-top .sp { flex: 1; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; }
+  .stat b { font-size: 22px; display: block; line-height: 1.1; } .stat small { color: var(--muted); font-size: 12px; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filters button { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 11px; font-size: 13px; cursor: pointer; display: flex; gap: 6px; align-items: center; }
+  .filters button i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+  .filters button.off { opacity: .45; text-decoration: line-through; }
+  .month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--line); gap: 1px; }
+  .dow { background: var(--surface-2); text-align: center; font-size: 12px; color: var(--muted); padding: 6px 0; font-weight: 600; }
+  .day { background: var(--surface); min-height: 104px; padding: 6px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; position: relative; text-align: left; border: none; font: inherit; color: inherit; }
+  .day:hover { background: var(--surface-2); }
+  .day.other { background: var(--bg); color: var(--muted); }
+  .day.block { box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--m-strategy) 55%, transparent); }
+  .day.taper { box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--m-tournament) 55%, transparent); }
+  .day .num { font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .day.today .num span:first-child { background: var(--accent); color: var(--accent-ink); border-radius: 99px; padding: 0 7px; }
+  .day .note-dot { font-size: 11px; }
+  .ev { font-size: 11.5px; line-height: 1.25; border-radius: 6px; padding: 2px 5px; background: color-mix(in srgb, var(--c) 15%, var(--surface)); border-left: 3px solid var(--c);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ev.planned { background: transparent; border: 1px dashed var(--c); border-left-width: 3px; border-left-style: solid; }
+  .ev.missed { opacity: .55; text-decoration: line-through; }
+  .ev.big { font-weight: 700; }
+  .more { font-size: 11px; color: var(--muted); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .legend span { display: flex; gap: 6px; align-items: center; } .legend i { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
+  .agenda { display: grid; gap: 14px; }
+  .ag-day { display: grid; grid-template-columns: 56px 1fr; gap: 12px; }
+  .ag-date { text-align: center; } .ag-date b { display: block; font-size: 22px; line-height: 1.1; } .ag-date small { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+  .ag-date.today b { color: var(--accent); }
+  .ag-list { display: grid; gap: 6px; }
+  .ag-ev { display: flex; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 12px; padding: 8px 12px; cursor: pointer; }
+  .ag-ev.planned { border-style: dashed; border-left-style: solid; }
+  .ag-ev .t { flex: 1; min-width: 0; } .ag-ev b { display: block; font-size: 15px; } .ag-ev small { color: var(--muted); font-size: 13px; }
+  .day-ev { display: grid; gap: 10px; }
+  .day-card { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 14px; padding: 12px 14px; }
+  .day-card .h { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+  .day-card .h b { font-size: 16px; }
+  .day-card p { margin: 6px 0 0; font-size: 15px; }
+  .day-card .by { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); margin-top: 8px; }
+  @media (max-width: 640px) { .day { min-height: 64px; padding: 4px; } .ev { font-size: 0; padding: 0; height: 6px; border-left-width: 0; border-radius: 3px; background: var(--c); } .ev.planned { background: transparent; border: 1.5px solid var(--c); height: 6px; } .more { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="bar">
+      <div class="ball" aria-hidden="true"></div>
+      <div class="brand"><b>Sam's Tennis Team</b><span>6 team members · 3.5 → 4.0</span></div>
+      <button class="icon-btn" id="openSettings" aria-label="Voice settings">⚙︎</button>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="talk" class="on"><span class="ti">🎙</span>Talk</button>
+      <button data-tab="calendar"><span class="ti">📅</span>Calendar</button>
+      <button data-tab="plan"><span class="ti">🗺</span>Plan</button>
+      <button data-tab="tournaments"><span class="ti">🏆</span>Tournaments</button>
+      <button data-tab="team"><span class="ti">👥</span>Team</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- TALK -->
+    <section class="page on" id="talk">
+      <div class="roster" id="roster">
+        <div class="roster-label" id="rosterLabel">Your team · the Head Coach brings in the right person</div>
+        <div class="roster-in" id="rosterIn"></div>
+      </div>
+      <div class="feed-wrap" id="feedWrap"><div class="feed" id="feed"></div></div>
+      <div class="composer-wrap">
+        <div class="composer">
+          <div class="chips">
+            <button class="btn" data-demo="plan">What should I work on?</button>
+            <button class="btn" data-demo="tournament">Get me ready for my tournament</button>
+            <button class="btn" data-demo="progress">How am I doing?</button>
+          </div>
+          <div class="live" id="live">Tap the mic and tell your team about tennis</div>
+          <div class="row">
+            <button class="mic" id="mic" aria-label="Tap to talk">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v5"/></svg>
+            </button>
+            <textarea id="text" rows="1" placeholder="Or type here..."></textarea>
+            <button class="btn primary" id="send">Send</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CALENDAR -->
+    <section class="page" id="calendar"></section>
+    <!-- PLAN -->
+    <section class="page" id="plan"></section>
+    <!-- TOURNAMENTS -->
+    <section class="page" id="tournaments"></section>
+    <!-- TEAM -->
+    <section class="page" id="team"></section>
+  </main>
+</div>
+
+<!-- Voice settings -->
+<div class="sheet" id="sheet">
+  <div class="sheet-in">
+    <h3>Voice</h3>
+    <label class="field">Language
+      <select id="lang">
+        <option value="en-US">English</option><option value="zh-TW">中文 (台灣)</option><option value="zh-CN">中文 (简体)</option>
+        <option value="es-ES">Español</option><option value="fr-FR">Français</option><option value="ja-JP">日本語</option>
+      </select>
+    </label>
+    <label class="field">Coach's voice <span class="quality muted" id="quality"></span>
+      <select id="voice"></select>
+    </label>
+    <label class="field">Speed
+      <input type="range" id="rate" min="0.8" max="1.15" step="0.05" value="0.95">
+    </label>
+    <label class="field" style="grid-template-columns:auto 1fr;align-items:center"><input type="checkbox" id="speak" checked> Read replies aloud</label>
+    <div class="tip" id="tip" hidden>
+      <b>Sound more human:</b> on a Mac, open System Settings → Accessibility → Spoken Content → System voice → Manage Voices, and download a <b>Premium</b> voice (e.g. Ava or Zoe; Meijia for 中文). It's free, and it appears here after you reload.
+    </div>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn" id="preview">▶ Preview</button>
+      <button class="btn primary" id="closeSettings">Done</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Onboarding: Meet your team -->
+<div class="overlay" id="onboard"><div class="wizard" id="wiz"></div></div>
+<!-- Member set-up & training panel -->
+<div class="overlay" id="panelShade" style="background:rgba(10,16,12,.3)"></div>
+<aside class="panel" id="panel" aria-label="Team member"></aside>
+<div class="toast" id="toast"></div>
+<script>
+/* ---------------- Demo data (what the team would write to _system/plan-data.js) ---------------- */
+var TEAM = [
+  { id: "head-coach", name: "Head Coach", e: "🎾", c: "--m-head", role: "Listens to you and brings in the right teammate.", ask: "What should I work on?", last: "Answered your question about second serves · Oct 15" },
+  { id: "journal-keeper", name: "Journal Keeper", e: "📓", c: "--m-journal", role: "Turns your messy notes into a clean training diary and spots patterns.", ask: "Here's how practice went...", last: "Logged your doubles match (won 6-4) · Oct 15" },
+  { id: "progress-coordinator", name: "Progress Coordinator", e: "📈", c: "--m-progress", role: "Each week decides what to keep, level up, simplify, or swap.", ask: "How am I doing?", last: "Weekly review: second serve → test in real points · Oct 13" },
+  { id: "strategy-coach", name: "Strategy Coach", e: "🗺", c: "--m-strategy", role: "Owns your final goal and the long-term roadmap to get there.", ask: "Is my long-term plan still right?", last: "Drew your 12-month roadmap to 4.0 · Oct 6" },
+  { id: "tournament-coach", name: "Tournament Coach", e: "🏆", c: "--m-tournament", role: "Prepares you for each event and reflects with you after.", ask: "Get me ready for my tournament", last: "Wrote your Fall Club Championship guide · Oct 14" },
+  { id: "coach-analyst", name: "Coach Analyst", e: "🔍", c: "--m-analyst", role: "Remembers what your coaches teach and checks your ideas against it.", ask: "Is this what Maria means?", last: "Added Maria's short-ball advice · Oct 14" }
+];
+var SOON = [
+  { name: "Fitness Coach", e: "💪", role: "One fitness block a week that serves your tennis." },
+  { name: "Nutrition Coach", e: "🥗", role: "Match-day fueling and hydration routines." },
+  { name: "Stats Analyst", e: "📊", role: "Turns SwingVision or match stats into patterns." },
+  { name: "Player Scout", e: "⭐", role: "Studies a pro you admire and what you can borrow." }
+];
+var DATA = {
+  player: "Sam",
+  goal: { dream: "Play competitive 4.0 league tennis as an aggressive baseliner", target: "Reach NTRP 4.0", by: "Oct 2027",
+          measure: "Win 60% of league matches at 4.0", three_month: "Beat the top seed in my 3.5 flight", progress: 8 },
+  roadmap: [
+    { when: "Oct – Dec", title: "Stop giving away free points", focus: "Second serve, moving in on short balls", status: "now" },
+    { when: "Jan – Mar", title: "Finish points at the net", focus: "Approach + first volley", status: "next" },
+    { when: "Apr – Jun", title: "Take time away from opponents", focus: "Early high backhand, serve +1", status: "later" },
+    { when: "Jul – Oct", title: "Compete at 4.0", focus: "Match play, tournaments, pressure routines", status: "later" }
+  ],
+  block: { name: "Second serve & short balls", progress: "Week 2 of 4", step: 2, of: 4,
+           goals: [ { t: "Second serve lands at the body 7/10 under pressure", ok: false }, { t: "First step forward on short balls 7/10 in live points", ok: false }, { t: "No double faults when serving for a set", ok: false } ] },
+  week_of: "Oct 19",
+  assignments: [
+    { area: "Top priority · Second serve", title: "Brushed second serve to the body, under pressure", how: "20 serves at the body, then 10 at a pretend 30-30", cue: "Brush up, body, less pace", target: "7 of 10 in at 30-30", status: "Test it in real points", kind: "warn" },
+    { area: "Top priority · Short balls", title: "Move in on every short ball, even when tired", how: "Feed drill, then 10 live points late in the session", cue: "Split, first step forward", target: "7 of 10 forward first steps", status: "Test it in real points", kind: "warn" },
+    { area: "Next priority · High backhand", title: "Take high backhands early, don't back up", how: "2 × 10 high feeds to your two-hander", cue: "Short backswing, take it rising", target: "6 of 10 not jammed", status: "Keep going", kind: "" },
+    { area: "Fitness · Calves", title: "Calf strength, twice this week", how: "3 × 12 slow calf raises after practice", cue: "Slow down, control up", target: "Calf rating not worse", status: "Keep going", kind: "" }
+  ],
+  cues: ["Brush up, body, less pace", "Split, first step forward", "Short backswing, take it rising"],
+  improving: ["Second serve depth: 14 of 20 in practice", "Calling “short” out loud gets you moving in"],
+  watching: ["Backing up on short balls when tired", "Left calf tightness after long matches"],
+  tournaments: [
+    { name: "Fall Club Championship", date: "Nov 8", month: "Nov", day: "8", days: 24, format: "3.5 singles · draw of 16", goal: "Win two rounds", status: "upcoming",
+      guide: {
+        before: ["Week of Nov 2: lighter practice, more points, no new technique", "Play two practice sets at match pace", "Scout: ask around about likely first-round opponents"],
+        game_plan: ["Serve: first serve 70% pace to the backhand, second serve to the body", "Return: block deep middle, then build", "Short balls: call 'short' and move in"],
+        match_day: ["Eat a real meal 2–3 hours before; bring water and a banana", "Warm up 20 min: jog, dynamic stretches, mini-tennis", "Pack: 2 rackets, spare grip, cap, snacks"],
+        between_points: ["Turn away, breathe out slowly", "Fix your strings, then plan the next point in one word", "At 5-4: 'breathe, bounce, brush up'"],
+        after: ["How did each part of the plan work: used, worked, failed?", "Two things to keep, one thing to train", "Tell your coach — it updates your plan"]
+      } },
+    { name: "Winter Indoor Open", date: "Jan 17", month: "Jan", day: "17", days: 94, format: "3.5 singles", goal: "Use net-finishing in matches", status: "upcoming" },
+    { name: "Club Doubles Night", date: "Oct 15", month: "Oct", day: "15", format: "Doubles", goal: "Have fun, test second serve", status: "played", result: "Won 6-4", reflection: "Serve held up; floating backhand slices got poached; 2 double faults at 5-4." }
+  ]
+};
+
+/* ---------------- Render ---------------- */
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function av(m, sm) { return '<span class="av' + (sm ? " sm" : "") + '" style="--c:var(' + m.c + ')" title="' + esc(m.name) + '">' + m.e + "</span>"; }
+function byId(id) { return TEAM.filter(function (m) { return m.id === id; })[0]; }
+
+$("rosterIn").innerHTML = TEAM.map(function (m) {
+  return '<div class="member" data-id="' + m.id + '">' + av(m) + "<small>" + esc(m.name) + "</small></div>";
+}).join("");
+
+function renderPlan() {
+  var d = DATA, g = d.goal, b = d.block;
+  $("plan").innerHTML =
+    '<h2 class="sec">Final goal</h2>' +
+    '<div class="goal"><div class="k">🏆 The dream</div><h3>' + esc(g.dream) + "</h3>" +
+    '<div class="goal-grid">' +
+      "<div><small>12-month target</small><b>" + esc(g.target) + "</b> <span class='muted'>by " + esc(g.by) + "</span></div>" +
+      "<div><small>How we'll know</small>" + esc(g.measure) + "</div>" +
+      "<div><small>Next 3 months</small>" + esc(g.three_month) + "</div>" +
+    "</div>" +
+    '<div class="bar-track" title="Journey progress"><div class="bar-fill" style="width:' + g.progress + '%"></div></div>' +
+    '<div class="muted" style="font-size:13px;margin-top:6px">Month 1 of 12 on the road to 4.0</div></div>' +
+
+    '<h2 class="sec">Long-term roadmap <span style="text-transform:none;letter-spacing:0">· by your Strategy Coach</span></h2>' +
+    '<div class="timeline">' + d.roadmap.map(function (p) {
+      var chip = { now: '<span class="chip">Now</span>', next: '<span class="chip blue">Next</span>', later: "", done: '<span class="chip">Done ✓</span>' }[p.status];
+      return '<div class="phase ' + p.status + '">' + chip + '<div class="when">' + esc(p.when) + "</div><b>" + esc(p.title) + '</b><div class="f">' + esc(p.focus) + "</div></div>";
+    }).join("") + "</div>" +
+
+    '<h2 class="sec">This block · ' + esc(b.progress) + "</h2>" +
+    '<div class="block"><div class="card"><b style="font-size:18px">' + esc(b.name) + "</b>" +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + (b.step / b.of * 100) + '%"></div></div>' +
+      '<ul class="checks">' + b.goals.map(function (x) { return '<li><span class="mk' + (x.ok ? " ok" : "") + '">' + (x.ok ? "✓" : "") + "</span>" + esc(x.t) + "</li>"; }).join("") + "</ul></div>" +
+      '<div class="card"><b>How it\'s going</b><div class="muted" style="font-size:13px;margin-top:8px">Getting better</div><ul style="margin:4px 0 8px;padding-left:18px">' +
+        d.improving.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") +
+      '</ul><div class="muted" style="font-size:13px">Keeping an eye on</div><ul style="margin:4px 0 0;padding-left:18px">' +
+        d.watching.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></div></div>" +
+
+    '<h2 class="sec">This week · from ' + esc(d.week_of) + "</h2>" +
+    '<div class="assign">' + d.assignments.map(function (a) {
+      return '<div class="card"><div class="a-top"><div><span class="area">' + esc(a.area) + "</span><b>" + esc(a.title) + '</b></div><span class="chip ' + a.kind + '">' + esc(a.status) + "</span></div>" +
+        "<dl><dt>How</dt><dd>" + esc(a.how) + "</dd><dt>Cue</dt><dd>“" + esc(a.cue) + "”</dd><dt>Target</dt><dd>" + esc(a.target) + "</dd></dl></div>";
+    }).join("") + "</div>" +
+
+    '<h2 class="sec">Say these on court</h2><div class="cues">' + d.cues.map(function (c) { return '<div class="cue">' + esc(c) + "</div>"; }).join("") + "</div>";
+}
+
+function renderTournaments() {
+  var up = DATA.tournaments.filter(function (t) { return t.status === "upcoming"; });
+  var past = DATA.tournaments.filter(function (t) { return t.status === "played"; });
+  var n = up[0], gd = n.guide;
+  var sections = [
+    ["📅", "Prep week", "Nov 2 – 7", gd.before],
+    ["🧠", "Game plan", "Read the night before", gd.game_plan],
+    ["🎒", "Match day", "Nov 8", gd.match_day],
+    ["🔁", "Between points", "Every point", gd.between_points],
+    ["📝", "After the match", "Tell your coach", gd.after]
+  ];
+  $("tournaments").innerHTML =
+    '<h2 class="sec">Next tournament · by your Tournament Coach</h2>' +
+    '<div class="card"><div class="next-t">' +
+      '<div class="count"><div class="n">' + n.days + "</div><small>days to go</small></div>" +
+      "<div><b style='font-size:22px'>" + esc(n.name) + "</b><div class='muted'>" + esc(n.date) + " · " + esc(n.format) + "</div>" +
+      "<div style='margin-top:10px'><span class='chip'>Goal: " + esc(n.goal) + "</span></div>" +
+      "<p class='muted' style='margin:12px 0 0;font-size:15px'>Your training eases off the week before so you arrive fresh. Your guide is below — open each part when you need it.</p></div>" +
+    "</div></div>" +
+    '<h2 class="sec">Your tournament guide</h2>' +
+    sections.map(function (s, i) {
+      return '<details class="g"' + (i === 1 ? " open" : "") + "><summary><span class='av sm' style='--c:var(--m-tournament)'>" + s[0] + "</span>" + s[1] + '<span class="when">' + s[2] + "</span></summary>" +
+        '<div class="body"><ul>' + s[3].map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></div></details>";
+    }).join("") +
+    '<h2 class="sec">Coming up</h2><div class="tlist">' + up.slice(1).map(function (t) {
+      return '<div class="card trow"><div class="date"><b>' + t.day + "</b><small>" + t.month + '</small></div><div class="info"><b>' + esc(t.name) + '</b><span class="muted" style="font-size:14px">' + esc(t.format) + " · Goal: " + esc(t.goal) + '</span></div><span class="chip blue">' + t.days + " days</span></div>";
+    }).join("") + '<button class="btn" style="justify-self:start">＋ Add a tournament</button></div>' +
+    '<h2 class="sec">Played</h2><div class="tlist">' + past.map(function (t) {
+      return '<div class="card trow"><div class="date"><b>' + t.day + "</b><small>" + t.month + '</small></div><div class="info"><b>' + esc(t.name) + " · " + esc(t.result) + '</b><span class="muted" style="font-size:14px">' + esc(t.reflection) + "</span></div></div>";
+    }).join("") + "</div>";
+}
+
+function renderTeam() {
+  $("team").innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px"><h2 class="sec" style="margin:0">Your team</h2><button class="btn" id="rerun">✨ Team setup</button></div>' +
+    '<p class="muted" style="margin:0 0 14px">Talk to your Head Coach about anything. Open a teammate to see what they know, change how they work, or teach them something new.</p>' +
+    '<div class="team-grid">' + TEAM.map(function (m) {
+      var st = SETUP[m.id].status;
+      return '<div class="card tm"><div class="tm-top">' + av(m) + '<div style="flex:1"><b>' + esc(m.name) + '</b></div><span class="status ' + (st.ok ? "ready" : "needs") + '">' + esc(st.label) + "</span></div><p>" + esc(m.role) + '</p><div class="last">Latest: ' + esc(m.last) + '</div><div class="row2"><button class="btn primary" data-member="' + m.id + '">Set up &amp; train</button><button class="btn" data-ask="' + esc(m.ask) + '">Ask</button></div></div>';
+    }).join("") + "</div>" +
+    '<h2 class="sec">Joining soon</h2><div class="team-grid">' + SOON.map(function (m) {
+      return '<div class="card tm soon"><div class="tm-top"><span class="av" style="--c:var(--m-manager)">' + m.e + "</span><div><b>" + esc(m.name) + "</b><small>Coming soon</small></div></div><p>" + esc(m.role) + "</p></div>";
+    }).join("") + "</div>";
+  document.querySelectorAll("[data-member]").forEach(function (b) { b.onclick = function () { openMember(b.getAttribute("data-member")); }; });
+  $("rerun").onclick = function () { startOnboarding(); };
+  document.querySelectorAll("[data-ask]").forEach(function (b) {
+    b.onclick = function () { showTab("talk"); $("text").value = b.getAttribute("data-ask"); $("text").focus(); };
+  });
+}
+renderPlan(); renderTournaments();
+
+/* ---------------- Tabs ---------------- */
+function showTab(id) {
+  document.querySelectorAll("#tabs button").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-tab") === id); });
+  document.querySelectorAll(".page").forEach(function (p) { p.classList.toggle("on", p.id === id); });
+}
+document.querySelectorAll("#tabs button").forEach(function (b) { b.onclick = function () { showTab(b.getAttribute("data-tab")); }; });
+
+/* ---------------- Voice: pick the most natural voice ---------------- */
+var NOVELTY = /albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|ralph|kathy|grandma|grandpa|rocko|shelley|sandy|flo|reed|eddy/i;
+function scoreVoice(v) {
+  var n = v.name, s = 0;
+  if (/premium/i.test(n)) s += 100;
+  if (/natural|neural|online/i.test(n)) s += 95;
+  if (/enhanced/i.test(n)) s += 80;
+  if (/^google/i.test(n)) s += 60;
+  if (/siri/i.test(n)) s += 70;
+  if (/ava|zoe|allison|samantha|evan|nathan|joelle|noelle|meijia|tingting|sinji|kyoko|monica|paulina|amelie|aria|jenny|guy/i.test(n)) s += 25;
+  if (/compact|espeak/i.test(n)) s -= 40;
+  if (NOVELTY.test(n)) s -= 200;
+  if (v.localService === false) s += 5;
+  return s;
+}
+var langSel = $("lang"), voiceSel = $("voice"), rate = $("rate"), speakBox = $("speak");
+function voicesFor(lang) {
+  var all = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+  var exact = all.filter(function (v) { return v.lang && v.lang.replace("_", "-").toLowerCase() === lang.toLowerCase(); });
+  var pool = exact.length ? exact : all.filter(function (v) { return v.lang && v.lang.slice(0, 2) === lang.slice(0, 2); });
+  return pool.sort(function (a, b) { return scoreVoice(b) - scoreVoice(a); });
+}
+function fillVoices() {
+  var list = voicesFor(langSel.value);
+  voiceSel.innerHTML = list.map(function (v, i) {
+    var tag = scoreVoice(v) >= 80 ? " ★ natural" : scoreVoice(v) >= 50 ? " · good" : "";
+    return '<option value="' + esc(v.name) + '">' + esc(v.name) + tag + (i === 0 ? " (recommended)" : "") + "</option>";
+  }).join("") || "<option>No voices for this language</option>";
+  var best = list[0];
+  $("quality").textContent = best ? (scoreVoice(best) >= 80 ? "· natural voice found" : "· only basic voices installed") : "";
+  $("tip").hidden = !!(best && scoreVoice(best) >= 80);
+}
+if (window.speechSynthesis) { speechSynthesis.onvoiceschanged = fillVoices; fillVoices(); }
+langSel.onchange = fillVoices;
+
+function speakable(t) {
+  return String(t).replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, "").replace(/\*\*|__|[*_`#>]/g, "")
+    .replace(/\s*[-•]\s+/g, ". ").replace(/(\d+)\s*-\s*(\d+)/g, "$1 $2").replace(/\s+/g, " ").trim();
+}
+function speak(text, onEnd) {
+  if (!speakBox.checked || !window.speechSynthesis) { onEnd && onEnd(); return; }
+  speechSynthesis.cancel();
+  var voice = voicesFor(langSel.value).filter(function (v) { return v.name === voiceSel.value; })[0];
+  var sentences = speakable(text).match(/[^.!?。！？]+[.!?。！？]*/g) || [text];
+  sentences.forEach(function (s, i) {
+    var u = new SpeechSynthesisUtterance(s.trim());
+    if (voice) u.voice = voice;
+    u.lang = langSel.value; u.rate = parseFloat(rate.value); u.pitch = 1;
+    if (i === sentences.length - 1 && onEnd) u.onend = onEnd;
+    speechSynthesis.speak(u);
+  });
+}
+$("preview").onclick = function () {
+  var t = langSel.value.indexOf("zh") === 0 ? "嗨，我是你的總教練。今天練得怎麼樣？" : "Hi, I'm your head coach. Nice win today. Let's keep that second serve working for you.";
+  speak(t);
+};
+$("openSettings").onclick = function () { $("sheet").classList.add("on"); };
+$("closeSettings").onclick = function () { $("sheet").classList.remove("on"); };
+$("sheet").onclick = function (e) { if (e.target === this) this.classList.remove("on"); };
+
+/* ---------------- Simulated conversation ---------------- */
+var feed = $("feed"), roster = $("roster");
+function scroll() { $("feedWrap").scrollTop = $("feedWrap").scrollHeight; }
+function setActive(id, label) {
+  roster.classList.toggle("busy", !!id);
+  document.querySelectorAll(".member").forEach(function (m) { m.classList.toggle("active", m.getAttribute("data-id") === id); });
+  $("rosterLabel").textContent = id ? byId(id).name + " · " + label : "Your team · the Head Coach brings in the right person";
+}
+function addMe(t) { var w = feed.querySelector(".welcome"); if (w) w.remove(); var el = document.createElement("div"); el.className = "msg me"; el.textContent = t; feed.appendChild(el); scroll(); }
+
+var SCRIPTS = {
+  note: {
+    say: "Played a practice set with Jim today, lost 4-6. Called short out loud and moved in way more, like 7 out of 10. But at 4-5 I double faulted again. Oh and the club championship entry is confirmed for November 8th.",
+    steps: [["head-coach", "Listening"], ["journal-keeper", "Writing your practice into the journal"], ["journal-keeper", "Updating patterns: moving in is improving"],
+            ["tournament-coach", "Adding Nov 8 to your calendar"], ["progress-coordinator", "Short balls: level up to match play"], ["head-coach", "Putting it together"]],
+    team: ["head-coach", "journal-keeper", "tournament-coach", "progress-coordinator"],
+    reply: "Seven out of ten moving in is a real jump. Calling “short” out loud is working, so we're taking it into match play next.\n\nThe double fault at 4-5 is the same pressure pattern as last week. Your Tournament Coach added a serving-for-the-set routine to your guide.\n\n- **Short balls:** level up, play it in practice sets\n- **Second serve:** keep going, add 10 serves at 4-5\n- **Nov 8 championship:** 24 days, guide is ready in Tournaments"
+  },
+  plan: {
+    say: "What should I work on this week?",
+    steps: [["head-coach", "Checking this week's plan"]],
+    team: ["head-coach"],
+    reply: "Two top priorities this week. First, your second serve to the body, tested at a pretend 30-30. Your cue is “brush up, body, less pace.” Second, move in on every short ball, even when you're tired. Then high backhands if you have time, and two calf sessions. It's all in the Plan tab."
+  },
+  tournament: {
+    say: "Get me ready for my tournament.",
+    steps: [["head-coach", "Listening"], ["tournament-coach", "Reading your guide for Nov 8"], ["tournament-coach", "Checking your recent match notes"]],
+    team: ["head-coach", "tournament-coach"],
+    reply: "Your club championship is in 24 days. Here's the shape of it.\n\n- **Until Nov 1:** normal training, with practice sets every week\n- **Nov 2 to 7:** lighter, more points, no new technique\n- **Match day:** eat two to three hours before, then a 20-minute warm-up\n\nYour game plan is to serve to the backhand, block returns deep middle, and call “short” to move in. The full guide is in the Tournaments tab."
+  },
+  progress: {
+    say: "How am I doing?",
+    steps: [["head-coach", "Listening"], ["progress-coordinator", "Reviewing your last two weeks"], ["strategy-coach", "Checking you're on track for 4.0"]],
+    team: ["head-coach", "progress-coordinator", "strategy-coach"],
+    reply: "You're on track. Moving in on short balls is the clearest win, and your second serve is landing deeper in practice. What still leaks is pressure moments, like serving at 4-5. Your Strategy Coach says phase one of the roadmap is about 40 percent done, right on schedule for 4.0 next October."
+  }
+};
+
+function runScript(key) {
+  var s = SCRIPTS[key];
+  addMe(s.say);
+  var bubble = document.createElement("div"); bubble.className = "msg team";
+  bubble.innerHTML = '<ul class="work"></ul>'; feed.appendChild(bubble); scroll();
+  var list = bubble.querySelector(".work"), i = 0;
+  setBusy(true);
+  (function next() {
+    if (i < s.steps.length) {
+      var st = s.steps[i], m = byId(st[0]);
+      list.querySelectorAll("li").forEach(function (li) { li.classList.remove("now"); });
+      var li = document.createElement("li"); li.className = "now";
+      li.innerHTML = av(m, true) + "<b style='font-size:14px'>" + esc(m.name) + '</b><span class="t">' + esc(st[1]) + "</span>";
+      list.appendChild(li); setActive(st[0], st[1]); scroll(); i++;
+      return setTimeout(next, 1100);
+    }
+    var names = s.team.map(byId);
+    var credit = names.length > 1 ? names[0].name + " with " + names.slice(1).map(function (m) { return m.name; }).join(", ") : names[0].name;
+    bubble.innerHTML = '<div class="from"><span class="stack">' + names.map(function (m) { return av(m, true); }).join("") + "</span>" + esc(credit) + '<span class="speaking" id="eq" hidden><i></i><i></i><i></i></span></div>' + md(s.reply) +
+      '<div class="fb"><button data-fb="good">👍 Helpful</button><button data-fb="long">Too long</button><button data-fb="soft">Too soft</button><button data-fb="wrong">Not quite right</button></div>';
+    wireFeedback(bubble);
+    setActive("head-coach", "speaking"); scroll();
+    var eq = bubble.querySelector(".speaking"); if (speakBox.checked && window.speechSynthesis) eq.hidden = false;
+    speak(s.reply, function () { eq.hidden = true; setActive(null); });
+    if (!speakBox.checked || !window.speechSynthesis) setActive(null);
+    setBusy(false);
+  })();
+}
+function md(src) {
+  var out = [], inList = false;
+  src.split("\n").forEach(function (l) {
+    var m = l.match(/^\s*-\s+(.*)$/);
+    if (m) { if (!inList) { out.push("<ul>"); inList = true; } out.push("<li>" + inline(m[1]) + "</li>"); return; }
+    if (inList) { out.push("</ul>"); inList = false; }
+    if (l.trim()) out.push("<p>" + inline(l) + "</p>");
+  });
+  if (inList) out.push("</ul>");
+  return out.join("");
+}
+function inline(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>"); }
+function setBusy(b) { $("mic").disabled = b; $("send").disabled = b; }
+
+feed.innerHTML = '<div class="welcome"><b>Hi Sam, how did tennis go?</b>Your team is listening. Tap the mic, or try a suggestion below.</div>';
+
+var mic = $("mic"), live = $("live"), typing = null;
+mic.onclick = function () {
+  if (mic.classList.contains("rec")) {
+    clearInterval(typing); mic.classList.remove("rec"); live.textContent = "Tap the mic and tell your team about tennis"; runScript("note"); return;
+  }
+  speechSynthesis && speechSynthesis.cancel();
+  mic.classList.add("rec");
+  var words = SCRIPTS.note.say.split(" "), k = 0; live.style.color = "var(--ink)";
+  typing = setInterval(function () {
+    k++; live.textContent = words.slice(Math.max(0, k - 14), k).join(" ") + "…";
+    if (k >= words.length) { clearInterval(typing); live.textContent = "Tap again when you're done"; }
+  }, 170);
+};
+$("send").onclick = function () { var t = $("text").value.trim(); if (!t) return; $("text").value = ""; SCRIPTS.custom = Object.assign({}, SCRIPTS.plan, { say: t }); runScript("custom"); };
+$("text").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("send").click(); } });
+document.querySelectorAll("[data-demo]").forEach(function (b) { b.onclick = function () { runScript(b.getAttribute("data-demo")); }; });
+
+/* ---------------- Member set-up & training ---------------- */
+var STYLE = { tone: "Balanced", length: "Short" };
+var SETUP = {
+  "head-coach": {
+    status: { ok: true, label: "Ready" },
+    intro: "Your front door. Learns how you like to be coached from your settings and your feedback on replies.",
+    settings: [
+      { k: "tone", label: "Coaching style", hint: "How they talk to you", type: "seg", options: ["Encouraging", "Balanced", "Straight-talking"] },
+      { k: "length", label: "Reply length", hint: "Spoken replies stay short either way", type: "seg", options: ["Short", "Detailed"] },
+      { label: "Ask for a score after practice", hint: "One gentle reminder when a note has no numbers", type: "switch", on: true }
+    ],
+    knows: [ { t: "Prefers short, direct replies", src: "From your feedback · Oct 15" }, { t: "Plays Tue / Thu / Sat, about 90 minutes", src: "From your notes" }, { t: "Mild left calf tightness after long matches", src: "From setup · keeping an eye on it" } ],
+    teach: [ ["💬", "Tell them about you", "Schedule, life, what motivates you"], ["🎙", "Record a voice intro", "2 minutes about your tennis story"] ],
+    rules: ["At most 3 next steps in any reply", "Never more than one question at a time", "Pain means rest and see a professional"]
+  },
+  "journal-keeper": {
+    status: { ok: true, label: "Ready" },
+    intro: "Turns anything you say into a clean diary entry and keeps track of repeating patterns.",
+    settings: [
+      { label: "Pick up notes from my Inbox folder", hint: "Voice memos and notes from your phone", type: "switch", on: true },
+      { label: "Keep my exact words", hint: "Stores your original note next to the clean version", type: "switch", on: true }
+    ],
+    knows: [ { t: "7 notes logged since Oct 6", src: "Practice 4 · Match 2 · Lesson 1" }, { t: "Moving in on short balls is improving", src: "Pattern · seen in 3 notes" }, { t: "Double faults when serving for a set", src: "Pattern · seen in 2 matches" } ],
+    teach: [ ["📥", "Import old notes", "Paste or upload your old journal"], ["📱", "Connect phone notes", "Point to your iCloud / Drive Inbox"] ],
+    rules: ["One note creates “something we're watching”", "Needs repeated evidence for “a proven pattern”", "Contradictions stay visible"]
+  },
+  "coach-analyst": {
+    status: { ok: false, label: "Needs you" },
+    intro: "Keeps a record of what your real coaches teach and checks your ideas against it, so advice never drifts from theirs.",
+    coaches: [ { name: "Coach Maria", how: "In person · weekly lesson", n: "4 principles · 3 ideas to test" } ],
+    knows: [ { t: "Short balls: first step forward as soon as you see it's short", src: "Maria · lesson Oct 14 · sure" }, { t: "High backhand: take it on the rise, shorter backswing", src: "Maria · lesson Oct 14 · sure" }, { t: "Calling “short” out loud may help you move earlier", src: "Your idea · not tested yet" } ],
+    teach: [ ["📝", "Paste lesson notes", "What your coach said today"], ["🔗", "Add a video or article", "YouTube, blog, course"], ["📄", "Upload a file", "PDF, doc, or photo of notes"], ["➕", "Add another coach", "In person, online, or a book"] ],
+    rules: ["Your coach's direct advice beats videos and general tips", "Says “Maria taught you” only with a lesson on record", "Unsure ideas stay “to test”, never presented as fact"],
+    needs: "Add notes from your next lesson with Maria so I can check your ideas against her teaching."
+  },
+  "progress-coordinator": {
+    status: { ok: true, label: "Ready" },
+    intro: "Every week, looks at the evidence and decides what to keep, level up, simplify, rest, or swap.",
+    settings: [
+      { k: "day", label: "Weekly review", hint: "Runs automatically when you next talk to your team", type: "seg", options: ["Sunday", "Monday"] },
+      { k: "drills", label: "Tennis focuses per week", hint: "Fewer is easier to stick to", type: "seg", options: ["1", "2", "3"] },
+      { label: "Include a fitness block", hint: "One short block that supports your tennis", type: "switch", on: true }
+    ],
+    knows: [ { t: "Second serve: test it in real points", src: "Review · Oct 13" }, { t: "Short balls: ready to level up", src: "Review · Oct 13" } ],
+    teach: [ ["📊", "Share match stats", "SwingVision export or a score sheet"] ],
+    rules: ["Level up only after repeated success in real points", "When unsure, keep going", "Every week includes a top priority"]
+  },
+  "strategy-coach": {
+    status: { ok: true, label: "Ready" },
+    intro: "Owns your final goal and the long-term roadmap. Checks every month that the weekly work still points at it.",
+    form: [ { label: "Your dream", value: "Play competitive 4.0 league tennis as an aggressive baseliner" }, { label: "12-month target", value: "Reach NTRP 4.0 by Oct 2027" } ],
+    settings: [ { k: "check", label: "Roadmap check-in", hint: "A short “are we on track?” talk", type: "seg", options: ["Monthly", "Every block"] } ],
+    knows: [ { t: "Roadmap: 4 phases from serve to competing at 4.0", src: "Drawn Oct 6" }, { t: "Phase 1 about 40% done", src: "From your last two reviews" } ],
+    teach: [ ["⭐", "A player I want to play like", "Your Player Scout joins soon"], ["🎯", "Change my goal", "Goals can change, and that's fine"] ],
+    rules: ["Weekly work must serve the current phase", "No more than two focus areas per phase"]
+  },
+  "tournament-coach": {
+    status: { ok: true, label: "Ready" },
+    intro: "Keeps your tournament calendar, writes a guide for each event, eases training before it, and reflects with you after.",
+    settings: [
+      { k: "taper", label: "Ease off training", hint: "How long before an event", type: "seg", options: ["3 days", "5 days", "1 week"] },
+      { label: "Help me scout opponents", hint: "Adds a scouting checklist to each guide", type: "switch", on: true },
+      { label: "Ask how it went the day after", hint: "So the reflection gets logged", type: "switch", on: true }
+    ],
+    knows: [ { t: "Fall Club Championship · Nov 8 · guide ready", src: "Calendar" }, { t: "Winter Indoor Open · Jan 17", src: "Calendar" }, { t: "Nerves at 5-4 → serving-for-the-set routine", src: "From your match notes" } ],
+    teach: [ ["➕", "Add a tournament", "Name, date, format, your goal"], ["🧾", "Reflect on a match", "Tell them how it went"] ],
+    rules: ["Guides are ready a week before each event", "No new technique in the last week", "Every event gets a reflection"]
+  }
+};
+SETUP["head-coach"].values = { tone: "Balanced", length: "Short" };
+var SOURCES = {
+  "head-coach": [ { kind: "doc", title: "My tennis story", where: "Google Doc", learned: 4, synced: "Synced 2 days ago", sync: true } ],
+  "journal-keeper": [ { kind: "doc", title: "Tennis Journal 2026", where: "Google Doc", learned: 23, synced: "Synced 1 hour ago", sync: true },
+                      { kind: "file", title: "Inbox (iCloud Drive)", where: "Folder · voice memos & notes", learned: 6, synced: "Checked today", sync: true } ],
+  "coach-analyst": [ { kind: "doc", title: "Lesson notes – Maria", where: "Google Doc", learned: 5, synced: "Synced 3 hours ago", sync: true },
+                     { kind: "video", title: "Brush up: the second serve that never misses", where: "YouTube · 8 min · Maria's channel", learned: 2 } ],
+  "progress-coordinator": [ { kind: "file", title: "swingvision-oct-12.csv", where: "SwingVision export", learned: 3 } ],
+  "strategy-coach": [],
+  "tournament-coach": [ { kind: "web", title: "Fall Club Championship – draw & rules", where: "clubsite.com", learned: 2, synced: "Checked yesterday", sync: true } ]
+};
+SETUP["progress-coordinator"].values = { day: "Sunday", drills: "3" };
+SETUP["strategy-coach"].values = { check: "Monthly" };
+SETUP["tournament-coach"].values = { taper: "1 week" };
+renderTeam();
+
+function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove("on"); }, 2600); }
+
+function openMember(id) {
+  var m = byId(id), d = SETUP[id], vals = d.values || {};
+  var h = '<div class="panel-head">' + av(m) + '<div class="t"><b>' + esc(m.name) + "</b><small>" + esc(m.role) + '</small></div><button class="icon-btn" id="closePanel" aria-label="Close">✕</button></div><div class="panel-body">';
+  h += '<p class="muted" style="margin:14px 0 0">' + esc(d.intro) + "</p>";
+  if (d.needs) h += '<div class="tip" style="margin-top:12px">👋 ' + esc(d.needs) + "</div>";
+  if (d.form) h += '<h2 class="sec">Your goal</h2><div class="grid">' + d.form.map(function (f) { return '<label class="field">' + esc(f.label) + '<input class="input" value="' + esc(f.value) + '"></label>'; }).join("") + "</div>";
+  if (d.coaches) h += '<h2 class="sec">Your coaches</h2><div class="grid">' + d.coaches.map(function (c) { return '<div class="coach-row"><span class="av sm" style="--c:var(--m-analyst)">👤</span><div class="t"><b>' + esc(c.name) + "</b><small>" + esc(c.how) + " · " + esc(c.n) + '</small></div><button class="btn" data-teach="0">Add notes</button></div>'; }).join("") + "</div>";
+  if (d.settings) h += '<h2 class="sec">How they work</h2><div class="card" style="padding:4px 14px">' + d.settings.map(function (st, i) {
+    var ctl = st.type === "switch" ? '<button class="switch' + (st.on ? " on" : "") + '" data-switch="' + i + '" aria-label="' + esc(st.label) + '"></button>'
+      : '<div class="seg" data-seg="' + esc(st.k) + '">' + st.options.map(function (o) { return '<button class="' + (vals[st.k] === o ? "on" : "") + '">' + esc(o) + "</button>"; }).join("") + "</div>";
+    return '<div class="set-row"><div class="l"><b>' + esc(st.label) + "</b><small>" + esc(st.hint) + "</small></div>" + ctl + "</div>";
+  }).join("") + "</div>";
+  if (id === "head-coach") h += '<div class="sample" id="sample" style="margin-top:10px"></div>';
+  h += '<h2 class="sec">What they know</h2><div class="know" id="know">' + d.knows.map(kItem).join("") + "</div>";
+  h += '<h2 class="sec">Teach them</h2><div class="lib-in">' +
+    '<div class="link-row"><input class="input" id="linkIn" placeholder="Paste a link: YouTube, Loom, Google Doc, Drive, website…"><button class="btn primary" id="linkGo">Add</button></div>' +
+    '<div class="detect" id="detect">They read docs and pages, and watch videos through their transcript.</div>' +
+    '<label class="drop" id="drop"><input type="file" id="fileIn" hidden multiple accept="video/*,audio/*,.pdf,.doc,.docx,.txt,.md,.csv,image/*"><b>⬆ Upload or drop files</b><br>Match videos, lesson recordings, PDFs, photos of notes, stats exports' +
+      '<div class="types"><span>🎥 MP4 / MOV</span><span>🎙 Voice memo</span><span>📄 PDF / Doc</span><span>📷 Photo</span><span>📊 CSV</span></div></label>' +
+    '<div class="alt"><button class="btn" id="pasteBtn">📝 Paste text</button><button class="btn" id="sayBtn">🎙 Say it</button></div>' +
+    '<div><div class="muted" style="font-size:12px;margin-bottom:6px">Ideas for ' + esc(m.name) + '</div><div class="ideas">' + d.teach.map(function (t, i) { return '<button data-teach="' + i + '">' + t[0] + " " + esc(t[1]) + "</button>"; }).join("") + "</div></div>" +
+    '</div><div id="teachBox"></div>';
+  h += '<h2 class="sec">Sources they learn from</h2><div class="grid" id="srcList">' + ((SOURCES[id] || []).length ? SOURCES[id].map(srcRow).join("") : '<div class="empty-src">Nothing linked yet. Add a doc, video, or file above.</div>') + "</div>";
+  h += '<h2 class="sec">Rules they follow</h2><ul style="margin:0;padding-left:20px">' + d.rules.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>";
+  h += '<p class="muted" style="font-size:13px;margin-top:18px">Everything they know lives in your own tennis folder. Remove anything that\'s wrong — they\'ll stop using it.</p></div>';
+  $("panel").innerHTML = h; $("panel").classList.add("on"); $("panelShade").classList.add("on"); $("panel").scrollTop = 0;
+  $("closePanel").onclick = closeMember;
+  $("panel").querySelectorAll(".switch").forEach(function (b) { b.onclick = function () { b.classList.toggle("on"); toast(m.name + " updated"); }; });
+  $("panel").querySelectorAll(".seg").forEach(function (seg) {
+    seg.querySelectorAll("button").forEach(function (b) { b.onclick = function () {
+      seg.querySelectorAll("button").forEach(function (x) { x.classList.remove("on"); }); b.classList.add("on");
+      vals[seg.getAttribute("data-seg")] = b.textContent; d.values = vals;
+      if (id === "head-coach") { STYLE[seg.getAttribute("data-seg")] = b.textContent; sample(); }
+      toast(m.name + ": " + b.textContent.toLowerCase());
+    }; });
+  });
+  $("panel").querySelectorAll("[data-teach]").forEach(function (b) { b.onclick = function () { teachBox(id, d.teach[+b.getAttribute("data-teach")]); }; });
+  wireLibrary(id);
+  wireKnow(m);
+  if (id === "head-coach") sample();
+}
+function kItem(k) { return '<div class="k-item' + (k.isNew ? " new" : "") + '"><div class="k-t">' + esc(k.t) + "<small>" + esc(k.src) + '</small></div><button class="x" aria-label="Forget this">✕</button></div>'; }
+function wireKnow(m) { $("know").querySelectorAll(".x").forEach(function (x) { x.onclick = function () { x.parentNode.remove(); toast(m.name + " will forget that"); }; }); }
+function closeMember() { $("panel").classList.remove("on"); $("panelShade").classList.remove("on"); }
+$("panelShade").onclick = closeMember;
+
+function sample() {
+  var lines = {
+    "Encouraging": "Love that you moved in on 7 of 10 short balls — that's real progress! The double fault at 4-5 is normal under pressure; we'll build a routine for it.",
+    "Balanced": "Seven of ten moving in is a real jump. The double fault at 4-5 is the same pressure pattern as last week, so let's add a serving-for-the-set routine.",
+    "Straight-talking": "Short balls: 7/10, good, move it into match play. Second serve still breaks at 4-5. Ten pressure serves every session until it holds."
+  };
+  var extra = STYLE.length === "Detailed" ? " Here's why: under pressure your toss drifts forward and your arm slows down to “guide” it, which is exactly when brushing up matters most." : "";
+  $("sample").innerHTML = '<div class="from"><span class="av sm" style="--c:var(--m-head)">🎾</span>How your coach will sound</div>' + esc(lines[STYLE.tone] + extra) +
+    ' <button class="link" id="hear">▶ hear it</button>';
+  $("hear").onclick = function () { speak(lines[STYLE.tone] + extra); };
+}
+
+function teachBox(id, t) {
+  var m = byId(id);
+  var placeholder = { "📝": "e.g. Maria said: on my second serve, toss a bit more to the left and brush up the back of the ball…",
+                      "🔗": "Paste a YouTube or article link", "➕": "e.g. Winter Indoor Open, Jan 17, 3.5 singles, goal: use my net game",
+                      "💬": "e.g. I work late on Wednesdays and play best in the mornings…" }[t[0]] || "Type or paste here…";
+  $("teachBox").innerHTML = '<div class="teach-box"><b>' + t[0] + " " + esc(t[1]) + '</b><textarea class="input" id="teachText" placeholder="' + esc(placeholder) + '"></textarea>' +
+    '<div class="row" style="justify-content:space-between"><button class="btn" id="teachMic">🎙 Say it instead</button><button class="btn primary" id="teachGo">Teach ' + esc(m.name) + "</button></div></div>";
+  $("teachText").focus();
+  $("teachMic").onclick = function () { $("teachText").value = placeholder.replace(/^e\.g\. /, ""); toast("Got it — read it over, then tap Teach"); };
+  $("teachGo").onclick = function () {
+    var v = $("teachText").value.trim() || placeholder.replace(/^e\.g\. /, "");
+    var learned = {
+      "coach-analyst": { t: "Second serve: toss slightly left, brush up the back of the ball", src: "Maria · lesson today · sure" },
+      "tournament-coach": { t: v.split(",").slice(0, 2).join(" ·") + " · guide coming", src: "Calendar · just added" },
+      "head-coach": { t: v.length > 70 ? v.slice(0, 70) + "…" : v, src: "You told them · just now" }
+    }[id] || { t: v.length > 70 ? v.slice(0, 70) + "…" : v, src: "You taught them · just now" };
+    learned.isNew = true;
+    $("know").insertAdjacentHTML("afterbegin", kItem(learned)); wireKnow(m);
+    $("teachBox").innerHTML = ""; $("know").scrollIntoView({ behavior: "smooth", block: "center" });
+    toast(m.name + " learned something new" + (id === "coach-analyst" ? " · checked against your plan" : ""));
+    if (id === "coach-analyst") { SETUP[id].status = { ok: true, label: "Ready" }; renderTeam(); }
+  };
+}
+
+/* ---------------- Train through use: reply feedback ---------------- */
+function wireFeedback(bubble) {
+  bubble.querySelectorAll("[data-fb]").forEach(function (b) {
+    b.onclick = function () {
+      var k = b.getAttribute("data-fb"), fb = b.parentNode;
+      var msg = { good: "Thanks — I'll keep doing that.", long: "Got it — shorter replies from now on.", soft: "Understood — I'll be more direct with you.", wrong: "Sorry — tell me what's off and I'll fix it in your notes." }[k];
+      if (k === "long") STYLE.length = "Short";
+      if (k === "soft") STYLE.tone = "Straight-talking";
+      fb.classList.add("done"); fb.insertAdjacentHTML("beforeend", '<span class="thanks">🎾 ' + esc(msg) + "</span>");
+      if (k !== "good" && k !== "wrong") toast("Head Coach learned your preference · see Team → Head Coach");
+      if (k === "wrong") { $("text").focus(); }
+    };
+  });
+}
+
+/* ---------------- Onboarding: Meet your team ---------------- */
+var OB = { step: 0, goal: "Reach NTRP 4.0", tone: "Balanced", members: { "coach-analyst": true, "tournament-coach": true } };
+function startOnboarding() { OB.step = 0; $("onboard").classList.add("on"); drawWizard(); }
+function closeOnboarding() { $("onboard").classList.remove("on"); }
+function drawWizard() {
+  var dots = '<div class="dots">' + [0, 1, 2].map(function (i) { return '<i class="' + (i <= OB.step ? "on" : "") + '"></i>'; }).join("") + "</div>";
+  var body = "", next = "Next";
+  if (OB.step === 0) {
+    body = "<h3>Meet your tennis team</h3><p class='lead'>They work together behind one coach. Keep everyone, or switch off who you don't need. You can change this anytime.</p><div class='pick'>" +
+      TEAM.map(function (m) {
+        var core = ["head-coach", "journal-keeper", "progress-coordinator", "strategy-coach"].indexOf(m.id) >= 0;
+        if (core) return "<label class='core'>" + av(m) + "<span class='txt'><b>" + esc(m.name) + "</b><small>" + esc(m.role) + "</small></span><span class='chip'>Always on</span></label>";
+        return "<label><input type='checkbox' data-m='" + m.id + "' " + (OB.members[m.id] ? "checked" : "") + ">" + av(m) +
+          "<span class='txt'><b>" + esc(m.name) + "</b><small>" + esc(m.role) + "</small></span></label>";
+      }).join("") +
+      SOON.map(function (m) { return "<label class='dis'><input type='checkbox' disabled><span class='av' style='--c:var(--m-manager)'>" + m.e + "</span><span class='txt'><b>" + esc(m.name) + "</b><small>Joining soon</small></span></label>"; }).join("") + "</div>";
+  } else if (OB.step === 1) {
+    var picks = ["Enjoy it and keep improving", "Win my club championship", "Reach NTRP 4.0", "Play college / university tennis", "Compete in USTA tournaments"];
+    body = "<h3>What's your dream in tennis?</h3><p class='lead'>Your Strategy Coach builds the long-term plan from this. A rough idea is perfect.</p><div class='opts'>" +
+      picks.map(function (p) { return "<button class='opt" + (OB.goal === p ? " on" : "") + "' data-goal='" + esc(p) + "'>" + esc(p) + "</button>"; }).join("") +
+      "</div><input class='input' id='goalOther' placeholder='Or in your own words…'>" +
+      "<label class='field'>By when? <select class='input'><option>No rush</option><option>3 months</option><option selected>12 months</option><option>2 years</option></select></label>";
+  } else {
+    body = "<h3>How should your coach talk to you?</h3><p class='lead'>You can fine-tune this later. Just react to any reply with “Too long” or “Too soft”.</p>" +
+      "<div class='opts'>" + ["Encouraging", "Balanced", "Straight-talking"].map(function (t) { return "<button class='opt" + (OB.tone === t ? " on" : "") + "' data-tone='" + t + "'>" + t + "</button>"; }).join("") + "</div>" +
+      "<div class='sample' id='obSample'></div>";
+    next = "Start talking 🎾";
+  }
+  $("wiz").innerHTML = dots + body + '<div class="wiz-foot"><button class="link" id="obSkip">' + (OB.step === 2 ? "Skip" : "Skip setup — my team will learn as we go") + '</button><div class="row">' +
+    (OB.step > 0 ? '<button class="btn" id="obBack">Back</button>' : "") + '<button class="btn primary" id="obNext">' + next + "</button></div></div>";
+  $("wiz").querySelectorAll("[data-goal]").forEach(function (b) { b.onclick = function () { OB.goal = b.getAttribute("data-goal"); drawWizard(); }; });
+  $("wiz").querySelectorAll("[data-tone]").forEach(function (b) { b.onclick = function () { OB.tone = b.getAttribute("data-tone"); drawWizard(); }; });
+  $("wiz").querySelectorAll("[data-m]").forEach(function (c) { c.onchange = function () { OB.members[c.getAttribute("data-m")] = c.checked; }; });
+  if ($("obSample")) {
+    var line = { "Encouraging": "Great hitting today! Your serve is getting more reliable, so let's build on it.", "Balanced": "Good session. Your serve is improving; next, let's test it in real points.", "Straight-talking": "Serve's better. Now prove it at 30-30. Ten pressure serves next session." }[OB.tone];
+    $("obSample").innerHTML = '<div class="from"><span class="av sm" style="--c:var(--m-head)">🎾</span>Your Head Coach would say</div>' + esc(line) + ' <button class="link" id="obHear">▶ hear it</button>';
+    $("obHear").onclick = function () { speak(line); };
+  }
+  $("obSkip").onclick = function () { closeOnboarding(); toast("No problem — your team will learn from your notes"); };
+  if ($("obBack")) $("obBack").onclick = function () { OB.step--; drawWizard(); };
+  $("obNext").onclick = function () {
+    if (OB.step === 1 && $("goalOther").value.trim()) OB.goal = $("goalOther").value.trim();
+    if (OB.step < 2) { OB.step++; return drawWizard(); }
+    STYLE.tone = OB.tone; SETUP["head-coach"].values.tone = OB.tone; DATA.goal.target = OB.goal;
+    closeOnboarding(); showTab("talk");
+    feed.innerHTML = '<div class="welcome"><b>Your team is ready.</b>Tell them about your last practice or match — tap the mic.</div>';
+    toast("Team set up · goal: " + OB.goal);
+  };
+}
+
+/* ---------------- Knowledge library: links, uploads, synced docs ---------------- */
+var KIND_IC = { video: "🎥", doc: "📄", file: "📎", web: "🔗", audio: "🎙", image: "📷", sheet: "📊" };
+function srcRow(x, i) {
+  var ic = x.icon || KIND_IC[x.kind] || "📎";
+  var status = x.working ? '<span class="spin"></span> ' + esc(x.working)
+    : "Learned " + x.learned + " thing" + (x.learned === 1 ? "" : "s") + (x.synced ? " · " + esc(x.synced) : "");
+  var sync = (x.kind === "doc" || x.kind === "web" || x.title.indexOf("Inbox") === 0) && !x.working
+    ? '<div class="sync"><button class="switch' + (x.sync ? " on" : "") + '" data-sync aria-label="Keep in sync"></button>Keep in sync</div>' : "";
+  return '<div class="src' + (x.working ? " working" : "") + '"><span class="ic ' + (x.kind === "audio" || x.kind === "image" || x.kind === "sheet" ? "file" : x.kind) + '">' + ic + '</span><div class="t"><b>' + esc(x.title) + "</b><small>" + esc(x.where) + " · " + status + "</small></div>" + sync + "</div>";
+}
+function detectLink(u) {
+  u = u.trim();
+  if (!u) return null;
+  if (/youtu\.?be/i.test(u)) return { kind: "video", where: "YouTube video", title: "YouTube video", steps: ["Getting the transcript", "Finding the coaching points"] };
+  if (/loom\.com/i.test(u)) return { kind: "video", where: "Loom recording", title: "Loom recording", steps: ["Getting the transcript", "Finding the coaching points"] };
+  if (/vimeo\.com/i.test(u)) return { kind: "video", where: "Vimeo video", title: "Vimeo video", steps: ["Getting the transcript", "Finding the coaching points"] };
+  if (/docs\.google\.com\/document/i.test(u)) return { kind: "doc", where: "Google Doc", title: "Google Doc", steps: ["Reading the doc", "Comparing with what they know"], sync: true };
+  if (/docs\.google\.com\/spreadsheets/i.test(u)) return { kind: "doc", icon: "📊", where: "Google Sheet", title: "Google Sheet", steps: ["Reading the sheet", "Looking for patterns"], sync: true };
+  if (/drive\.google\.com/i.test(u)) return { kind: "doc", icon: "🗂", where: "Google Drive file", title: "Drive file", steps: ["Opening the file", "Reading it"], sync: true };
+  if (/^https?:\/\//i.test(u) || /\.\w{2,}\//.test(u)) return { kind: "web", where: u.replace(/^https?:\/\//, "").split("/")[0], title: "Web page", steps: ["Reading the page", "Pulling out the useful parts"], sync: false };
+  return null;
+}
+var LEARN = {
+  "coach-analyst": [ "Second serve: toss slightly left, brush up the back of the ball", "Keep the head still until after contact on the serve", "Approach shots: hit through the ball, then split before the volley" ],
+  "head-coach": [ "Most motivated by competing with friends", "Works late on Wednesdays — mornings are best" ],
+  "journal-keeper": [ "12 older notes imported into your diary", "Pattern found: second serve tightens when tired" ],
+  "progress-coordinator": [ "First-serve % drops from 62% to 48% in third sets", "Backhand errors up 30% after 60 minutes" ],
+  "strategy-coach": [ "Your idol plays 70% of points from the forehand corner", "Roadmap idea: add inside-out forehand in phase 3" ],
+  "tournament-coach": [ "Matches are best-of-3 with a match tiebreak", "Courts are hard; first match at 9:00 am" ]
+};
+function learnFrom(id, item) {
+  var m = byId(id), list = SOURCES[id] = SOURCES[id] || [];
+  item.working = item.steps[0]; list.unshift(item);
+  var render = function () { $("srcList").innerHTML = list.map(srcRow).join(""); wireSync(); };
+  render(); $("srcList").scrollIntoView({ behavior: "smooth", block: "center" });
+  var i = 0;
+  (function step() {
+    i++;
+    if (i < item.steps.length) { item.working = item.steps[i]; render(); return setTimeout(step, 1300); }
+    var facts = (LEARN[id] || ["Something new from this source"]).slice(0, item.kind === "doc" ? 3 : 2);
+    item.working = null; item.learned = facts.length; item.synced = item.sync ? "Synced just now" : ""; render();
+    facts.forEach(function (f) { $("know").insertAdjacentHTML("afterbegin", kItem({ t: f, src: "From " + item.title + (id === "coach-analyst" && item.kind !== "web" ? " · sure" : ""), isNew: true })); });
+    wireKnow(m);
+    toast(m.name + " learned " + facts.length + " things from " + item.title + (item.sync ? " · will keep it in sync" : ""));
+    if (id === "coach-analyst") { SETUP[id].status = { ok: true, label: "Ready" }; renderTeam(); }
+  })();
+}
+function wireSync() {
+  $("srcList").querySelectorAll("[data-sync]").forEach(function (b) {
+    b.onclick = function () { b.classList.toggle("on"); toast(b.classList.contains("on") ? "They'll re-read it whenever it changes" : "Sync off — they'll keep what they learned"); };
+  });
+}
+function wireLibrary(id) {
+  wireSync();
+  var input = $("linkIn"), det = $("detect");
+  input.oninput = function () {
+    var d = detectLink(input.value);
+    det.innerHTML = d ? (d.icon || KIND_IC[d.kind]) + " <b>" + esc(d.where) + "</b> detected" + (d.sync ? " · they'll keep it in sync" : d.kind === "video" ? " · they'll learn from its transcript" : "")
+      : input.value ? "Paste a full link (https://…)" : "They read docs and pages, and watch videos through their transcript.";
+  };
+  var add = function () {
+    var d = detectLink(input.value); if (!d) { det.textContent = "That doesn't look like a link. Try pasting the full address."; return; }
+    var titles = { "YouTube video": "Maria: approach & first volley", "Google Doc": "Lesson notes – Maria (Oct)", "Loom recording": "Match review with Maria", "Google Sheet": "Practice log 2026", "Drive file": "Club rules.pdf" };
+    d.title = titles[d.title] || d.title; input.value = ""; input.oninput(); learnFrom(id, d);
+  };
+  $("linkGo").onclick = add; input.onkeydown = function (e) { if (e.key === "Enter") add(); };
+  var drop = $("drop"), fileIn = $("fileIn");
+  var takeFiles = function (files) {
+    Array.prototype.forEach.call(files, function (f) {
+      var t = f.type || "", kind = /video/.test(t) ? "video" : /audio/.test(t) ? "audio" : /image/.test(t) ? "image" : /csv|sheet/.test(t + f.name) ? "sheet" : "file";
+      var steps = { video: ["Uploading", "Transcribing what's said", "Picking out coaching moments"], audio: ["Uploading", "Transcribing"], image: ["Uploading", "Reading the handwriting"], sheet: ["Uploading", "Crunching the numbers"], file: ["Uploading", "Reading it"] }[kind];
+      learnFrom(id, { kind: kind, title: f.name, where: Math.max(1, Math.round(f.size / 1048576)) + " MB upload", steps: steps });
+    });
+  };
+  fileIn.onchange = function () { takeFiles(fileIn.files); fileIn.value = ""; };
+  drop.ondragover = function (e) { e.preventDefault(); drop.classList.add("over"); };
+  drop.ondragleave = function () { drop.classList.remove("over"); };
+  drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove("over"); takeFiles(e.dataTransfer.files); };
+  $("pasteBtn").onclick = function () { teachBox(id, ["📝", "Paste text", ""]); };
+  $("sayBtn").onclick = function () { teachBox(id, ["💬", "Say it", ""]); setTimeout(function () { $("teachMic").click(); }, 50); };
+}
+
+/* ---------------- Calendar ---------------- */
+var TYPES = {
+  practice:   { label: "Training",    c: "--m-head",       ic: "🎾" },
+  match:      { label: "Matches",     c: "--m-progress",   ic: "🏅" },
+  lesson:     { label: "Lessons",     c: "--m-analyst",    ic: "👤" },
+  fitness:    { label: "Fitness",     c: "--m-strategy",   ic: "💪" },
+  tournament: { label: "Tournaments", c: "--m-tournament", ic: "🏆" },
+  review:     { label: "Reviews",     c: "--m-journal",    ic: "📈" }
+};
+var TODAY = "2026-10-15";
+// state: done | planned | missed. note: summary of what was logged.
+var EVENTS = [
+  { d: "2026-10-01", t: "practice", title: "Hitting with Jim", state: "done", note: "Rally consistency fine; second serve short and attacked.", by: "journal-keeper" },
+  { d: "2026-10-03", t: "match", title: "League match vs. R. Patel", state: "done", note: "Lost 4-6 5-7. Backed up on short balls all match.", by: "journal-keeper" },
+  { d: "2026-10-05", t: "review", title: "Weekly review", state: "done", note: "Second serve and short balls became top priorities.", by: "progress-coordinator" },
+  { d: "2026-10-06", t: "practice", title: "Serve basket", state: "done", note: "Started brushing up on second serve.", by: "journal-keeper" },
+  { d: "2026-10-06", t: "review", title: "Roadmap to 4.0 drawn", state: "done", note: "4 phases from serve to competing at 4.0.", by: "strategy-coach" },
+  { d: "2026-10-07", t: "lesson", title: "Lesson with Maria", state: "done", note: "Second serve: brush up, aim body, less pace.", by: "coach-analyst" },
+  { d: "2026-10-08", t: "practice", title: "Short-ball drill", state: "missed" },
+  { d: "2026-10-09", t: "fitness", title: "Calf strength", state: "done", note: "3 × 12 slow raises. Calf 2/10.", by: "journal-keeper" },
+  { d: "2026-10-10", t: "practice", title: "Practice set with Jim", state: "done", note: "Lost 4-6. Called 'short' — moved in 7/10. Double fault at 4-5.", by: "journal-keeper" },
+  { d: "2026-10-12", t: "review", title: "Weekly review", state: "done", note: "Second serve → test it in real points. Short balls → level up.", by: "progress-coordinator" },
+  { d: "2026-10-13", t: "practice", title: "Second serve under pressure", state: "done", note: "14/20 deep; 6/10 at pretend 30-30.", by: "journal-keeper" },
+  { d: "2026-10-14", t: "lesson", title: "Lesson with Maria", state: "done", note: "Short balls: first step forward before the bounce. High backhand: take it rising.", by: "coach-analyst" },
+  { d: "2026-10-15", t: "match", title: "Club Doubles Night", state: "done", note: "Won 6-4. Serve held; floating slices got poached; 2 double faults at 5-4.", by: "journal-keeper" },
+  { d: "2026-10-16", t: "fitness", title: "Calf strength", state: "planned", plan: "3 × 12 slow calf raises · rate your calf after" },
+  { d: "2026-10-17", t: "practice", title: "Short balls + live points", state: "planned", plan: "Feed drill, then 10 live points late in the session · cue: split, first step forward" },
+  { d: "2026-10-19", t: "review", title: "Weekly review", state: "planned", plan: "Runs automatically next time you talk to your team" },
+  { d: "2026-10-20", t: "practice", title: "Second serve at 30-30", state: "planned", plan: "20 serves at the body, then 10 at pretend 30-30" },
+  { d: "2026-10-21", t: "lesson", title: "Lesson with Maria", state: "planned", plan: "Ask: what does 'go through the ball' mean on approaches?" },
+  { d: "2026-10-22", t: "practice", title: "High backhands", state: "planned", plan: "2 × 10 high feeds · cue: short backswing, take it rising" },
+  { d: "2026-10-23", t: "fitness", title: "Calf strength", state: "planned", plan: "3 × 12 slow calf raises" },
+  { d: "2026-10-24", t: "match", title: "Practice set with Jim", state: "planned", plan: "Play it like a match · count double faults" },
+  { d: "2026-10-26", t: "review", title: "Weekly review", state: "planned", plan: "Automatic" },
+  { d: "2026-10-27", t: "practice", title: "Serve + short balls", state: "planned", plan: "Combined pressure drill" },
+  { d: "2026-10-29", t: "practice", title: "Match-play points", state: "planned", plan: "Points only, track first-step forward" },
+  { d: "2026-10-31", t: "match", title: "Practice match", state: "planned", plan: "Full match simulation for Nov 8" },
+  { d: "2026-11-02", t: "review", title: "Weekly review + taper", state: "planned", plan: "Training eases off this week" },
+  { d: "2026-11-03", t: "practice", title: "Light hitting", state: "planned", plan: "45 min, more points, no new technique" },
+  { d: "2026-11-05", t: "practice", title: "Points + serve routine", state: "planned", plan: "Rehearse 'breathe, bounce, brush up'" },
+  { d: "2026-11-07", t: "practice", title: "Easy warm-up hit", state: "planned", plan: "30 min, feel good, early night" },
+  { d: "2026-11-08", t: "tournament", title: "Fall Club Championship", state: "planned", plan: "Goal: win two rounds · guide ready in Tournaments" },
+  { d: "2026-11-09", t: "review", title: "Tournament reflection", state: "planned", plan: "Your Tournament Coach will ask how it went" }
+];
+var CAL = { y: 2026, m: 9, view: window.innerWidth < 640 ? "list" : "month", off: {} };
+var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+function iso(y, m, d) { return y + "-" + String(m + 1).padStart(2, "0") + "-" + String(d).padStart(2, "0"); }
+function evOn(day) { return EVENTS.filter(function (e) { return e.d === day && !CAL.off[e.t]; }); }
+function inBlock(day) { return day >= "2026-10-12" && day <= "2026-11-01"; }
+function inTaper(day) { return day >= "2026-11-02" && day <= "2026-11-07"; }
+
+function renderCalendar() {
+  var y = CAL.y, m = CAL.m, first = new Date(y, m, 1), startDow = (first.getDay() + 6) % 7, days = new Date(y, m + 1, 0).getDate();
+  var monthEvents = EVENTS.filter(function (e) { return e.d.slice(0, 7) === iso(y, m, 1).slice(0, 7); });
+  var done = monthEvents.filter(function (e) { return (e.t === "practice" || e.t === "match" || e.t === "lesson" || e.t === "fitness") && e.state === "done"; }).length;
+  var planned = monthEvents.filter(function (e) { return e.t === "practice" || e.t === "match" || e.t === "lesson" || e.t === "fitness"; }).length;
+  var notes = monthEvents.filter(function (e) { return e.note && e.t !== "review"; }).length;
+  var h = '<div class="cal-top"><button class="icon-btn" id="calPrev" aria-label="Previous month">‹</button><h3>' + MONTHS[m] + " " + y + '</h3><button class="icon-btn" id="calNext" aria-label="Next month">›</button>' +
+    '<button class="btn" id="calToday">Today</button><span class="sp"></span>' +
+    '<div class="seg" id="calView"><button data-v="month" class="' + (CAL.view === "month" ? "on" : "") + '">Month</button><button data-v="list" class="' + (CAL.view === "list" ? "on" : "") + '">List</button></div>' +
+    '<button class="btn" id="gcal">↻ Sync to Google Calendar</button></div>';
+  h += '<div class="stats"><div class="stat"><b>' + done + "/" + planned + "</b><small>sessions done</small></div>" +
+       '<div class="stat"><b>' + notes + "</b><small>notes logged</small></div>" +
+       '<div class="stat"><b>' + (m === 9 ? "Week 2/4" : m === 10 ? "Taper" : "—") + "</b><small>current block</small></div>" +
+       '<div class="stat"><b style="color:var(--m-tournament)">24 days</b><small>to Fall Club Championship</small></div></div>';
+  h += '<div class="filters">' + Object.keys(TYPES).map(function (k) { var t = TYPES[k];
+    return '<button data-f="' + k + '" class="' + (CAL.off[k] ? "off" : "") + '" style="--c:var(' + t.c + ')"><i></i>' + t.ic + " " + t.label + "</button>"; }).join("") + "</div>";
+
+  if (CAL.view === "month") {
+    h += '<div class="month">' + ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(function (d) { return '<div class="dow">' + d + "</div>"; }).join("");
+    var cells = Math.ceil((startDow + days) / 7) * 7;
+    for (var i = 0; i < cells; i++) {
+      var dnum = i - startDow + 1, date = new Date(y, m, dnum), key = iso(date.getFullYear(), date.getMonth(), date.getDate());
+      var evs = evOn(key), other = date.getMonth() !== m;
+      var cls = "day" + (other ? " other" : "") + (key === TODAY ? " today" : "") + (inTaper(key) ? " taper" : inBlock(key) ? " block" : "");
+      var noteDot = evs.some(function (e) { return e.note && e.t !== "review"; }) ? '<span class="note-dot" title="Note logged">📓</span>' : "";
+      h += '<button class="' + cls + '" data-day="' + key + '"><div class="num"><span>' + date.getDate() + "</span>" + noteDot + "</div>" +
+        evs.slice(0, 3).map(function (e) { var t = TYPES[e.t];
+          return '<div class="ev ' + e.state + (e.t === "tournament" ? " big" : "") + '" style="--c:var(' + t.c + ')">' + t.ic + " " + esc(e.title) + "</div>"; }).join("") +
+        (evs.length > 3 ? '<div class="more">+' + (evs.length - 3) + " more</div>" : "") + "</button>";
+    }
+    h += "</div>" + '<div class="legend"><span><i style="background:var(--m-strategy)"></i>Training block: second serve & short balls</span><span><i style="background:var(--m-tournament)"></i>Taper week before tournament</span><span>Dashed = planned · crossed out = missed · 📓 = note logged</span></div>';
+  } else {
+    var keys = []; monthEvents.forEach(function (e) { if (keys.indexOf(e.d) < 0 && evOn(e.d).length) keys.push(e.d); });
+    keys.sort();
+    var future = keys.filter(function (k) { return k >= TODAY; }), past = keys.filter(function (k) { return k < TODAY; }).reverse();
+    var block = function (list, title) {
+      if (!list.length) return "";
+      return '<h2 class="sec">' + title + '</h2><div class="agenda">' + list.map(function (k) {
+        var dt = new Date(k + "T12:00:00");
+        return '<div class="ag-day"><div class="ag-date' + (k === TODAY ? " today" : "") + '"><b>' + dt.getDate() + "</b><small>" + ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][dt.getDay()] + '</small></div><div class="ag-list">' +
+          evOn(k).map(function (e) { var t = TYPES[e.t];
+            return '<div class="ag-ev ' + e.state + '" data-day="' + k + '" style="--c:var(' + t.c + ')"><span>' + t.ic + '</span><div class="t"><b>' + esc(e.title) + "</b><small>" +
+              esc(e.state === "missed" ? "Missed" : e.note || e.plan || "") + "</small></div>" + (e.note && e.t !== "review" ? "📓" : "") + "</div>"; }).join("") + "</div></div>";
+      }).join("") + "</div>";
+    };
+    h += block(future, "Coming up") + block(past, "Done");
+  }
+  $("calendar").innerHTML = h;
+  $("calPrev").onclick = function () { CAL.m--; if (CAL.m < 0) { CAL.m = 11; CAL.y--; } renderCalendar(); };
+  $("calNext").onclick = function () { CAL.m++; if (CAL.m > 11) { CAL.m = 0; CAL.y++; } renderCalendar(); };
+  $("calToday").onclick = function () { CAL.y = 2026; CAL.m = 9; renderCalendar(); };
+  $("calView").querySelectorAll("button").forEach(function (b) { b.onclick = function () { CAL.view = b.getAttribute("data-v"); renderCalendar(); }; });
+  $("calendar").querySelectorAll("[data-f]").forEach(function (b) { b.onclick = function () { var k = b.getAttribute("data-f"); CAL.off[k] = !CAL.off[k]; renderCalendar(); }; });
+  $("calendar").querySelectorAll("[data-day]").forEach(function (b) { b.onclick = function () { openDay(b.getAttribute("data-day")); }; });
+  $("gcal").onclick = function () { toast("Planned sessions, lessons and tournaments added to Google Calendar · keeps in sync"); };
+}
+
+function openDay(key) {
+  var dt = new Date(key + "T12:00:00"), evs = EVENTS.filter(function (e) { return e.d === key; });
+  var label = dt.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  var past = key < TODAY, isToday = key === TODAY;
+  var h = '<div class="panel-head"><span class="av" style="--c:var(--m-head)">📅</span><div class="t"><b>' + esc(label) + "</b><small>" +
+    (isToday ? "Today" : past ? "Looking back" : "Coming up") + (inTaper(key) ? " · taper week" : inBlock(key) ? " · block: second serve & short balls" : "") +
+    '</small></div><button class="icon-btn" id="closePanel" aria-label="Close">✕</button></div><div class="panel-body">';
+  if (!evs.length) h += '<p class="muted" style="margin-top:16px">' + (past ? "Nothing logged this day." : "Nothing planned yet — a rest day.") + "</p>";
+  h += '<div class="day-ev" style="margin-top:14px">' + evs.map(function (e) {
+    var t = TYPES[e.t], who = e.by ? byId(e.by) : null;
+    var stateChip = e.state === "done" ? '<span class="chip">Done</span>' : e.state === "missed" ? '<span class="chip warn">Missed</span>' : '<span class="chip blue">Planned</span>';
+    return '<div class="day-card" style="--c:var(' + t.c + ')"><div class="h"><b>' + t.ic + " " + esc(e.title) + "</b>" + stateChip + "</div>" +
+      (e.plan ? '<p class="muted">Plan: ' + esc(e.plan) + "</p>" : "") +
+      (e.note ? "<p>" + esc(e.note) + "</p>" : "") +
+      (who ? '<div class="by">' + av(who, true) + esc(who.name) + (e.t === "review" ? " ran this" : " logged this") + "</div>" : "") +
+      (e.state === "missed" ? '<div class="by">No note for this session. Missed it, or forgot to log?</div>' : "") + "</div>";
+  }).join("") + "</div>";
+  var actions = past || isToday
+    ? '<button class="btn primary" id="dayTalk">🎙 Tell your coach about this day</button>'
+    : '<button class="btn primary" id="dayAdd">＋ Add a session</button><button class="btn" id="dayMove">Move a session</button>';
+  h += '<div class="row" style="margin-top:16px;flex-wrap:wrap">' + actions + "</div>";
+  if (!past && !isToday) h += '<p class="muted" style="font-size:13px;margin-top:14px">Planned sessions come from your weekly plan. Your Progress Coordinator adjusts them after each review.</p>';
+  h += "</div>";
+  $("panel").innerHTML = h; $("panel").classList.add("on"); $("panelShade").classList.add("on"); $("panel").scrollTop = 0;
+  $("closePanel").onclick = closeMember;
+  if ($("dayTalk")) $("dayTalk").onclick = function () { closeMember(); showTab("talk"); $("text").value = "About " + label + ": "; $("text").focus(); };
+  if ($("dayAdd")) $("dayAdd").onclick = function () { toast("Tell your coach what to add — e.g. “add a hitting session with Jim”"); };
+  if ($("dayMove")) $("dayMove").onclick = function () { toast("Your Progress Coordinator will re-balance the week"); };
+}
+renderCalendar();
+startOnboarding();
+</script>
+</body>
+</html>

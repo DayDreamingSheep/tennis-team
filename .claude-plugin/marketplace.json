@@ -1,0 +1,14 @@
+{
+  "name": "tennis-team",
+  "owner": {
+    "name": "Cheng Yuan Ke"
+  },
+  "description": "Tennis Team: a file-first professional tennis coaching team for Claude.",
+  "plugins": [
+    {
+      "name": "tennis-team",
+      "source": "./",
+      "description": "Your professional tennis team as Claude skills: log notes, analyze your coach's teaching, and run weekly progress reviews."
+    }
+  ]
+}

@@ -1,0 +1,333 @@
+<title>Tennis Team Season Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; a full-width season chart (scrolls sideways on phones) up top, then the next 4 weeks, phases, gates, risks. */
+:root {
+  --bg: #f3f5f0; --surface: #ffffff; --surface-2: #e8ece4; --ink: #18201b; --muted: #59645d; --line: #d6dcd2;
+  --court: #24563a; --court-soft: #dcebdf; --clay: #b5532a; --clay-soft: #f6e3d8; --ball: #c9d72f;
+  --sky: #2b5f9e; --sky-soft: #e1eaf6; --plum: #6b4a9b; --plum-soft: #ece4f6; --gold: #9a6a00; --gold-soft: #f8edd2;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111613; --surface: #192019; --surface-2: #222a24; --ink: #e9eee8; --muted: #a2ada5; --line: #2e3831;
+    --court: #7cc489; --court-soft: #1f3326; --clay: #ec8f63; --clay-soft: #3a2519; --ball: #d6e24a;
+    --sky: #8fb6ef; --sky-soft: #1d2a3d; --plum: #c2a6ec; --plum-soft: #2c2338; --gold: #f0c160; --gold-soft: #3a301b; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111613; --surface: #192019; --surface-2: #222a24; --ink: #e9eee8; --muted: #a2ada5; --line: #2e3831;
+  --court: #7cc489; --court-soft: #1f3326; --clay: #ec8f63; --clay-soft: #3a2519; --ball: #d6e24a;
+  --sky: #8fb6ef; --sky-soft: #1d2a3d; --plum: #c2a6ec; --plum-soft: #2c2338; --gold: #f0c160; --gold-soft: #3a301b; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15.5px/1.6 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 72px; }
+@media (max-width: 640px) { .wrap { padding-inline: 16px; } }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(38px, 6vw, 60px); line-height: 1; margin: 8px 0 12px; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--court); }
+.lede { font-size: 17px; max-width: 70ch; margin: 0; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 30px; line-height: 1.05; margin: 0 0 6px; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0 0 14px; max-width: 72ch; }
+section { padding-block: 34px 4px; }
+.assume { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13.5px; color: var(--muted); margin-top: 14px; }
+.assume b { color: var(--ink); font-weight: 600; }
+
+/* Milestone strip */
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+@media (max-width: 860px) { .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ms { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+.ms .d { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ms b { display: block; font-size: 15.5px; line-height: 1.3; margin-top: 2px; }
+.ms .k { display: inline-block; margin-top: 6px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+.k-rel { background: var(--court-soft); color: var(--court); }
+.k-port { background: var(--sky-soft); color: var(--sky); }
+.k-biz { background: var(--gold-soft); color: var(--gold); }
+.k-test { background: var(--plum-soft); color: var(--plum); }
+.k-if { background: var(--surface-2); color: var(--muted); }
+
+/* Season chart */
+.chart-box { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow-x: auto; margin-top: 8px; }
+.chart { min-width: 980px; position: relative; padding: 0 0 12px; }
+.months { display: grid; grid-template-columns: 170px 1fr; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); z-index: 3; }
+.months .lbl { padding: 10px 12px; font-size: 12px; color: var(--muted); }
+.mrow { position: relative; height: 38px; }
+.mrow span { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line); padding: 10px 6px; font-family: var(--display); font-weight: 600; font-size: 16px; color: var(--muted); white-space: nowrap; }
+.lane { display: grid; grid-template-columns: 170px 1fr; border-bottom: 1px dashed var(--line); }
+.lane:last-child { border-bottom: none; }
+.lane .name { padding: 12px; font-weight: 600; font-size: 14px; display: flex; gap: 8px; align-items: flex-start; }
+.lane .name i { width: 10px; height: 10px; border-radius: 3px; margin-top: 6px; flex-shrink: 0; }
+.track { position: relative; min-height: 40px; }
+.grid-lines span { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line); opacity: .55; }
+.bar { position: absolute; height: 24px; border-radius: 7px; font-size: 12px; line-height: 24px; padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); border: 1px solid transparent; }
+.bar.rel { background: var(--court-soft); border-color: color-mix(in srgb, var(--court) 40%, transparent); }
+.bar.dev { background: var(--clay-soft); border-color: color-mix(in srgb, var(--clay) 40%, transparent); }
+.bar.test { background: var(--plum-soft); border-color: color-mix(in srgb, var(--plum) 40%, transparent); }
+.bar.port { background: var(--sky-soft); border-color: color-mix(in srgb, var(--sky) 40%, transparent); }
+.bar.biz { background: var(--gold-soft); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bar.if { background: transparent; border: 1.5px dashed var(--muted); color: var(--muted); }
+.bar.muted { background: var(--surface-2); color: var(--muted); }
+.bar.done { opacity: .6; }
+.mile { position: absolute; width: 14px; height: 14px; transform: translateX(-7px) rotate(45deg); border-radius: 3px; border: 2px solid var(--surface); }
+.mile.rel { background: var(--court); } .mile.port { background: var(--sky); } .mile.biz { background: var(--gold); } .mile.test { background: var(--plum); }
+.mile.if { background: var(--surface); border: 2px dashed var(--muted); }
+.mlabel { position: absolute; font-size: 11.5px; font-weight: 600; white-space: nowrap; transform: translateX(10px); color: var(--ink); }
+.today { position: absolute; top: 38px; bottom: 0; width: 2px; background: var(--ball); z-index: 2; }
+.today::before { content: "Today · Oct 15"; position: absolute; top: -2px; left: 6px; font-size: 11px; font-weight: 700; font-family: var(--mono); background: var(--ball); color: #18201b; padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+.legend span { display: flex; gap: 6px; align-items: center; }
+.legend i { width: 14px; height: 10px; border-radius: 3px; }
+
+/* Weeks */
+.weeks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 960px) { .weeks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .weeks { grid-template-columns: minmax(0, 1fr); } }
+.wk { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; }
+.wk.now { border: 2px solid var(--court); }
+.wk .d { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.wk h3 { font-family: var(--display); font-size: 21px; font-weight: 600; margin: 2px 0 8px; line-height: 1.1; }
+.wk ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; font-size: 14px; }
+.wk li { display: grid; grid-template-columns: 18px 1fr; gap: 6px; }
+.wk li::before { content: ""; width: 12px; height: 12px; border: 1.5px solid var(--muted); border-radius: 4px; margin-top: 4px; }
+.wk li.done::before { background: var(--court); border-color: var(--court); }
+.wk li.you { font-weight: 600; }
+.wk .ship { margin-top: 10px; font-size: 13px; background: var(--court-soft); color: var(--court); border-radius: 8px; padding: 6px 8px; font-weight: 600; }
+.tag { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--clay); margin-left: 4px; }
+
+/* Tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 760px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; background: var(--surface-2); }
+tr:last-child td { border-bottom: none; }
+td.v { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+td.dt { white-space: nowrap; font-variant-numeric: tabular-nums; }
+ul.c { margin: 0; padding-left: 18px; } ul.c li { margin: 2px 0; }
+
+/* Gates */
+.gates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .gates { grid-template-columns: minmax(0, 1fr); } }
+.gate { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+.gate .top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.gate h3 { margin: 0; font-size: 16px; } .gate .d { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.gate ul { margin: 8px 0 0; padding-left: 18px; font-size: 14px; } .gate li { margin: 3px 0; }
+.gate .no { margin-top: 8px; font-size: 13px; color: var(--muted); }
+.risk td:first-child { font-weight: 600; }
+footer { margin-top: 44px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Tennis Team · release and development timeline · Oct 2026 – Jun 2027</div>
+  <h1>From preview to <em>a team people pay for</em></h1>
+  <p class="lede">The full plan for Tennis Team: ship a public preview in 11 days, grow it with a friends beta, make it a strong portfolio piece, then decide with real evidence whether to turn it into a paid product in March 2027.</p>
+  <div class="assume">
+    <span><b>Today:</b> Thu, Oct 15, 2026</span>
+    <span><b>Capacity:</b> about 10 h a week (you), with AI agents doing most of the build and testing</span>
+    <span><b>License:</b> PolyForm Noncommercial; commercial rights stay with you</span>
+    <span><b>Dates are targets;</b> holidays have buffer built in</span>
+  </div>
+
+  <div class="strip" id="strip"></div>
+
+  <section>
+    <h2>Season chart</h2>
+    <p class="sub">Five tracks run in parallel. Solid bars are planned; dashed ones only happen if the March decision is "go". Scroll sideways on a phone.</p>
+    <div class="chart-box"><div class="chart" id="chart"></div></div>
+    <div class="legend">
+      <span><i style="background:var(--court-soft);border:1px solid var(--court)"></i>Releases</span>
+      <span><i style="background:var(--clay-soft);border:1px solid var(--clay)"></i>Development</span>
+      <span><i style="background:var(--plum-soft);border:1px solid var(--plum)"></i>Testing and feedback</span>
+      <span><i style="background:var(--sky-soft);border:1px solid var(--sky)"></i>Portfolio and sharing</span>
+      <span><i style="background:var(--gold-soft);border:1px solid var(--gold)"></i>Business</span>
+      <span><i style="border:1.5px dashed var(--muted)"></i>Only if "go" in March</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>The next four weeks</h2>
+    <p class="sub">Bold items need you; the rest the agents and I can do. Checked items are already done.</p>
+    <div class="weeks">
+      <div class="wk now"><div class="d">Oct 15 – 18 · this week</div><h3>Get it saved and online</h3><ul>
+        <li class="done">Switch to the non-commercial license</li>
+        <li class="done">Clean up for public view, portfolio README</li>
+        <li class="you">Check your employment contract for side-project rules</li>
+        <li class="you">Share your GitHub username; approve first commit</li>
+        <li>Create the repo, push, add topics and description</li>
+        <li>Turn on GitHub Pages</li></ul></div>
+      <div class="wk"><div class="d">Oct 19 – 25</div><h3>Prove it on real Macs</h3><ul>
+        <li>Live demo on GitHub Pages (works without Claude)</li>
+        <li>Screenshots and a short GIF for the README</li>
+        <li class="you">Real-mic talk-mode test; tell me how it feels</li>
+        <li class="you">Fresh install on a second Mac (friend or spare)</li>
+        <li>Auto-open check in the CLI, Desktop Code tab and Cowork</li>
+        <li>Fix anything that blocks a first-time user</li></ul>
+        <div class="ship">Ship Mon, Oct 26 · v0.2.0 Preview</div></div>
+      <div class="wk"><div class="d">Oct 26 – Nov 1</div><h3>Friends beta starts</h3><ul>
+        <li class="you">Invite 5–8 testers: 3–4 adult players, 1–2 parents</li>
+        <li>Beta kit: install guide, demo link, 2-minute feedback form</li>
+        <li>Build: plan review appears instantly (draft while setup runs)</li>
+        <li>Case study page live (from the Blueprint)</li>
+        <li class="you">Add the project to your resume and portfolio</li></ul></div>
+      <div class="wk"><div class="d">Nov 2 – 8</div><h3>First fixes, first post</h3><ul>
+        <li>v0.2.1 patch from beta feedback</li>
+        <li>Build: lighter background updates, daily cost cap</li>
+        <li>60-second demo video</li>
+        <li class="you">LinkedIn or blog post: "how I built an AI tennis team"</li></ul>
+        <div class="ship">Ship Mon, Nov 9 · v0.2.1</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Phases and versions</h2>
+    <p class="sub">Each phase ends in a release with clear exit criteria, so it's always obvious what "done" means.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Phase</th><th>Dates</th><th>Version</th><th>Scope</th><th>Done when</th></tr></thead>
+      <tbody>
+        <tr><td><b>0 · Preview</b></td><td class="dt">Oct 15 – Oct 26</td><td class="v">v0.2.0-preview</td>
+          <td><ul class="c"><li>License, cleanup, portfolio README</li><li>GitHub repo and Pages demo</li><li>Real-device test pass and blocker fixes</li></ul></td>
+          <td>Installs from GitHub on 2 Macs; demo link works without Claude</td></tr>
+        <tr><td><b>1 · Launch-ready beta</b></td><td class="dt">Oct 27 – Nov 22</td><td class="v">v0.2.1 – 0.2.4 (weekly)</td>
+          <td><ul class="c"><li>Instant plan review</li><li>Lighter bookkeeping (about 30% of today's cost)</li><li>Daily cost cap; friendly error recovery</li><li>Case study, demo video, first post</li></ul></td>
+          <td>5+ active testers; no data-loss bugs; reply cost under half of today</td></tr>
+        <tr><td><b>2 · Feels like a real team</b></td><td class="dt">Nov 23 – Jan 18</td><td class="v">v0.3.0</td>
+          <td><ul class="c"><li>AI understanding replaces keyword rules</li><li>Streaming replies (coach speaks in about 5 s)</li><li>On-device Whisper recognition</li><li>Player Scout and Fitness Coach</li><li>Holiday buffer Dec 21 – Jan 3</li></ul></td>
+          <td>Persona retest 4.5+ on every stage; coach starts talking within 5 s</td></tr>
+        <tr><td><b>2b · Directory</b></td><td class="dt">Jan 25 – Feb 21</td><td class="v">v0.3.x</td>
+          <td><ul class="c"><li>Privacy note and listing assets</li><li>Submit to Anthropic's plugin directory</li><li>Review time isn't in our control</li></ul></td>
+          <td>Submitted; feedback from the review addressed</td></tr>
+        <tr><td><b>3 · Family and on the go</b></td><td class="dt">Jan 19 – Mar 28</td><td class="v">v0.4.0</td>
+          <td><ul class="c"><li>Knowledge library part 2, Sunday check-in, match tools</li><li>Phone voice memos, then phone access</li><li>Nutrition (adults), Google Calendar sync</li></ul></td>
+          <td>Parents use it courtside; phone notes reach the team without a laptop</td></tr>
+        <tr><td><b>4 · Product (if go)</b></td><td class="dt">Mar 30 – Jun 21</td><td class="v">v1.0 hosted beta</td>
+          <td><ul class="c"><li>Hosted version: accounts, Claude API backend, phone-first</li><li>Pricing, privacy policy, minors compliance</li><li>Coach and academy pilot</li></ul></td>
+          <td>10+ paying users or a signed academy pilot</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Decision gates</h2>
+    <p class="sub">Four checkpoints where the evidence decides the next step, not enthusiasm.</p>
+    <div class="gates">
+      <div class="gate"><div class="top"><h3>G1 · Preview shipped</h3><span class="d">Mon, Oct 26</span></div>
+        <ul><li>Install from GitHub works on 2 Macs</li><li>Live demo runs without Claude</li><li>README and case study are ready to show</li></ul>
+        <div class="no">If not: slip one week; never ship a broken first run.</div></div>
+      <div class="gate"><div class="top"><h3>G2 · Beta health</h3><span class="d">Sun, Nov 22</span></div>
+        <ul><li>5+ testers active</li><li>60% log a second note within 7 days</li><li>Average reply under 20 s; no lost notes</li></ul>
+        <div class="no">If not: interview the drop-outs and fix the first-week experience before v0.3 features.</div></div>
+      <div class="gate"><div class="top"><h3>G3 · v0.3 quality</h3><span class="d">Mon, Jan 18</span></div>
+        <ul><li>Persona retest 4.5+ everywhere</li><li>Coach starts speaking within 5 s</li><li>Ready for directory review</li></ul>
+        <div class="no">If not: keep polishing; directory submission waits.</div></div>
+      <div class="gate"><div class="top"><h3>G4 · Profit decision</h3><span class="d">Mon, Mar 1</span></div>
+        <ul><li>40% of testers still active at week 8</li><li>3 of 10 interviewees would pay a monthly fee (test about $8–15)</li><li>One clear segment: adult players, parents, or coaches</li><li>Per-user AI cost fits under the price</li></ul>
+        <div class="no">If no-go: keep it as an open portfolio project with small releases. Nothing is wasted.</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Risks to watch</h2>
+    <div class="tbl risk"><table>
+      <thead><tr><th>Risk</th><th>Why it matters</th><th>What we do</th></tr></thead>
+      <tbody>
+        <tr><td>AI cost per message</td><td>Each message is two AI runs; background bookkeeping cost about $0.90 in one test</td><td>Phase 1 cost work and a daily cap; a hosted price must cover it</td></tr>
+        <tr><td>Your side-project rules</td><td>Some employment contracts claim side projects</td><td>Check before making the repo public (this week)</td></tr>
+        <tr><td>Solo time</td><td>About 10 h a week; life and tennis happen</td><td>Weekly patches stay small; holiday buffer; agents do the heavy lifting</td></tr>
+        <tr><td>Platform changes</td><td>Claude plugin features are still evolving</td><td>Keep the server and skills simple; follow release notes</td></tr>
+        <tr><td>Minors and privacy</td><td>Junior players and health notes</td><td>Parent-operated only; local data; a legal review before any hosted version</td></tr>
+        <tr><td>Directory review timing</td><td>Not in our control</td><td>Grow through GitHub and friends first; the directory is a bonus</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <footer>Built from ROADMAP.md, the v0.2 build contract, the persona test results and the release audit (Oct 15, 2026). Update the dates as each gate passes.</footer>
+</div>
+
+<script>
+(function () {
+  var START = new Date("2026-10-12T12:00:00"), END = new Date("2027-06-28T12:00:00"), TODAY = new Date("2026-10-15T12:00:00");
+  var SPAN = END - START;
+  function pct(d) { return ((new Date(d + "T12:00:00") - START) / SPAN * 100); }
+  var lanes = [
+    { name: "Releases", c: "var(--court)", items: [
+      { m: "2026-10-26", t: "v0.2.0 Preview", k: "rel" },
+      { s: "2026-10-27", e: "2026-11-22", t: "Weekly patches v0.2.1–0.2.4", k: "rel" },
+      { m: "2027-01-18", t: "v0.3.0", k: "rel" },
+      { s: "2027-01-25", e: "2027-02-21", t: "Directory review", k: "rel" },
+      { m: "2027-03-29", t: "v0.4.0", k: "rel" },
+      { m: "2027-06-21", t: "v1.0 hosted beta", k: "if" } ] },
+    { name: "Development", c: "var(--clay)", items: [
+      { s: "2026-10-15", e: "2026-10-25", t: "Launch fixes", k: "dev" },
+      { s: "2026-10-27", e: "2026-11-21", t: "Speed, cost cap, errors", k: "dev" },
+      { s: "2026-11-23", e: "2026-12-20", t: "AI understanding · streaming · Whisper", k: "dev" },
+      { s: "2026-12-21", e: "2027-01-03", t: "Holiday buffer", k: "muted" },
+      { s: "2027-01-04", e: "2027-01-17", t: "Player Scout · Fitness", k: "dev" },
+      { s: "2027-01-19", e: "2027-02-14", t: "Library · check-in · match tools", k: "dev" },
+      { s: "2027-02-15", e: "2027-03-28", t: "Phone · nutrition · calendar", k: "dev" },
+      { s: "2027-03-30", e: "2027-06-20", t: "Hosted version build", k: "if" } ] },
+    { name: "Testing and feedback", c: "var(--plum)", items: [
+      { s: "2026-10-19", e: "2026-10-25", t: "Real-device pass", k: "test" },
+      { s: "2026-10-26", e: "2027-02-28", t: "Friends beta (5–8 players and parents)", k: "test" },
+      { m: "2026-11-22", t: "Beta review", k: "test" },
+      { m: "2027-01-11", t: "Persona retest", k: "test" },
+      { m: "2027-03-22", t: "Persona retest", k: "test" } ] },
+    { name: "Portfolio and sharing", c: "var(--sky)", items: [
+      { s: "2026-10-16", e: "2026-10-25", t: "Repo · README · Pages demo", k: "port" },
+      { m: "2026-11-01", t: "Case study + resume", k: "port" },
+      { s: "2026-10-28", e: "2026-11-07", t: "Demo video", k: "port" },
+      { m: "2026-11-08", t: "First post", k: "port" },
+      { m: "2027-01-25", t: "v0.3 write-up", k: "port" } ] },
+    { name: "Business", c: "var(--gold)", items: [
+      { s: "2026-10-15", e: "2026-10-18", t: "Contract check", k: "biz" },
+      { s: "2027-02-01", e: "2027-02-28", t: "Pay interviews", k: "biz" },
+      { m: "2027-03-01", t: "Go / no-go", k: "biz" },
+      { s: "2027-03-02", e: "2027-04-30", t: "Pricing · privacy · legal", k: "if" },
+      { s: "2027-05-01", e: "2027-06-27", t: "Academy pilot", k: "if" } ] }
+  ];
+  var months = [], d = new Date(2026, 9, 1);
+  while (d < END) { months.push(new Date(d)); d.setMonth(d.getMonth() + 1); }
+  var MN = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  function iso(x) { return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); }
+  var monthMarks = months.map(function (m) { var p = Math.max(0, pct(iso(m))); return { p: p, label: MN[m.getMonth()] + (m.getMonth() === 0 || m.getMonth() === 9 && m.getFullYear() === 2026 ? " " + m.getFullYear() : "") }; });
+  var h = '<div class="months"><div class="lbl">Track</div><div class="mrow">' + monthMarks.map(function (m) { return '<span style="left:' + m.p + '%">' + m.label + "</span>"; }).join("") + "</div></div>";
+  lanes.forEach(function (L) {
+    var rows = [], items = L.items.map(function (it) {
+      var s = it.m || it.s, e = it.m || it.e, a = pct(s), b = pct(e);
+      var row = 0; while (rows[row] && rows[row] > a - (it.m ? 6 : 0.5)) row++;
+      rows[row] = it.m ? a + 12 : b; return { it: it, a: a, b: b, row: row };
+    });
+    var height = Math.max(1, rows.length) * 30 + 12;
+    h += '<div class="lane"><div class="name"><i style="background:' + L.c + '"></i>' + L.name + '</div><div class="track" style="height:' + height + 'px"><div class="grid-lines">' +
+      monthMarks.map(function (m) { return '<span style="left:' + m.p + '%"></span>'; }).join("") + "</div>" +
+      items.map(function (x) {
+        var top = 8 + x.row * 30, it = x.it;
+        if (it.m) return '<div class="mile ' + it.k + '" style="left:' + x.a + "%;top:" + (top + 5) + 'px" title="' + it.t + " · " + it.m + '"></div><div class="mlabel" style="left:' + x.a + "%;top:" + (top + 2) + 'px">' + it.t + "</div>";
+        return '<div class="bar ' + it.k + '" style="left:' + x.a + "%;width:" + Math.max(1.2, x.b - x.a) + "%;top:" + top + 'px" title="' + it.t + " · " + it.s + " → " + it.e + '">' + it.t + "</div>";
+      }).join("") + "</div></div>";
+  });
+  var chart = document.getElementById("chart");
+  chart.innerHTML = h;
+  var lanesW = chart.querySelector(".track"), offset = 170;
+  var t = document.createElement("div"); t.className = "today";
+  t.style.left = "calc(" + offset + "px + (100% - " + offset + "px) * " + (pct("2026-10-15") / 100) + ")";
+  chart.appendChild(t);
+
+  var strip = [
+    ["Mon, Oct 26, 2026", "v0.2.0 Preview on GitHub, with live demo", "Release", "k-rel"],
+    ["Sun, Nov 1, 2026", "Case study live; project on your resume", "Portfolio", "k-port"],
+    ["Sun, Nov 22, 2026", "Friends beta review (gate G2)", "Testing", "k-test"],
+    ["Mon, Jan 18, 2027", "v0.3.0: feels like a real team", "Release", "k-rel"],
+    ["Mon, Jan 25, 2027", "Submit to Anthropic's plugin directory", "Release", "k-rel"],
+    ["Mon, Mar 1, 2027", "Go / no-go on a paid product (gate G4)", "Business", "k-biz"],
+    ["Mon, Mar 29, 2027", "v0.4.0: family and on the go", "Release", "k-rel"],
+    ["Mon, Jun 21, 2027", "v1.0 hosted beta, only if go", "If go", "k-if"]
+  ];
+  document.getElementById("strip").innerHTML = strip.map(function (s) {
+    return '<div class="ms"><div class="d">' + s[0] + "</div><b>" + s[1] + '</b><span class="k ' + s[3] + '">' + s[2] + "</span></div>";
+  }).join("");
+})();
+</script>
