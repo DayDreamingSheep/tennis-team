@@ -117,4 +117,4 @@ python3 app/server.py --workspace ~/Tennis --open   # run the app on its own
 
 Source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE.md). You may read, run, modify and share it for personal and other noncommercial use. Commercial use needs written permission from the author.
 
-Built by Andy (Chengyuan) Ke.
+Built by Andy(Chengyuan) Ke.

@@ -1,4 +1,4 @@
-Required Notice: Copyright (c) 2026 Andy (Chengyuan) Ke. All commercial rights reserved; see the terms below.
+Required Notice: Copyright (c) 2026 Andy(Chengyuan) Ke. All commercial rights reserved; see the terms below.
 
 # PolyForm Noncommercial License 1.0.0
 
