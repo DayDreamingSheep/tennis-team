@@ -4,3 +4,4 @@ my-workspace/
 *.zip
 __pycache__/
 *.pyc
+_site/

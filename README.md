@@ -6,7 +6,7 @@
 
 After a practice or match, just talk. Your Head Coach listens, the team remembers everything, spots your patterns, and keeps a small, evidence-based plan: at most three things to work on each week, plus one fitness block. Every item comes with a **Why?** that quotes your own words.
 
-**Live demo:** coming soon on GitHub Pages; it runs in your browser with sample data, no install needed.
+**▶ [Try the live demo](https://daydreamingsheep.github.io/tennis-team/demo/?demo=1)** in your browser, with sample data and no install. · [Project site](https://daydreamingsheep.github.io/tennis-team/) · [Case study](https://daydreamingsheep.github.io/tennis-team/case-study/) · [Timeline](https://daydreamingsheep.github.io/tennis-team/timeline/)
 
 ---
 

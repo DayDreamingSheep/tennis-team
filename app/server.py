@@ -36,6 +36,8 @@ from voice import VoiceManager  # noqa: E402
 import net  # noqa: E402
 PLUGIN_ROOT = APP_DIR.parent
 PAGE = APP_DIR / "web" / "index.html"
+# Installed through /plugin install (the hook passes CLAUDE_PLUGIN_ROOT): Claude already loads the plugin itself.
+INSTALLED = Path(os.environ.get("CLAUDE_PLUGIN_ROOT") or "/nonexistent").resolve() == PLUGIN_ROOT
 INIT_SCRIPT = PLUGIN_ROOT / "skills" / "setup" / "scripts" / "init_workspace.py"
 TOKEN = secrets.token_urlsafe(18)
 ALLOWED_TOOLS = "Read Write Edit Glob Grep Skill"
@@ -466,11 +468,14 @@ class App:
         cmd = [self.claude, "-p", "--output-format", "stream-json", "--verbose", "--allowedTools", tools,
                "--append-system-prompt", system]
         if plugin:
-            cmd += ["--plugin-dir", str(PLUGIN_ROOT), "--permission-mode", "acceptEdits"]
+            if not INSTALLED:                      # running from a checkout: load the plugin explicitly
+                cmd += ["--plugin-dir", str(PLUGIN_ROOT)]
+            cmd += ["--permission-mode", "acceptEdits"]
+        env = dict(os.environ, TT_JOB="1")         # tells our SessionStart hook not to start another app
         result, err = None, None
         try:
             proc = subprocess.Popen(cmd, cwd=str(self.workspace), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE, text=True, bufsize=1)
+                                    stderr=subprocess.PIPE, text=True, bufsize=1, env=env)
             proc.stdin.write(message)
             proc.stdin.close()
             for line in proc.stdout:

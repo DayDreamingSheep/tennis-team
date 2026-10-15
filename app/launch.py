@@ -88,6 +88,8 @@ def main():
     ap.add_argument("--dir", help="folder to look for a workspace in (default: CLAUDE_PROJECT_DIR or cwd)")
     args = ap.parse_args()
 
+    if os.environ.get("TT_JOB"):
+        return                           # a background job of the app itself: never start another app
     data = data_dir()
     here = Path(args.dir or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()).expanduser().resolve()
     info = read_json(data / "server.json")
