@@ -270,6 +270,10 @@
   .status { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; white-space: nowrap; }
   .status.ready { background: var(--accent-soft); color: var(--accent); }
   .status.needs { background: var(--warn-soft); color: var(--warn); }
+  .status.set { background: var(--surface-2, var(--bg)); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+  .status.auto { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
+  .tm .kind { display: block; color: var(--muted); font-size: 12px; font-weight: 500; margin-top: 3px; }
+  .tm .kind .status { font-size: 11.5px; padding: 2px 8px; }
   .coach-row { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
   .coach-row .t { flex: 1; } .coach-row b { display: block; } .coach-row small { color: var(--muted); }
   .teach-box { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--accent); border-radius: 14px; padding: 12px; margin-top: 10px; }
@@ -762,7 +766,7 @@
   <header>
     <div class="bar">
       <div class="ball" aria-hidden="true"></div>
-      <div class="brand"><b id="brandName">Your Pocket Tennis Team</b><button class="team-pres" id="brandSub" type="button" aria-label="Open your team">Your team · 6 coaches</button></div>
+      <div class="brand"><b id="brandName">Your Pocket Tennis Team</b><button class="team-pres" id="brandSub" type="button" aria-label="Open your team">Your team · 5 members</button></div>
       <button class="icon-btn" id="openSettings" aria-label="Settings">⚙︎</button>
     </div>
     <nav class="tabs" id="tabs"></nav>
@@ -849,15 +853,15 @@ var LAST_SENT = { text: "", at: 0 };   // guards against the same message being 
 document.getElementById("noScript").remove();
 /* ---------- Reused from prototypes/team-app.html (data, renderers, voice, team panels, library, calendar) ---------- */
 var TEAM = [
-  { id: "head-coach", name: "Head Coach", e: "🎾", c: "--m-head", role: "Listens to you and brings in the right teammate.", ask: "What should I work on?", last: "Answered your question about second serves · Oct 15" },
-  { id: "journal-keeper", name: "Journal Keeper", e: "📓", c: "--m-journal", role: "Turns your messy notes into a clean training diary and spots patterns.", ask: "Here's how practice went...", last: "Logged your doubles match (won 6-4) · Oct 15" },
-  { id: "progress-coordinator", name: "Progress Coordinator", e: "📈", c: "--m-progress", role: "Each week decides what to keep, level up, simplify, or swap.", ask: "How am I doing?", last: "Weekly review: second serve → test in real points · Oct 13" },
-  { id: "strategy-coach", name: "Strategy Coach", e: "🗺", c: "--m-strategy", role: "Owns your final goal and the long-term roadmap to get there.", ask: "Is my long-term plan still right?", last: "Drew your 12-month roadmap to 4.0 · Oct 6" },
-  { id: "tournament-coach", name: "Tournament Coach", e: "🏆", c: "--m-tournament", role: "Prepares you for each event and reflects with you after.", ask: "Get me ready for my tournament", last: "Wrote your Fall Club Championship guide · Oct 14" },
-  { id: "coach-analyst", name: "Coach Analyst", e: "🔍", c: "--m-analyst", role: "Remembers what your coaches teach and checks your ideas against it.", ask: "Is this what Maria means?", last: "Added Maria's short-ball advice · Oct 14" }
+  { id: "head-coach", mode: "teach", name: "Head Coach", e: "🎾", c: "--m-head", role: "Learns from your coaches, the videos you follow and what works for you on court.", ask: "What should I work on?", last: "Answered your question about second serves · Oct 15" },
+  { id: "journal-keeper", mode: "adjust", name: "Journal Keeper", e: "📓", c: "--m-journal", role: "Turns your messy notes into a clean training diary and spots patterns.", ask: "Here's how practice went...", last: "Logged your doubles match (won 6-4) · Oct 15" },
+  { id: "progress-coordinator", mode: "auto", name: "Progress Coordinator", e: "📈", c: "--m-progress", role: "Each week decides what to keep, level up, simplify, or swap.", ask: "How am I doing?", last: "Weekly review: second serve → test in real points · Oct 13" },
+  { id: "strategy-coach", mode: "adjust", name: "Planner", e: "🗺", c: "--m-strategy", role: "Plans when and how much: your goal, your timeline and how hard each week is.", ask: "Is my long-term plan still right?", last: "Drew your 12-month roadmap to 4.0 · Oct 6" },
+  { id: "tournament-coach", mode: "adjust", name: "Tournament Coach", e: "🏆", c: "--m-tournament", role: "Prepares you for each event and reflects with you after.", ask: "Get me ready for my tournament", last: "Wrote your Fall Club Championship guide · Oct 14" },
+  { id: "coach-analyst", mode: "teach", hidden: true, name: "Coach Analyst", e: "🔍", c: "--m-analyst", role: "Remembers what your coaches teach and checks your ideas against it.", ask: "Is this what Maria means?", last: "Added Maria's short-ball advice · Oct 14" }
 ];
 var SOON = [
-  { name: "Fitness Coach", e: "💪", role: "One fitness block a week that serves your tennis." },
+  { name: "Fitness Coach", e: "💪", role: "Learns from your physio notes, injury history and gym program. One fitness block a week that serves your tennis.", mode: "Teach" },
   { name: "Nutrition Coach", e: "🥗", role: "Match-day fueling and hydration routines." },
   { name: "Stats Analyst", e: "📊", role: "Turns SwingVision or match stats into patterns." },
   { name: "Player Scout", e: "⭐", role: "Studies a pro you admire and what you can borrow." }
@@ -914,7 +918,7 @@ function renderPlan() {
     '<div class="bar-track" title="Journey progress"><div class="bar-fill" style="width:' + g.progress + '%"></div></div>' +
     '<div class="muted" style="font-size:13px;margin-top:6px">' + esc(g.journey || "") + '</div></div>' +
 
-    '<h2 class="sec">Long-term roadmap <span style="text-transform:none;letter-spacing:0">· by your Strategy Coach</span></h2>' +
+    '<h2 class="sec">Long-term roadmap <span style="text-transform:none;letter-spacing:0">· by your Planner</span></h2>' +
     '<div class="timeline">' + d.roadmap.map(function (p) {
       var chip = { now: '<span class="chip">Now</span>', next: '<span class="chip blue">Next</span>', later: "", done: '<span class="chip">Done ✓</span>' }[p.status];
       return '<div class="phase ' + p.status + '">' + chip + '<div class="when">' + esc(p.when) + "</div><b>" + esc(p.title) + '</b><div class="f">' + esc(p.focus) + "</div></div>";
@@ -970,16 +974,42 @@ function renderTournaments() {
     }).join("") + "</div>";
 }
 
+// Teach members learn from real material; Adjust members follow a few choices; Automatic members run on fixed rules.
+var MODE_ORDER = { teach: 0, adjust: 1, auto: 2 };
+var KIND_LABEL = { teach: "Learns from you", adjust: "Follows your style", auto: "Automatic" };
+function memberStatus(m) {
+  if (m.mode === "auto") return { cls: "auto", label: "Reviews " + ((SETUP["strategy-coach"].values || {}).day || "Sunday") + "s" };
+  if (m.mode === "adjust") {
+    var v = SETUP[m.id].values || {};
+    var lab = { "strategy-coach": (v.pace || "Steady") + " pace", "tournament-coach": "Eases off " + (v.taper || "1 week") + " before", "journal-keeper": "Standard notes" }[m.id] || "Standard";
+    return { cls: "set", label: lab };
+  }
+  var d = memberData(m.id), n = (d.knows || []).length + (SOURCES[m.id] || []).reduce(function (a, x) { return a + (x.learned || 0); }, 0);
+  return SETUP["coach-analyst"].status.ok || n > 2 ? { cls: "ready", label: "Knows " + n + " thing" + (n === 1 ? "" : "s") } : { cls: "needs", label: "Needs you" };
+}
+// The Coach Analyst works behind the Head Coach: one Teach page with the coaches, lessons and links.
+function memberData(id) {
+  if (id !== "head-coach") return SETUP[id];
+  var h = SETUP["head-coach"], a = SETUP["coach-analyst"];
+  if ((SOURCES["coach-analyst"] || []).length) { SOURCES["head-coach"] = (SOURCES["head-coach"] || []).concat(SOURCES["coach-analyst"]); SOURCES["coach-analyst"] = []; }
+  return Object.assign({}, h, {
+    intro: "Your front door. Teach them with notes from your lessons, videos and links you learn from, and what works for you on court. Your coach's advice always comes first; the Coach Analyst keeps it straight behind the scenes.",
+    coaches: a.coaches, needs: a.status.ok ? null : a.needs,
+    knows: (a.knows || []).concat(h.knows || []),
+    teach: (a.teach || []).concat(h.teach || []),
+    rules: (a.rules || []).slice(0, 2).concat(h.rules || [])
+  });
+}
 function renderTeam() {
   $("team").innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px"><h2 class="sec" style="margin:0">Your team</h2><button class="btn" id="rerun">✨ Team setup</button></div>' +
-    '<p class="muted" style="margin:0 0 14px">Talk to your Head Coach about anything. Open a teammate to see what they know, change how they work, or teach them something new.</p>' +
-    '<div class="team-grid">' + TEAM.map(function (m) {
-      var st = SETUP[m.id].status;
-      return '<div class="card tm"><div class="tm-top">' + av(m) + '<div style="flex:1"><b>' + esc(m.name) + '</b></div><span class="status ' + (st.ok ? "ready" : "needs") + '">' + esc(st.label) + "</span></div><p>" + esc(m.role) + '</p><div class="last">Latest: ' + esc(m.last) + '</div><div class="row2"><button class="btn primary" data-member="' + m.id + '">Set up &amp; train</button><button class="btn" data-ask="' + esc(m.ask) + '">Ask</button></div></div>';
+    '<p class="muted" style="margin:0 0 14px">Talk to your Head Coach about anything. Teach your Head Coach with lesson notes, videos and what happens on court. Adjust the others to your style. The Progress Coordinator runs on its own.</p>' +
+    '<div class="team-grid">' + TEAM.filter(function (m) { return !m.hidden; }).sort(function (a, b) { return MODE_ORDER[a.mode] - MODE_ORDER[b.mode]; }).map(function (m) {
+      var st = memberStatus(m), btn = { teach: "Teach", adjust: "Adjust", auto: "See how it decides" }[m.mode];
+      return '<div class="card tm"><div class="tm-top">' + av(m) + '<div style="flex:1"><b>' + esc(m.name) + '</b><small class="kind">' + esc(KIND_LABEL[m.mode]) + ' · <span class="status ' + st.cls + '">' + esc(st.label) + "</span></small></div></div><p>" + esc(m.role) + '</p><div class="last">Latest: ' + esc(m.last) + '</div><div class="row2"><button class="btn ' + (m.mode === "teach" ? "primary" : "") + '" data-member="' + m.id + '">' + btn + '</button><button class="btn" data-ask="' + esc(m.ask) + '">Ask</button></div></div>';
     }).join("") + "</div>" +
     '<h2 class="sec">Joining soon</h2><div class="team-grid">' + SOON.map(function (m) {
-      return '<div class="card tm soon"><div class="tm-top"><span class="av" style="--c:var(--m-manager)">' + m.e + "</span><div><b>" + esc(m.name) + "</b><small>Coming soon</small></div></div><p>" + esc(m.role) + "</p></div>";
+      return '<div class="card tm soon"><div class="tm-top"><span class="av" style="--c:var(--m-manager)">' + m.e + "</span><div><b>" + esc(m.name) + "</b><small>" + (m.mode ? esc(m.mode) + " · " : "") + "Coming soon</small></div></div><p>" + esc(m.role) + "</p></div>";
     }).join("") + "</div>";
   document.querySelectorAll("[data-member]").forEach(function (b) { b.onclick = function () { openMember(b.getAttribute("data-member")); }; });
   $("rerun").onclick = function () { startOnboarding(); };
@@ -1107,20 +1137,22 @@ var SETUP = {
   "progress-coordinator": {
     status: { ok: true, label: "Ready" },
     intro: "Every week, looks at the evidence and decides what to keep, level up, simplify, rest, or swap.",
-    settings: [
-      { k: "day", label: "Weekly review", hint: "Runs automatically when you next talk to your team", type: "seg", options: ["Sunday", "Monday"] },
-      { k: "drills", label: "Tennis focuses per week", hint: "Fewer is easier to stick to", type: "seg", options: ["1", "2", "3"] },
-      { label: "Include a fitness block", hint: "One short block that supports your tennis", type: "switch", on: true }
-    ],
+    intro2: "Runs on fixed rules, so there's nothing to set up. Each week it reads the numbers in your notes and decides what to keep, level up, simplify, rest, or swap. How hard and how often is set by your Planner.",
     knows: [ { t: "Second serve: test it in real points", src: "Review · Oct 13" }, { t: "Short balls: ready to level up", src: "Review · Oct 13" } ],
     teach: [ ["📊", "Share match stats", "SwingVision export or a score sheet"] ],
     rules: ["Level up only after repeated success in real points", "When unsure, keep going", "Every week includes a top priority"]
   },
   "strategy-coach": {
     status: { ok: true, label: "Ready" },
-    intro: "Owns your final goal and the long-term roadmap. Checks every month that the weekly work still points at it.",
+    intro: "Plans when and how much: your goal and timeline, how many days you play, and how hard each week is. Your Head Coach decides what to work on; the Planner fits it into your weeks.",
     form: [ { label: "Your dream", value: "Play competitive 4.0 league tennis as an aggressive baseliner" }, { label: "12-month target", value: "Reach NTRP 4.0 by Oct 2027" } ],
-    settings: [ { k: "check", label: "Roadmap check-in", hint: "A short “are we on track?” talk", type: "seg", options: ["Monthly", "Every block"] } ],
+    settings: [
+      { k: "pace", label: "Intensity", hint: "Aggressive moves faster; health limits never change", type: "seg", options: ["Gentle", "Steady", "Aggressive"] },
+      { k: "drills", label: "Tennis focuses per week", hint: "Fewer is easier to stick to", type: "seg", options: ["1", "2", "3"] },
+      { k: "day", label: "Weekly review", hint: "Runs when you next talk to your team", type: "seg", options: ["Sunday", "Monday"] },
+      { k: "check", label: "Roadmap check-in", hint: "A short “are we on track?” talk", type: "seg", options: ["Monthly", "Every block"] },
+      { label: "Include a fitness block", hint: "One short block that supports your tennis", type: "switch", on: true }
+    ],
     knows: [ { t: "Roadmap: 4 phases from serve to competing at 4.0", src: "Drawn Oct 6" }, { t: "Phase 1 about 40% done", src: "From your last two reviews" } ],
     teach: [ ["⭐", "A player I want to play like", "Your Player Scout joins soon"], ["🎯", "Change my goal", "Goals can change, and that's fine"] ],
     rules: ["Weekly work must serve the current phase", "No more than two focus areas per phase"]
@@ -1149,17 +1181,17 @@ var SOURCES = {
   "strategy-coach": [],
   "tournament-coach": [ { kind: "web", title: "Fall Club Championship – draw & rules", where: "clubsite.com", learned: 2, synced: "Checked yesterday", sync: true } ]
 };
-SETUP["progress-coordinator"].values = { day: "Sunday", drills: "3" };
-SETUP["strategy-coach"].values = { check: "Monthly" };
+SETUP["strategy-coach"].values = { pace: "Steady", drills: "3", day: "Sunday", check: "Monthly" };
 SETUP["tournament-coach"].values = { taper: "1 week" };
 renderTeam();
 
 function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove("on"); }, 2600); }
 
 function openMember(id) {
-  var m = byId(id), d = SETUP[id], vals = d.values || {};
+  if (id === "coach-analyst") id = "head-coach";
+  var m = byId(id), d = memberData(id), vals = d.values || {};
   var h = '<div class="panel-head">' + av(m) + '<div class="t"><b>' + esc(m.name) + "</b><small>" + esc(m.role) + '</small></div><button class="icon-btn" id="closePanel" aria-label="Close">✕</button></div><div class="panel-body">';
-  h += '<p class="muted" style="margin:14px 0 0">' + esc(d.intro) + "</p>";
+  h += '<p class="muted" style="margin:14px 0 0">' + esc(d.intro2 || d.intro) + "</p>";
   if (d.needs) h += '<div class="tip" style="margin-top:12px">👋 ' + esc(d.needs) + "</div>";
   if (d.form) h += '<h2 class="sec">Your goal</h2><div class="grid">' + d.form.map(function (f) { return '<label class="field">' + esc(f.label) + '<input class="input" value="' + esc(f.value) + '"></label>'; }).join("") + "</div>";
   if (d.coaches) h += '<h2 class="sec">Your coaches</h2><div class="grid">' + d.coaches.map(function (c) { return '<div class="coach-row"><span class="av sm" style="--c:var(--m-analyst)">👤</span><div class="t"><b>' + esc(c.name) + "</b><small>" + esc(c.how) + " · " + esc(c.n) + '</small></div><button class="btn" data-teach="0">Add notes</button></div>'; }).join("") + "</div>";
@@ -1169,8 +1201,9 @@ function openMember(id) {
     return '<div class="set-row"><div class="l"><b>' + esc(st.label) + "</b><small>" + esc(st.hint) + "</small></div>" + ctl + "</div>";
   }).join("") + "</div>";
   if (id === "head-coach") h += '<div class="sample" id="sample" style="margin-top:10px"></div>';
-  h += '<h2 class="sec">What they know</h2><div class="know" id="know">' + d.knows.map(kItem).join("") + "</div>";
-  h += '<h2 class="sec">Teach them</h2><div class="lib-in">' +
+  var auto = m.mode === "auto";
+  h += '<h2 class="sec">' + (auto ? "Recent decisions" : "What they know") + '</h2><div class="know" id="know">' + d.knows.map(kItem).join("") + "</div>";
+  if (!auto) h += '<h2 class="sec">Teach them</h2><div class="lib-in">' +
     '<div class="link-row"><input class="input" id="linkIn" placeholder="Paste a link: YouTube, Loom, Google Doc, Drive, website…"><button class="btn primary" id="linkGo">Add</button></div>' +
     '<div class="detect" id="detect">They study what\'s public about a link (pages, docs, video titles and descriptions), then write notes for your Head Coach. Your own takeaway counts most.</div>' +
     '<label class="drop" id="drop"><input type="file" id="fileIn" hidden multiple accept="video/*,audio/*,.pdf,.doc,.docx,.txt,.md,.csv,image/*"><b>⬆ Upload or drop files</b><br>Match videos, lesson recordings, PDFs, photos of notes, stats exports' +
@@ -1178,8 +1211,8 @@ function openMember(id) {
     '<div class="alt"><button class="btn" id="pasteBtn">📝 Paste text</button><button class="btn" id="sayBtn">🎙 Say it</button></div>' +
     '<div><div class="muted" style="font-size:12px;margin-bottom:6px">Ideas for ' + esc(m.name) + '</div><div class="ideas">' + d.teach.map(function (t, i) { return '<button data-teach="' + i + '">' + t[0] + " " + esc(t[1]) + "</button>"; }).join("") + "</div></div>" +
     '</div><div id="teachBox"></div>';
-  h += '<h2 class="sec">Sources they learn from</h2><div class="grid" id="srcList" data-member="' + esc(id) + '">' + ((SOURCES[id] || []).length ? SOURCES[id].map(srcRow).join("") : '<div class="empty-src">Nothing linked yet. Add a doc, video, or file above.</div>') + "</div>";
-  h += '<h2 class="sec">Rules they follow</h2><ul style="margin:0;padding-left:20px">' + d.rules.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>";
+  if (!auto) h += '<h2 class="sec">Sources they learn from</h2><div class="grid" id="srcList" data-member="' + esc(id) + '">' + ((SOURCES[id] || []).length ? SOURCES[id].map(srcRow).join("") : '<div class="empty-src">Nothing linked yet. Add a doc, video, or file above.</div>') + "</div>";
+  h += '<h2 class="sec">' + (auto ? "How they decide" : "Rules they follow") + '</h2><ul style="margin:0;padding-left:20px">' + d.rules.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>";
   h += '<p class="muted" style="font-size:13px;margin-top:18px">Everything they know lives in your own tennis folder. Remove anything that\'s wrong — they\'ll stop using it.</p></div>';
   $("panel").innerHTML = h; $("panel").classList.add("on"); $("panelShade").classList.add("on"); $("panel").scrollTop = 0;
   $("closePanel").onclick = closeMember;
@@ -1189,11 +1222,11 @@ function openMember(id) {
       seg.querySelectorAll("button").forEach(function (x) { x.classList.remove("on"); }); b.classList.add("on");
       vals[seg.getAttribute("data-seg")] = b.textContent; d.values = vals;
       if (id === "head-coach") { STYLE[seg.getAttribute("data-seg")] = b.textContent; sample(); }
-      toast(m.name + ": " + b.textContent.toLowerCase());
+      toast(m.name + ": " + b.textContent.toLowerCase()); renderTeam();
     }; });
   });
   $("panel").querySelectorAll("[data-teach]").forEach(function (b) { b.onclick = function () { teachBox(id, d.teach[+b.getAttribute("data-teach")]); }; });
-  wireLibrary(id);
+  if (!auto) wireLibrary(id);
   wireKnow(m);
   if (id === "head-coach") sample();
 }
@@ -1227,14 +1260,15 @@ function teachBox(id, t) {
     var v = $("teachText").value.trim() || placeholder.replace(/^e\.g\. /, "");
     var learned = {
       "coach-analyst": { t: "Second serve: toss slightly left, brush up the back of the ball", src: "Maria · lesson today · sure" },
+      "head-coach": /lesson|coach|said|taught/i.test(v) ? { t: v.length > 70 ? v.slice(0, 70) + "…" : v, src: "From your lesson · just now" } : null,
       "tournament-coach": { t: v.split(",").slice(0, 2).join(" ·") + " · guide coming", src: "Calendar · just added" },
       "head-coach": { t: v.length > 70 ? v.slice(0, 70) + "…" : v, src: "You told them · just now" }
     }[id] || { t: v.length > 70 ? v.slice(0, 70) + "…" : v, src: "You taught them · just now" };
     learned.isNew = true;
     $("know").insertAdjacentHTML("afterbegin", kItem(learned)); wireKnow(m);
     $("teachBox").innerHTML = ""; $("know").scrollIntoView({ behavior: "smooth", block: "center" });
-    toast(m.name + " learned something new" + (id === "coach-analyst" ? " · checked against your plan" : ""));
-    if (id === "coach-analyst") { SETUP[id].status = { ok: true, label: "Ready" }; renderTeam(); }
+    toast(m.name + " learned something new" + (id === "head-coach" ? " · checked against your plan" : ""));
+    if (id === "coach-analyst" || id === "head-coach") { SETUP["coach-analyst"].status = { ok: true, label: "Ready" }; renderTeam(); }
   };
 }
 /* ---------------- Knowledge library: links, uploads, synced docs ---------------- */
@@ -1265,7 +1299,7 @@ function detectLink(u) {
 }
 var LEARN = {
   "coach-analyst": [ "Second serve: toss slightly left, brush up the back of the ball", "Keep the head still until after contact on the serve", "Approach shots: hit through the ball, then split before the volley" ],
-  "head-coach": [ "Most motivated by competing with friends", "Works late on Wednesdays — mornings are best" ],
+  "head-coach": [ "Second serve: toss slightly left, brush up the back of the ball", "Keep the head still until after contact on the serve", "Most motivated by competing with friends" ],
   "journal-keeper": [ "12 older notes imported into your diary", "Pattern found: second serve tightens when tired" ],
   "progress-coordinator": [ "First-serve % drops from 62% to 48% in third sets", "Backhand errors up 30% after 60 minutes" ],
   "strategy-coach": [ "Your idol plays 70% of points from the forehand corner", "Roadmap idea: add inside-out forehand in phase 3" ],
@@ -1282,10 +1316,10 @@ function learnFrom(id, item) {
     if (i < item.steps.length) { item.working = item.steps[i]; render(); return setTimeout(step, 1300); }
     var facts = (LEARN[id] || ["Something new from this source"]).slice(0, item.kind === "doc" ? 3 : 2);
     item.working = null; item.learned = facts.length; item.synced = item.sync ? "Synced just now" : ""; render();
-    facts.forEach(function (f) { $("know").insertAdjacentHTML("afterbegin", kItem({ t: f, src: "From " + item.title + (id === "coach-analyst" && item.kind !== "web" ? " · sure" : ""), isNew: true })); });
+    facts.forEach(function (f) { $("know").insertAdjacentHTML("afterbegin", kItem({ t: f, src: "From " + item.title + ((id === "coach-analyst" || id === "head-coach") && item.kind !== "web" ? " · sure" : ""), isNew: true })); });
     wireKnow(m);
     toast(m.name + " learned " + facts.length + " things from " + item.title + (item.sync ? " · will keep it in sync" : ""));
-    if (id === "coach-analyst") { SETUP[id].status = { ok: true, label: "Ready" }; renderTeam(); }
+    if (id === "coach-analyst" || id === "head-coach") { SETUP["coach-analyst"].status = { ok: true, label: "Ready" }; renderTeam(); }
   })();
 }
 // Real mode: training-material links are saved with public metadata only (no downloading or transcript scraping);
@@ -1305,7 +1339,7 @@ var STUDY_T = null;
 function serverSourcesInto() {
   if (!REAL || !window.SERVER_SOURCES) return;
   Object.keys(SOURCES).forEach(function (k) { SOURCES[k] = []; });
-  window.SERVER_SOURCES.forEach(function (x) { var m = x.member || "coach-analyst"; (SOURCES[m] = SOURCES[m] || []).push(srcFromServer(x)); });
+  window.SERVER_SOURCES.forEach(function (x) { var m = x.member || "head-coach"; if (m === "coach-analyst") m = "head-coach"; (SOURCES[m] = SOURCES[m] || []).push(srcFromServer(x)); });
   var list = $("srcList"), id = list && list.getAttribute("data-member");
   if (list && id && (SOURCES[id] || []).length) { list.innerHTML = SOURCES[id].map(srcRow).join(""); wireSync(); }
   clearTimeout(STUDY_T);
@@ -1770,7 +1804,7 @@ function buildFresh() {
     goal: { dream: parent ? (OB.season.length ? OB.season.join(" · ") : "A strong, healthy season") + (goal ? " · " + name + "'s goal: " + goal : "") : target + (by ? " by " + by : ""),
             target: target, by: by, measure: "We'll set this after the first few notes", three_month: "Steady progress on the top focus", progress: 2, journey: "Week 1 · the plan sharpens after each note" },
     roadmap: [ { when: "Now – mid Nov", title: "Build the base", focus: asg.filter(function (a) { return a.k !== "phy"; }).map(function (a) { return a.area.split("· ")[1]; }).join(", "), status: "now" },
-               { when: "After the first check-ins", title: "Next phase: planned by your Strategy Coach", focus: "Based on " + (parent ? name + "'s" : "your") + " first notes", status: "next" } ],
+               { when: "After the first check-ins", title: "Next phase: planned by your Planner", focus: "Based on " + (parent ? name + "'s" : "your") + " first notes", status: "next" } ],
     block: { name: asg.filter(function (a) { return a.k !== "phy"; }).map(function (a) { return a.area.split("· ")[1]; }).join(" & "), progress: "Week 1 of 4", step: 1, of: 4,
              goals: asg.filter(function (a) { return a.k !== "phy"; }).map(function (a) { return { t: a.title + ": " + a.target, ok: false }; }) },
     week_of: "Oct 12", assignments: asg, cues: asg.filter(function (a) { return a.k !== "phy"; }).map(function (a) { return a.cue; }),
@@ -1904,7 +1938,7 @@ function applyTeam() {
   }
   SETUP["coach-analyst"].knows = (S.learned || []).concat(SETUP["coach-analyst"].knows || []);
   SETUP["progress-coordinator"].values = { day: "Sunday", drills: "3" };
-  SETUP["strategy-coach"].values = { check: "Monthly" }; SETUP["tournament-coach"].values = { taper: "1 week" };
+  SETUP["strategy-coach"].values = Object.assign({ pace: "Steady", drills: "3", day: "Sunday", check: "Monthly" }, SETUP["strategy-coach"].values || {}); SETUP["tournament-coach"].values = { taper: "1 week" };
   SETUP["head-coach"].values = { tone: STYLE.tone, length: STYLE.length };
   Object.keys(S.latest || {}).forEach(function (id) { var m = byId(id); if (m) m.last = S.latest[id]; });
   SOON[1].role = parent ? "General fueling only for juniors. Never weight or diet goals." : "Match-day fueling and hydration routines.";
@@ -3559,7 +3593,7 @@ function computeBoard() {
     var gt = parent ? ([P.level(A.level || "") || (A.level ? trimQ(A.level, 26) : ""), A.goal ? trimQ(A.goal, 48) : ""].filter(Boolean).join(" · "))
       : (g.cur && g.tgt ? g.cur + " → " + g.tgt : A.goal ? cap(trimQ(A.goal, 50)) : g.cur ? "Level " + g.cur : "Goal to set") + (g.by ? " by " + g.by : "");
     cards.push({ id: "goal", kind: "goal", ic: "🎯", title: gt, body: parent ? "Season goals" : "Your goal", quote: cleanQ(trimQ(A.goal || A.level, 70)), k: A.goal ? "goal" : "level", by: "strategy-coach" });
-    if (A.goal) cards.push({ id: "j-strategy", kind: "join", ic: "🗺", title: "Strategy Coach joined", body: "to own the long-term goal", quote: cleanQ(trimQ(A.goal, 60)), k: "goal", by: "strategy-coach" });
+    if (A.goal) cards.push({ id: "j-strategy", kind: "join", ic: "🗺", title: "Planner joined", body: "to own the long-term goal", quote: cleanQ(trimQ(A.goal, 60)), k: "goal", by: "strategy-coach" });
   }
   var loseTxt = [A.lose, A.lose2, alexLose(A.alex)].filter(Boolean).join(". ");
   ORDER.filter(function (k) { return problemsFrom(loseTxt).indexOf(k) >= 0; }).slice(0, 3).forEach(function (k, i) {
@@ -3769,7 +3803,7 @@ function paintBrand() {
   var b = $("brandSub"); if (!b) return;
   $("brandName").textContent = (pname() ? pname() + "'s" : "Your") + " Pocket Tennis Team";
   var extra = S.mode === "parent" ? (S.parent ? S.parent + " (parent)" : "Parent") + " · " + pname() : (S.intro && S.intro.level ? S.intro.level.replace("NTRP ", "") + (S.nextLevel ? " → " + S.nextLevel : "") : S.demo ? "3.5 → 4.0" : "");
-  b.innerHTML = '<span class="stack">' + TEAM.slice(0, 5).map(function (m) { return av(m, true); }).join("") + '</span><span class="tp-t">Your team · 6 coaches</span>' + (extra ? '<span class="tp-x"> · ' + esc(extra) + "</span>" : "");
+  b.innerHTML = '<span class="stack">' + TEAM.filter(function (m) { return !m.hidden; }).map(function (m) { return av(m, true); }).join("") + '</span><span class="tp-t">Your team · 5 members</span>' + (extra ? '<span class="tp-x"> · ' + esc(extra) + "</span>" : "");
 }
 function stripHTML() {
   var evs = EVENTS.filter(function (e) { return e.d === TODAY && e.t !== "review"; }), planned = evs.filter(function (e) { return e.state === "planned"; }), logged = evs.filter(function (e) { return e.note; });
@@ -4146,7 +4180,7 @@ function computeBoard() {
     if (!A.goal) cards.push({ id: "goal", kind: "goal", ic: "📍", title: "Where you are now: " + (g.cur ? "NTRP " + g.cur : trimQ(A.level, 30)), body: "Your goal comes next", quote: cleanQ(trimQ(A.level, 60)), k: "level", by: "strategy-coach" });
     else cards.push({ id: "goal", kind: "goal", ic: "🎯", title: (g.cur && g.tgt ? g.cur + " → " + g.tgt : cap(trimQ(familyGoal().tags.concat(familyGoal().detail ? [familyGoal().detail] : []).join(" · ") || A.goal, 50))) + (g.by ? " by " + g.by : ""), body: "Your goal", quote: cleanQ(trimQ(A.goal, 70)), k: "goal", by: "strategy-coach" });
   }
-  if (A.goal) cards.push({ id: "j-strategy", kind: "join", ic: "🗺", title: "Strategy Coach joined", body: "to own the long-term goal", quote: cleanQ(trimQ(A.goal, 60)), k: "goal", by: "strategy-coach" });
+  if (A.goal) cards.push({ id: "j-strategy", kind: "join", ic: "🗺", title: "Planner joined", body: "to own the long-term goal", quote: cleanQ(trimQ(A.goal, 60)), k: "goal", by: "strategy-coach" });
   var mine = [A.lose, A.lose2].filter(Boolean).join(". "), alexs = alexLose(A.alex), loseTxt = [mine, alexs].filter(Boolean).join(". ");
   ORDER.filter(function (k) { return problemsFrom(loseTxt).indexOf(k) >= 0; }).slice(0, 3).forEach(function (k, i) {
     var rule = PROB_RULES.filter(function (r) { return r[0] === k; })[0], fromAlex = !rule[1].test(stripPositive(mine));

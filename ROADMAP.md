@@ -7,7 +7,7 @@ Last updated 2026-10-15. Status: v0.2 is built and tested end to end with the re
 **Built and tested in v0.2:**
 - **App:** opens on its own (with an off switch) for a Head Coach interview with a live plan board. Then a team huddle, then a plan review where every item has a Why.
 - **Home and tabs:** a conversation-first Home with Plan, Calendar, Tournaments, Team, and Health & Load for parents.
-- **Team:** seven members, each a skill: Head Coach, Team Manager, Journal Keeper, Coach Analyst, Progress Coordinator, Strategy Coach and Tournament Coach.
+- **Team:** seven members, each a skill: Head Coach, Team Manager, Journal Keeper, Coach Analyst, Progress Coordinator, Planner (formerly Strategy Coach) and Tournament Coach.
 - **Replies:** a fast reply in about 20 s; the journal, plan and calendar update in the background.
 - **Voice:**
   - natural on-device voice (36 voices; defaults Heart and 曉曉 Xiaoxiao)

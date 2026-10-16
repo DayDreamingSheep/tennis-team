@@ -82,7 +82,9 @@ FAST_MODE = (
     "\"say\" is the same message written to be spoken aloud by a warm coach: under 70 words, contractions, "
     "no lists, symbols or emoji, numbers and scores as words (\"six out of ten\", \"four-six\"), uses the player's "
     "name once, sounds like talking not reading, and ends with a short question or nudge.\nMember ids: head-coach, "
-    "team-manager, journal-keeper, coach-analyst, progress-coordinator, strategy-coach, tournament-coach."
+    "team-manager, journal-keeper, coach-analyst, progress-coordinator, strategy-coach, tournament-coach. Names the player "
+    "sees: strategy-coach is 'the Planner' (never 'Strategy Coach'); coach-analyst is 'Coach Analyst', who works behind the "
+    "Head Coach."
 )
 BOOK_MODE = (
     "BOOKKEEPING MODE for the Pocket Tennis Team app. The player has ALREADY been answered; the '[replied]' line holds that "

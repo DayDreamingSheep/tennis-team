@@ -28,17 +28,19 @@ Club and junior players get advice from everywhere: lessons, YouTube, teammates,
 
 ## Your team
 
-| Team member | What they do |
-|---|---|
-| 🎾 **Head Coach** | Your front door. Listens to anything, answers fast, calls in the right teammate |
-| 🧰 **Team Manager** | Interviews you and sets up your team and starter plan |
-| 📓 **Journal Keeper** | Turns messy notes into a clean training diary and spots repeating patterns |
-| 🔍 **Coach Analyst** | Remembers what your real coaches and favourite channels teach, and checks your ideas against it |
-| 📈 **Progress Coordinator** | Each week decides what to keep, level up, simplify, rest or swap |
-| 🗺 **Strategy Coach** | Owns your goal and the long-term roadmap to get there |
-| 🏆 **Tournament Coach** | Calendar, entry deadlines, guides, game plans, debriefs and reflections |
+Some members **learn from you** (you teach them), some **follow your style** (a few choices), and one is **automatic**.
 
-Joining later: Player Scout (learn from a pro you admire), Fitness, Nutrition and Stats. See the [roadmap](ROADMAP.md).
+| Team member | Kind | What they do |
+|---|---|---|
+| 🎾 **Head Coach** | Learns from you | Your front door. Learns from your lesson notes, the videos and links you follow, and what works on court. Brings in the right teammate |
+| 🔍 Coach Analyst | Behind the Head Coach | Keeps your coaches' teaching straight, studies saved links, checks your ideas against it |
+| 🧰 **Team Manager** | Automatic | Interviews you and sets up your team and starter plan |
+| 📓 **Journal Keeper** | Follows your style | Turns messy notes into a clean training diary and spots repeating patterns |
+| 🗺 **Planner** | Follows your style | When and how much: goal, timeline, days a week and intensity |
+| 🏆 **Tournament Coach** | Follows your style | Calendar, entry deadlines, guides, game plans, debriefs and reflections |
+| 📈 **Progress Coordinator** | Automatic | Each week decides what to keep, level up, simplify, rest or swap, on fixed rules you can read |
+
+Joining later: Fitness Coach (learns from your physio notes and gym program), Player Scout, Nutrition and Stats. See the [roadmap](ROADMAP.md).
 
 ## How it works
 

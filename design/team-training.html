@@ -1,0 +1,388 @@
+<title>Training Your Tennis Team</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one reading column (~760px) with wide inserts for the team map and UI mockups; court-line rules as section dividers. */
+:root {
+  --bg: #f3f5f1;          /* hard-court off-white with a green bias */
+  --surface: #ffffff;
+  --ink: #18231b;
+  --muted: #5d6b60;
+  --line: #d9e0d6;
+  --court: #2d6a3e;       /* the app's green */
+  --court-soft: #e3efe4;
+  --ball: #c6d83a;        /* ball yellow, used sparingly */
+  --ball-soft: #f3f7d6;
+  --clay: #b4552f;        /* warnings and guardrails */
+  --clay-soft: #f8e7df;
+  --blue: #2f5f8f;        /* "public material" tag */
+  --blue-soft: #e3ecf5;
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121814; --surface: #1a221c; --ink: #e6ece5; --muted: #9faea2; --line: #2c3a2f;
+  --court: #7cc28f; --court-soft: #1f3325; --ball: #d4e45a; --ball-soft: #2b3118;
+  --clay: #e48a62; --clay-soft: #3a2219; --blue: #8db7e3; --blue-soft: #1c2a38; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121814; --surface: #1a221c; --ink: #e6ece5; --muted: #9faea2; --line: #2c3a2f;
+  --court: #7cc28f; --court-soft: #1f3325; --ball: #d4e45a; --ball-soft: #2b3118;
+  --clay: #e48a62; --clay-soft: #3a2219; --blue: #8db7e3; --blue-soft: #1c2a38; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body); margin: 0; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; }
+.col { max-width: 720px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 6vw, 54px); font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: 28px; font-weight: 800; margin-bottom: 10px; }
+h3 { font-size: 18px; font-weight: 700; }
+p { margin: 0; }
+.eyebrow { font: 500 12px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--court); }
+.lede { font-size: 19px; color: var(--muted); margin-top: 14px; max-width: 640px; }
+section { display: grid; gap: 18px; padding-block: 44px; border-top: 2px solid var(--line); position: relative; }
+section::before { content: ""; position: absolute; left: 0; top: -2px; width: 64px; height: 2px; background: var(--court); }
+.stack { display: grid; gap: 12px; }
+.muted { color: var(--muted); }
+small, .small { font-size: 13px; }
+
+/* Thesis band */
+.thesis { margin-top: 28px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.thesis div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 6px; }
+.thesis b { font-family: var(--f-display); font-size: 20px; }
+@media (max-width: 720px) { .thesis { grid-template-columns: minmax(0, 1fr); } }
+
+/* Team map */
+.map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.lane { border-radius: 14px; padding: 16px; display: grid; gap: 12px; align-content: start; border: 1px solid var(--line); background: var(--surface); }
+.lane > header { display: grid; gap: 4px; }
+.lane > header .tag { font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; }
+.lane.teach > header .tag { color: var(--court); }
+.lane.adjust > header .tag { color: var(--blue); }
+.lane.auto > header .tag { color: var(--muted); }
+.who { border-top: 1px dashed var(--line); padding-top: 10px; display: grid; gap: 4px; }
+.who b { font-family: var(--f-display); font-size: 16px; }
+.who .btnlike { justify-self: start; font: 600 13px/1 var(--f-body); padding: 7px 12px; border-radius: 999px; }
+.teach .btnlike { background: var(--court); color: var(--bg); }
+.adjust .btnlike { background: var(--blue-soft); color: var(--blue); }
+.auto .btnlike { border: 1px solid var(--line); color: var(--muted); }
+.who .new { font: 500 10px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--clay); margin-left: 6px; }
+@media (max-width: 820px) { .map { grid-template-columns: minmax(0, 1fr); } }
+
+/* Evidence ladder */
+.ladder { display: grid; gap: 8px; }
+.rung { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.rung .n { font: 800 18px/1 var(--f-display); color: var(--court); text-align: center; font-variant-numeric: tabular-nums; }
+.rung .badge { white-space: nowrap; }
+@media (max-width: 560px) { .rung { grid-template-columns: 28px minmax(0, 1fr); } .rung .badge { grid-column: 2; justify-self: start; } }
+
+.badge { display: inline-block; font: 600 12px/1 var(--f-body); padding: 5px 9px; border-radius: 999px; }
+.b-coach { background: var(--court-soft); color: var(--court); }
+.b-proven { background: var(--ball-soft); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ball); }
+.b-test { background: var(--surface); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
+.b-pub { background: var(--blue-soft); color: var(--blue); }
+.b-warn { background: var(--clay-soft); color: var(--clay); }
+
+/* Three inputs */
+.inputs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.input { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 10px; align-content: start; }
+.input .say { font-size: 14px; background: var(--bg); border-radius: 10px; padding: 10px 12px; border-left: 3px solid var(--court); }
+.input ol { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.input .lands { font-size: 13px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 8px; }
+@media (max-width: 860px) { .inputs { grid-template-columns: minmax(0, 1fr); } }
+
+/* Mockups */
+.mock { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px; display: grid; gap: 16px; box-shadow: 0 1px 0 var(--line), 0 12px 28px -18px rgba(24,35,27,.35); }
+.mock .bar { display: flex; gap: 12px; align-items: center; }
+.mock .av { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--court-soft); font-size: 20px; flex: none; }
+.mock .bar div { min-width: 0; }
+.mock .bar b { font-family: var(--f-display); font-size: 18px; display: block; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.act { font: 600 14px/1 var(--f-body); padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.act.primary { background: var(--court); color: var(--bg); border-color: var(--court); }
+.kgroup { display: grid; gap: 8px; }
+.kgroup h4 { margin: 0; font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.idea { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: start; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.idea p { font-size: 15px; }
+.idea .src { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+.mock-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 860px) { .mock-grid { grid-template-columns: minmax(0, 1fr); } }
+.setting { display: grid; gap: 8px; }
+.setting label { font-weight: 600; font-size: 14px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13px; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+.chip.on { background: var(--court); color: var(--bg); border-color: var(--court); }
+.diff { font-size: 14px; display: grid; gap: 4px; background: var(--bg); border-radius: 10px; padding: 12px; }
+.diff .was { color: var(--muted); text-decoration: line-through; }
+.guard { border-left: 3px solid var(--clay); background: var(--clay-soft); padding: 10px 12px; border-radius: 0 10px 10px 0; font-size: 14px; }
+
+/* Tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 11px/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td b { font-family: var(--f-display); }
+
+pre.mermaid { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; overflow-x: auto; margin: 0; }
+.decide { display: grid; gap: 10px; }
+.decide div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+.decide b { font-family: var(--f-display); }
+footer { margin-top: 30px; font-size: 13px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header class="col">
+    <p class="eyebrow">Pocket Tennis Team · design proposal · Oct 15, 2026</p>
+    <h1 style="margin-top:12px">Training your tennis team</h1>
+    <p class="lede">Only two team members need real knowledge: the Head Coach and the Fitness Coach. The rest need a few choices, or nothing at all. Players teach with three things they already have: notes from lessons, videos and links they learn from, and what happened on court.</p>
+  </header>
+
+  <div class="thesis">
+    <div><span class="eyebrow">Teach</span><b>2 members</b><span class="muted small">Learn from your lessons, videos and body. They hold the knowledge.</span></div>
+    <div><span class="eyebrow">Adjust</span><b>3 members</b><span class="muted small">A few settings, or just say "make my plan more aggressive".</span></div>
+    <div><span class="eyebrow">Automatic</span><b>1 member</b><span class="muted small">Runs on fixed rules you can read. Nothing to set up.</span></div>
+  </div>
+
+  <section>
+    <div class="col stack">
+      <p class="eyebrow">1 · The problem</p>
+      <h2>"Set up &amp; train" on every card asks too much and explains too little</h2>
+      <p>Today all six cards show the same button. A player can't tell where their effort pays off. Training the Progress Coordinator means nothing: it applies rules. Training the Head Coach means a lot, but the page doesn't say what to bring. Parents and low-tech players need to see one obvious place to teach, and know the rest is handled.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col stack">
+      <p class="eyebrow">2 · The new team map</p>
+      <h2>Three kinds of team member, each with its own button</h2>
+      <p class="muted">The Coach Analyst stops being a separate card. It becomes the engine behind "Teach your Head Coach", so players never have to understand the difference.</p>
+    </div>
+    <div class="map">
+      <div class="lane teach">
+        <header><span class="tag">Teach · needs real material</span><h3>They hold the knowledge</h3></header>
+        <div class="who"><b>🎾 Head Coach</b><span class="small muted">Your coaches' lessons, channels and videos you follow, docs, and what works for you on court. Coach Analyst works behind this page.</span><span class="btnlike">Teach</span></div>
+        <div class="who"><b>💪 Fitness Coach<span class="new">new</span></b><span class="small muted">Physio notes, injury history, your gym or conditioning program, and how your body felt after sessions. Wearable data later.</span><span class="btnlike">Teach</span></div>
+      </div>
+      <div class="lane adjust">
+        <header><span class="tag">Adjust · a few choices</span><h3>They follow your style</h3></header>
+        <div class="who"><b>📓 Journal Keeper</b><span class="small muted">What to pay attention to (technique, tactics, mental, body), how many follow-up questions, tone.</span><span class="btnlike">Adjust</span></div>
+        <div class="who"><b>🗺 Planner</b><span class="small muted">Was "Strategy Coach". Goal, timeline, days a week, and intensity (gentle, steady, aggressive).</span><span class="btnlike">Adjust</span></div>
+        <div class="who"><b>🏆 Tournament Coach</b><span class="small muted">Calendar link, how early to remind you about entries, game plans on or off.</span><span class="btnlike">Adjust</span></div>
+      </div>
+      <div class="lane auto">
+        <header><span class="tag">Automatic · nothing to set up</span><h3>Fixed, readable rules</h3></header>
+        <div class="who"><b>📈 Progress Coordinator</b><span class="small muted">Each week: keep, level up, simplify, rest or swap, based on your numbers. Training it would only weaken the evidence bar.</span><span class="btnlike">See how it decides</span></div>
+      </div>
+    </div>
+    <div class="col"><p class="small muted">Card status changes to match. "Needs you" shows only on a Teach member with nothing to learn from yet. Adjust members show their setting, for example <b>Planner · steady · 4 days a week</b>, so the grid shows how your team is set up at a glance.</p></div>
+  </section>
+
+  <section>
+    <div class="col stack">
+      <p class="eyebrow">3 · Three ways to teach</p>
+      <h2>Bring what you already have</h2>
+      <p>Each input has one button on the Teach page, and can also just be said on Home. "Had a lesson with Priya, she said…" goes to the same place.</p>
+    </div>
+    <div class="inputs">
+      <div class="input">
+        <h3>📝 After a lesson</h3>
+        <p class="say">"Priya said toss more to the right and keep my head up until after contact. Say 'toss right, head up'."</p>
+        <ol>
+          <li>Journal Keeper saves it as a lesson in your diary.</li>
+          <li>Coach Analyst pulls out the cue, what it's for, and the exact words.</li>
+          <li>The Head Coach learns it as <b>taught by Priya</b>.</li>
+          <li>If it's about something you're working on, the new cue replaces the old one this week.</li>
+        </ol>
+        <p class="lands">Strongest evidence. A real coach's lesson for you beats everything else.</p>
+      </div>
+      <div class="input">
+        <h3>▶️ A video or link</h3>
+        <p class="say">Paste a YouTube video or channel, an article, a Loom, or a Google Doc.</p>
+        <ol>
+          <li>Coach Analyst studies what's public about it: pages, docs, video titles and descriptions. <span class="muted">(Shipped in v0.2.5.)</span></li>
+          <li>Study notes list the main ideas, how they fit your plan, and what to watch first.</li>
+          <li>The Head Coach asks: "What's the one thing you took from it?"</li>
+          <li>Your takeaway becomes an idea <b>to test</b> next practice.</li>
+        </ol>
+        <p class="lands">Public material never overrides your coach. A clash gets flagged for your next lesson.</p>
+      </div>
+      <div class="input">
+        <h3>🎾 What happened on court</h3>
+        <p class="say">"Tried the early split step today: seven of ten returns back deep. It felt rushed on the backhand side."</p>
+        <ol>
+          <li>Journal Keeper logs it with the numbers.</li>
+          <li>The idea being tested gets a result: worked, partly, or didn't.</li>
+          <li>Two good sessions with numbers make it <b>proven for you</b>. A clear miss sends it back with a question for your coach.</li>
+        </ol>
+        <p class="lands">Court results decide what sticks. This is how the team learns <i>your</i> tennis, not tennis in general.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col stack">
+      <p class="eyebrow">4 · How the Head Coach weighs what it knows</p>
+      <h2>Every idea carries a label that says where it came from</h2>
+      <p>Players see plain labels. The files keep the formal levels (DIRECT, PLAYER, PUB) that already exist in the evidence rules.</p>
+    </div>
+    <div class="ladder col">
+      <div class="rung"><span class="n">1</span><span><b>Taught by your coach</b><br><span class="small muted">From a lesson, in their words. Can change this week's cue.</span></span><span class="badge b-coach">Taught by Priya</span></div>
+      <div class="rung"><span class="n">2</span><span><b>Proven on court</b><br><span class="small muted">You tested it and the numbers held up twice. Stays in your cues.</span></span><span class="badge b-proven">Proven for you</span></div>
+      <div class="rung"><span class="n">3</span><span><b>Testing</b><br><span class="small muted">Your takeaway from a video, or a coach idea applied to a new shot. Gets a small test.</span></span><span class="badge b-test">Testing · 1 of 2</span></div>
+      <div class="rung"><span class="n">4</span><span><b>From public material</b><br><span class="small muted">Study notes from videos and articles. Background reading. Never changes the plan alone.</span></span><span class="badge b-pub">From Olivari videos</span></div>
+      <div class="rung"><span class="n">5</span><span><b>General tennis knowledge</b><br><span class="small muted">Used only to fill gaps, and always said as general advice.</span></span><span class="badge b-test">General tip</span></div>
+    </div>
+    <pre class="mermaid">
+flowchart LR
+  L["📝 Lesson note"] --> T1["Taught by your coach"]
+  V["▶️ Video or link"] --> S["Study notes<br/>(public text only)"]
+  S --> Q{"What did you<br/>take from it?"}
+  Q --> T3["Testing"]
+  T1 --> P["This week's cues<br/>(max 3)"]
+  T3 --> C["🎾 On court:<br/>numbers"]
+  C -->|"worked twice"| T2["Proven for you"]
+  C -->|"didn't work"| A["Question for<br/>your next lesson"]
+  T2 --> P
+    </pre>
+  </section>
+
+  <section>
+    <div class="col stack">
+      <p class="eyebrow">5 · The Teach page</p>
+      <h2>"What I know", not a settings form</h2>
+      <p>The Head Coach page opens on its knowledge, grouped by label, with the three teach buttons on top. Every idea has a way to correct it.</p>
+    </div>
+    <div class="mock">
+      <div class="bar"><span class="av">🎾</span><div><b>Head Coach</b><span class="small muted">Knows 9 things about your tennis · 2 being tested</span></div></div>
+      <div class="actions"><span class="act primary">📝 After a lesson</span><span class="act">▶️ Add a video or link</span><span class="act">🎾 What happened on court</span></div>
+      <div class="kgroup">
+        <h4>From your coaches</h4>
+        <div class="idea"><p>Toss a little more to the right; head stays up until after contact.</p><span class="badge b-coach">Taught by Priya</span><span class="src">Lesson, Oct 9 · cue "toss right, head up" · in this week's plan</span></div>
+      </div>
+      <div class="kgroup">
+        <h4>Proven for you</h4>
+        <div class="idea"><p>Split step as they hit gets more returns back deep.</p><span class="badge b-proven">Proven for you</span><span class="src">7/10 on Oct 11, 8/10 on Oct 14 · from your coach's footwork cue</span></div>
+      </div>
+      <div class="kgroup">
+        <h4>Testing</h4>
+        <div class="idea"><p>Load the outside leg early on wide forehands.</p><span class="badge b-test">Testing · 1 of 2</span><span class="src">Your takeaway from an Olivari footwork video · test it Thursday: count balls you reach balanced</span></div>
+      </div>
+      <div class="kgroup">
+        <h4>Background reading</h4>
+        <div class="idea"><p>Fix the mechanics first; footwork is the foundation; learn in levels.</p><span class="badge b-pub">From Olivari videos</span><span class="src">Study notes · public descriptions, not the videos themselves · Open notes</span></div>
+      </div>
+      <p class="small muted">Each idea opens to: <b>That's not right</b> (remove or correct it), <b>Test it next practice</b>, or <b>Ask my coach about this</b> (adds it to your next lesson's questions).</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col stack">
+      <p class="eyebrow">6 · Adjust pages</p>
+      <h2>Pick a style, or just say it</h2>
+      <p>Each Adjust member has three or four choices with sensible defaults already set. Typing or saying a change works too. The member shows what will change before saving.</p>
+    </div>
+    <div class="mock-grid">
+      <div class="mock">
+        <div class="bar"><span class="av">🗺</span><div><b>Planner</b><span class="small muted">Plans when and how much. The Head Coach decides what.</span></div></div>
+        <div class="setting"><label>Intensity</label><div class="chips"><span class="chip">Gentle</span><span class="chip on">Steady</span><span class="chip">Aggressive</span></div></div>
+        <div class="setting"><label>Tennis days a week</label><div class="chips"><span class="chip">2</span><span class="chip">3</span><span class="chip on">4</span><span class="chip">5+</span></div></div>
+        <div class="setting"><label>Goal and timeline</label><div class="chips"><span class="chip on">Play a tournament · by March</span><span class="chip">Change</span></div></div>
+        <div class="setting"><label>You said: "Make my plan more aggressive"</label>
+          <div class="diff">
+            <span><span class="was">Level up after 2 good sessions</span> → level up after 1 strong session</span>
+            <span><span class="was">Tournament by March</span> → first tournament in January</span>
+            <span>Fitness block: 2 → 3 short sessions a week</span>
+          </div>
+          <div class="actions"><span class="act primary">Use this</span><span class="act">Keep steady</span></div>
+        </div>
+        <div class="guard">Aggressive can raise pace and volume. It can never go past 3 tennis focuses and 1 fitness block, and pain still means rest. Junior players stay at Steady at most.</div>
+      </div>
+      <div class="stack">
+        <div class="mock">
+          <div class="bar"><span class="av">📓</span><div><b>Journal Keeper</b><span class="small muted">How your notes get written up</span></div></div>
+          <div class="setting"><label>Pay most attention to</label><div class="chips"><span class="chip on">Technique</span><span class="chip">Tactics</span><span class="chip on">Mental side</span><span class="chip">Body</span></div></div>
+          <div class="setting"><label>After a note</label><div class="chips"><span class="chip">Just save it</span><span class="chip on">Ask me one follow-up</span><span class="chip">Dig deeper</span></div></div>
+          <div class="setting"><label>Tone</label><div class="chips"><span class="chip on">Short and direct</span><span class="chip">Encouraging</span></div></div>
+        </div>
+        <div class="mock">
+          <div class="bar"><span class="av">🏆</span><div><b>Tournament Coach</b><span class="small muted">Events, entries, game plans</span></div></div>
+          <div class="setting"><label>Remind me about entry deadlines</label><div class="chips"><span class="chip">1 week</span><span class="chip on">2 weeks</span><span class="chip">1 month</span></div></div>
+          <div class="setting"><label>Match game plans</label><div class="chips"><span class="chip on">Before every match</span><span class="chip">Tournaments only</span></div></div>
+        </div>
+        <div class="mock">
+          <div class="bar"><span class="av">📈</span><div><b>Progress Coordinator</b><span class="small muted">Automatic · weekly review on Sundays</span></div></div>
+          <p class="small">Shows its rules in plain words and the last 4 weeks of decisions with the numbers behind each. Nothing to set. The review day lives in Planner settings.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col stack">
+      <p class="eyebrow">7 · Keeping Planner and Head Coach in sync</p>
+      <h2>One plan, two owners, no silent disagreements</h2>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Question</th><th>Owner</th><th>Reads</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>What to work on, and why</td><td><b>Head Coach</b></td><td>What it knows (taught, proven, testing) and your journal patterns</td><td>"Returns first: they cost you the most points."</td></tr>
+        <tr><td>How much, how often, by when</td><td><b>Planner</b></td><td>Intensity, days a week, goal date, upcoming tournaments, health flags</td><td>"4 days this week, lighter before Sunday's match."</td></tr>
+        <tr><td>Keep, level up or simplify</td><td><b>Progress Coordinator</b></td><td>The numbers from your notes, against each focus's target</td><td>"7/10 twice → level up the target to 8/10."</td></tr>
+        <tr><td>Health</td><td><b>Fitness Coach</b>, always first</td><td>Body checks, physio notes, injury history</td><td>"Heel sore → low impact only until the physio check."</td></tr>
+      </tbody>
+    </table></div>
+    <p class="col small muted">All four write to the same plan file. When the Planner's intensity and the Head Coach's focus pull in different directions, the plan keeps the safer option and shows one line explaining why.</p>
+  </section>
+
+  <section>
+    <div class="col stack">
+      <p class="eyebrow">8 · Fitness Coach (new)</p>
+      <h2>The second member that needs real data</h2>
+      <p>Same Teach page pattern, with health inputs instead of tennis ones:</p>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Teach with</th><th>What it does with it</th><th>Guardrail</th></tr></thead>
+      <tbody>
+        <tr><td>Physio or doctor notes</td><td>Sets limits on the plan (no jumping, shoulder load cap)</td><td>Outranks everything, including the Planner's intensity</td></tr>
+        <tr><td>Injury history</td><td>Watches for repeats and adds warm-ups that fit</td><td>Never diagnoses. Says "not medical advice"</td></tr>
+        <tr><td>Your gym or conditioning program</td><td>Fits the 1 fitness block around tennis load</td><td>One fitness block a week in the plan, at most</td></tr>
+        <tr><td>How you felt after sessions</td><td>Tracks soreness and tightness trends</td><td>Tightness means watch it, pain means pause, limping means stop</td></tr>
+        <tr><td>Wearable data (later)</td><td>Load and sleep trends</td><td>Opt-in only; stays in your folder</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="col stack">
+      <p class="eyebrow">9 · What it takes to build</p>
+      <h2>Mostly existing pieces, rearranged</h2>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Piece</th><th>Status today</th><th>Work</th></tr></thead>
+      <tbody>
+        <tr><td>Lesson notes → coach cues</td><td>Works (coach-analysis Mode A, rule 6 cue change)</td><td>Teach button and labels in the app</td></tr>
+        <tr><td>Video or link study</td><td>Shipped in v0.2.5</td><td>Show it inside the Head Coach's knowledge</td></tr>
+        <tr><td>On-court results test ideas</td><td>Partly: the journal logs numbers, but ideas don't track tests</td><td>"Testing → proven" status on hypotheses, read by the weekly review</td></tr>
+        <tr><td>Adjust settings</td><td>New</td><td>One small settings file the skills read; three Adjust pages; "say it" goes through the Head Coach</td></tr>
+        <tr><td>Card grid</td><td>Same button on all cards</td><td>Teach, Adjust or See how it decides; Coach Analyst folds into the Head Coach</td></tr>
+        <tr><td>Fitness Coach</td><td>Not built</td><td>New skill and Teach page; health rules already exist in TEAM.md</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="col stack">
+      <p class="eyebrow">10 · Decisions needed</p>
+      <h2>Three calls before building</h2>
+    </div>
+    <div class="decide col">
+      <div><b>Fold the Coach Analyst into the Head Coach?</b><span class="muted">Recommended. Players teach "my coach", and the analyst keeps working behind the scenes, credited in the activity steps.</span></div>
+      <div><b>Rename Strategy Coach to Planner?</b><span class="muted">Recommended. It says what it does: when and how much.</span></div>
+      <div><b>Build order</b><span class="muted">Recommended: (1) card grid with Teach / Adjust / Automatic; (2) Head Coach "What I know" page with the testing → proven loop; (3) Planner and Journal Keeper settings; (4) Fitness Coach.</span></div>
+    </div>
+  </section>
+
+  <footer>Pocket Tennis Team · Built by Andy(Chengyuan) Ke · Proposal based on v0.2.5. Links are studied from public text only: no video, audio, captions or transcripts are downloaded.</footer>
+</div>
