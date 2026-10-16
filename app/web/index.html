@@ -32,6 +32,17 @@
          font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", sans-serif; }
   button { font: inherit; color: inherit; }
   .app { display: flex; flex-direction: column; height: 100%; }
+  /* Demo-only label: replies are scripted, no AI is connected */
+  .demo-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 70; height: 30px; padding: 0 12px; padding-top: env(safe-area-inset-top, 0px);
+              display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12.5px; line-height: 1.2;
+              background: var(--ink); color: var(--bg); text-align: center; white-space: nowrap; overflow: hidden; }
+  .demo-bar b { font-weight: 700; letter-spacing: .02em; }
+  .demo-bar a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+  .demo-bar .long { opacity: .85; }
+  body.is-demo .app { padding-top: 30px; }
+  body.is-demo .flow, body.is-demo .panel { top: 30px; }
+  @media (max-width: 520px) { .demo-bar .long { display: none; } }
+
 
   /* Header + tabs */
   header { background: var(--surface); border-bottom: 1px solid var(--line); }
@@ -4621,6 +4632,13 @@ function routeTextDemo(t) {
 var BOOT = window.TT_BOOT || null;
 var DEMO = !BOOT || /[?&]demo=1\b/.test(location.search);
 var REAL = !DEMO;
+if (DEMO) {   // tell visitors plainly: this is a scripted demo, not the AI coach
+  document.body.classList.add("is-demo");
+  var _db = document.createElement("div"); _db.className = "demo-bar"; _db.setAttribute("role", "note");
+  _db.innerHTML = '<b>Demo</b><span>Sample replies, no AI connected.</span><span class="long">The real coach runs on your Claude account.</span>' +
+    '<a href="https://github.com/DayDreamingSheep/tennis-team" target="_blank" rel="noopener noreferrer">Get it</a>';
+  document.body.insertBefore(_db, document.body.firstChild);
+}
 if (REAL && BOOT.today) TODAY = BOOT.today;
 CAL.y = dOf(TODAY).getFullYear(); CAL.m = dOf(TODAY).getMonth();
 
