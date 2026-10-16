@@ -705,6 +705,11 @@
   .iv-tags { min-height: 20px; } .iv-tags.hidden { display: block; visibility: hidden; }
   #ivHeard { display: none !important; }
   .iv-comp.busy { opacity: .55; pointer-events: none; }
+  .iv-comp.away { display: none; }
+  .iv-comp.enter { animation: ivIn .22s ease-out; }
+  @keyframes ivIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .iv-chips .grp-next { outline: 2px dashed var(--accent); outline-offset: 3px; border-radius: 999px; }
+  @media (prefers-reduced-motion: reduce) { .iv-comp.enter { animation: none; } }
   #feed3 > * { scroll-margin-top: 80px; }
   .strip { box-shadow: 0 6px 10px -8px rgba(0,0,0,.25); }
   #dev .pill { width: 8px !important; height: 36px !important; }
@@ -3950,7 +3955,7 @@ function ivAsk() {
 }
 function drawComposer(q) {
   var c = $("ivComp"); OB.iv.tags = [];
-  c.classList.remove("busy");
+  c.classList.remove("busy", "away"); c.classList.remove("enter"); void c.offsetWidth; c.classList.add("enter");
   c.innerHTML = '<div class="iv-row"><button class="mic" id="ivMic" type="button" aria-label="Tap to talk">' + MIC_SVG + '</button><textarea class="input" id="ivText" rows="4" placeholder="Talk or type your answer…"></textarea></div>' +
     '<div class="heard hidden" id="ivHeard"></div>' +
     '<div class="iv-tags hidden" id="ivTags"></div>' +
@@ -3979,17 +3984,30 @@ function drawComposer(q) {
     b.classList.toggle("on", i < 0); paintTags();
     autoSendSoon();
   }; });
-  // A tapped pill IS the answer: send it and move on after a short beat (time to tap a second pill,
-  // e.g. "Move up a level" + "Within a year"). Not for multi-pick questions (days), and not while typing.
+  // A tapped pill IS the answer and sends at once. Questions with two kinds of pill (goal + "by when",
+  // years + level) send as soon as both kinds are picked; Send skips the second. Days (multi-pick) and
+  // typed answers wait for Send.
   var multi = (q.chips || []).some(function (x) { return DAYCHIPS.indexOf(x) >= 0; }), autoT = null;
-  function cancelAuto() { clearTimeout(autoT); autoT = null; }
+  var TIME = /\b(years?|months?|weeks?)\b/i;
+  function kind(v) { return TIME.test(v) ? "time" : "what"; }
+  var kinds = {}; (q.chips || []).forEach(function (x) { if (!/^Send: /.test(x)) kinds[kind(ivFill(x))] = true; });
+  var twoKinds = kinds.time && kinds.what;
+  function cancelAuto() { clearTimeout(autoT); autoT = null; c.querySelectorAll(".grp-next").forEach(function (x) { x.classList.remove("grp-next"); }); }
   function autoSendSoon() {
     cancelAuto();
     if (!OB.iv.tags.length) { $("ivHint").textContent = "Tap the mic, or type. Tap a pill to answer."; return; }
     if (multi) { $("ivHint").textContent = "Tap all that apply, then Send."; return; }
     if (ta.value.trim()) { $("ivHint").textContent = "Added. Tap Send when you're ready."; return; }
-    $("ivHint").textContent = "Got it. Sending… tap another pill to add it.";
-    autoT = setTimeout(function () { autoT = null; if (OB.iv.tags.length && !ta.value.trim()) ivSend(q); }, 1100);
+    if (twoKinds) {
+      var have = {}; OB.iv.tags.forEach(function (t) { have[kind(t)] = true; });
+      if (!(have.time && have.what)) {
+        var need = have.time ? "what" : "time";
+        c.querySelectorAll("[data-ivc]").forEach(function (b) { var v = b.getAttribute("data-ivc"); if (!/^Send: /.test(v) && kind(v) === need) b.classList.add("grp-next"); });
+        $("ivHint").textContent = need === "time" ? (q.k === "goal" ? "And by when? Tap one, or Send to skip." : "And how long have you played? Tap one, or Send.") : (q.k === "level" ? "And your level? Tap one, or Send." : "Tap one more, or Send.");
+        return;
+      }
+    }
+    ivSend(q);
   }
   if (multi) $("ivHint").textContent = "Tap all the days that apply, then Send.";
   $("ivSend").onclick = function () { cancelAuto(); ivSend(q); };
@@ -3998,7 +4016,7 @@ function drawComposer(q) {
   $("ivSkipQ").addEventListener("click", cancelAuto);
   ta.oninput = grow;
   ta.onkeydown = function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ivSend(q); } };
-  $("ivSkipQ").onclick = function () { stopAll(); OB.iv.ans[q.k] = ""; ivMsg("me", "(skipped)"); OB.iv.i++; ivAsk(); };
+  $("ivSkipQ").onclick = function () { stopAll(); $("ivComp").classList.add("away"); OB.iv.ans[q.k] = ""; ivMsg("me", "(skipped)"); OB.iv.i++; ivAsk(); };
   grow();
   if (window.matchMedia("(min-width: 900px)").matches) ta.focus();
 }
@@ -4006,7 +4024,7 @@ function ivSend(q) {
   stopAll();
   var text = ($("ivText").value || "").trim(), tags = (OB.iv.tags || []).slice();
   if (!text && !tags.length) { toast("Say or type an answer, tap a chip, or Skip question."); $("ivText").focus(); return; }   // check first, so nothing gets locked
-  $("ivComp").querySelectorAll("button,textarea").forEach(function (b) { b.disabled = true; }); $("ivComp").classList.add("busy");
+  $("ivComp").querySelectorAll("button,textarea").forEach(function (b) { b.disabled = true; }); $("ivComp").classList.add("away");
   var v = tags.concat(text ? [text] : []).join(" · ");
   OB.iv.tagsBy = OB.iv.tagsBy || {}; OB.iv.textBy = OB.iv.textBy || {};
   OB.iv.tagsBy[q.k] = tags; OB.iv.textBy[q.k] = text; OB.iv.ans[q.k] = v;
