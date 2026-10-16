@@ -3,7 +3,7 @@
   "owner": {
     "name": "Andy(Chengyuan) Ke"
   },
-  "description": "Tennis Team: a file-first professional tennis coaching team for Claude.",
+  "description": "Pocket Tennis Team: a file-first professional tennis coaching team for Claude.",
   "plugins": [
     {
       "name": "tennis-team",

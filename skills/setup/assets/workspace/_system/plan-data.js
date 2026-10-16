@@ -1,5 +1,5 @@
 /*
-  Data for "My Tennis Plan.html". The Tennis Team rewrites this whole file after each update.
+  Data for "My Tennis Plan.html". The Pocket Tennis Team rewrites this whole file after each update.
   Rules: plain, friendly language. No IDs (NOTE-, PAT-, DR-), file names, or jargon such as P0 or "validate".
   player: "" if the name is unknown. Dates like "Oct 19".
   status_kind: new | keep | level-up | simplify | rest | swap | test

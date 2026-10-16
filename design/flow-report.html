@@ -1,4 +1,4 @@
-<title>Tennis Team Blueprint</title>
+<title>Pocket Tennis Team Blueprint</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -168,7 +168,7 @@ html { scroll-behavior: smooth; }
 
 <div class="wrap">
 <nav class="toc" aria-label="Report sections">
-  <div class="brand"><span class="dot" aria-hidden="true"></span>Tennis Team</div>
+  <div class="brand"><span class="dot" aria-hidden="true"></span>Pocket Tennis Team</div>
   <div class="grp">Product</div>
   <ol>
     <li><a href="#overview"><span>01</span>At a glance</a></li>
@@ -204,7 +204,7 @@ html { scroll-behavior: smooth; }
 <header class="mast">
   <div class="eyebrow">Flow and structure report · v3 tested · Oct 15, 2026</div>
   <h1>A whole tennis team, <em>one conversation away</em></h1>
-  <p class="lede">How the Tennis Team plugin is put together and every path a player or parent walks through it: from the first launch, through the coaching interview and daily training, to tournaments and the weekly review.</p>
+  <p class="lede">How the Pocket Tennis Team plugin is put together and every path a player or parent walks through it: from the first launch, through the coaching interview and daily training, to tournaments and the weekly review.</p>
   <div class="meta">
     <span><b>Status:</b> v0.1 plugin built · v2 and v3 prototypes tested with personas · v0.2 build next</span>
     <span><b>Personas:</b> Sam (adult) · Mei, parent of Alex (14)</span>
@@ -281,7 +281,7 @@ html { scroll-behavior: smooth; }
   <div class="sec-head"><div class="sec-no">03</div><h2>System structure</h2><p class="sec-sub">Everything runs on the player's own computer. The workspace folder is the memory; conversations are disposable.</p></div>
   <div class="diagram tall"><pre class="mermaid">
 flowchart LR
-  P["Player or parent"] -->|"talks or types"| APP["Tennis Team app<br/>local web page"]
+  P["Player or parent"] -->|"talks or types"| APP["Pocket Tennis Team app<br/>local web page"]
   APP -->|"speech to text"| STT["Browser recognition<br/>or on-device Whisper"]
   APP -->|"instant actions:<br/>answers, ticks, notes"| SRV["voice_server.py<br/>127.0.0.1 + secret token"]
   SRV -->|"one job per message"| CL["claude -p<br/>with the plugin"]
@@ -378,7 +378,7 @@ flowchart TD
   C -->|"yes"| D{"Server already<br/>running?"}
   D -->|"yes"| Z
   D -->|"no"| H["Start server, open Home"]
-  L["Double-click<br/>Open Tennis Team"] --> H
+  L["Double-click<br/>Open Pocket Tennis Team"] --> H
   </pre></div>
   <div class="grid g2">
     <div class="card"><h4>Verified platform facts</h4><ul class="clean"><li>Plugin <code>hooks/hooks.json</code> with an async SessionStart hook runs in the CLI, the desktop Code tab and Cowork.</li><li>No install-time hook: the app first opens at the first session after install.</li><li>Paths available: <code>CLAUDE_PLUGIN_ROOT</code>, <code>CLAUDE_PLUGIN_DATA</code>, <code>CLAUDE_PROJECT_DIR</code>.</li></ul></div>
@@ -462,7 +462,7 @@ sequenceDiagram
   <div class="sec-head"><div class="sec-no">09</div><h2>Conversation-first Home</h2><p class="sec-sub">The player opens the app to their coach, not a menu. Tasks become suggestions; the plan stays one tap away with its reasons.</p></div>
   <div class="wire-wrap">
     <div class="phone" role="img" aria-label="Phone wireframe of the conversation-first Home">
-      <div class="ph-head"><div><b>Jordan's Tennis Team</b><small>4.0 → 4.5</small></div><div class="stack"><i style="background:#24563a"></i><i style="background:#2b5f9e"></i><i style="background:#b5532a"></i><i style="background:#7a4fb5"></i></div></div>
+      <div class="ph-head"><div><b>Jordan's Pocket Tennis Team</b><small>4.0 → 4.5</small></div><div class="stack"><i style="background:#24563a"></i><i style="background:#2b5f9e"></i><i style="background:#b5532a"></i><i style="background:#7a4fb5"></i></div></div>
       <div class="ph-strip">📍 Today: Practice · <b>"Short swing, deep middle"</b><u>Why?</u></div>
       <div class="ph-feed">
         <div class="bub"><div class="by">Head Coach with Progress Coordinator</div>Here's your starter plan. Returns first, because you said they cost you the most points. <span class="why">Why?</span></div>

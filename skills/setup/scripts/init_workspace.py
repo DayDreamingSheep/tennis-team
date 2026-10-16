@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create (or repair) a Tennis Team workspace from the bundled templates.
+"""Create (or repair) a Pocket Tennis Team workspace from the bundled templates.
 
 Copies skills/setup/assets/workspace/ into the target folder, replacing {{DATE}}
 with today's date. Existing files are never overwritten. Standard library only.

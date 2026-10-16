@@ -1,4 +1,4 @@
-"""Voice engines for the Tennis Team app (contract §11). Standard library only.
+"""Voice engines for the Pocket Tennis Team app (contract §11). Standard library only.
 
 - natural: Kokoro on-device. A one-time install into <plugin data>/voice/ (venv + model files),
   then a long-lived tts_worker.py process.

@@ -1,4 +1,4 @@
-# Tennis Team: Design Brief v1
+# Pocket Tennis Team: Design Brief v1
 
 **Author:** Product design · **Date:** 2026-10-15 · **Status:** Draft for product owner review
 **Scope:** personas, tasks, features, launch + onboarding, task-first conversation, IA, roadmap. No production code.
@@ -174,7 +174,7 @@ Use an **async SessionStart hook (matcher `startup` only)** as the primary door,
 **Doors compared**
 
 - **A. Hook.** The only door that needs zero typing. Its costs: the first run may open in an unrelated folder, and it can't ask first. **Primary.**
-- **B. Double-click `Open Tennis Team.command` / `.bat`.** Setup writes it into the workspace. It works without opening Claude and can be pinned to the Dock. It needs the `claude` CLI on PATH, and Gatekeeper may warn once. **Daily backup.**
+- **B. Double-click `Open Pocket Tennis Team.command` / `.bat`.** Setup writes it into the workspace. It works without opening Claude and can be pinned to the Dock. It needs the `claude` CLI on PATH, and Gatekeeper may warn once. **Daily backup.**
 - **C. `/tennis`.** Reliable, but requires typing. **Fallback only;** it's mentioned once in Team settings.
 
 **Where does the workspace go if the first run starts in an unrelated folder?** Welcome decides, not the hook:
@@ -183,7 +183,7 @@ Use an **async SessionStart hook (matcher `startup` only)** as the primary door,
 - The default is `Documents/Tennis`. If iCloud Drive exists, the default is `iCloud Drive/Tennis`, labeled "lets you add voice memos from your phone".
 - If the current folder is empty or tennis-named, Welcome also offers "Use this folder".
 
-`.onboarded` is written when onboarding finishes or is skipped. The final screen says: *"Next time, just start Claude in your **Tennis** folder, or double-click **Open Tennis Team** inside it."*
+`.onboarded` is written when onboarding finishes or is skipped. The final screen says: *"Next time, just start Claude in your **Tennis** folder, or double-click **Open Pocket Tennis Team** inside it."*
 
 **Opt-out.** Welcome has a small "Don't open this automatically" link. Team → App settings has a switch, "Open automatically when I start Claude in my tennis folder". Both write `no-autoopen`.
 
@@ -208,7 +208,7 @@ flowchart TD
   C -- yes --> D{Server already running?}
   D -- yes --> Z
   D -- no --> H[Async: start server<br/>open Home]
-  L[Double-click 'Open Tennis Team'] --> H
+  L[Double-click 'Open Pocket Tennis Team'] --> H
   M["/tennis"] --> H
 ```
 

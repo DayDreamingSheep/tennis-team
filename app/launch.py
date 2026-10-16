@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Decide whether to start the Tennis Team app and open it (contract §5).
+"""Decide whether to start the Pocket Tennis Team app and open it (contract §5).
 
 Called by the plugin's SessionStart hook (async) with CLAUDE_PROJECT_DIR set, by the
-`open` skill (`--open`), and by the "Open Tennis Team" launcher in the workspace.
+`open` skill (`--open`), and by the "Open Pocket Tennis Team" launcher in the workspace.
 Standard library only. Must return quickly and print nothing in hook mode.
 """
 
@@ -47,7 +47,7 @@ def find_workspace(start):
 
 
 def alive(info):
-    """True when server.json points at a running Tennis Team server."""
+    """True when server.json points at a running Pocket Tennis Team server."""
     if not info or not info.get("pid") or not info.get("port"):
         return False
     try:
@@ -118,7 +118,7 @@ def main():
         time.sleep(0.3)
     start(data, workspace, here, open_browser=True)
     if args.open:
-        print("Opening Tennis Team…")
+        print("Opening Pocket Tennis Team…")
 
 
 if __name__ == "__main__":

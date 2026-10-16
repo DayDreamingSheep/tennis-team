@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tennis Team app server (v0.2).
+"""Pocket Tennis Team app server (v0.2).
 
 Serves the app page on 127.0.0.1 behind a secret token, reads and patches the
 player's workspace, and runs AI jobs (`claude -p` with this plugin) one at a
@@ -44,7 +44,7 @@ ALLOWED_TOOLS = "Read Write Edit Glob Grep Skill"
 MAX_BODY = 2_000_000
 
 APP_MODE = (
-    "APP MODE: You are answering inside the Tennis Team app. The first line of the message is "
+    "APP MODE: You are answering inside the Pocket Tennis Team app. The first line of the message is "
     "'[app] kind=<kind> mode=<adult|parent> today=<YYYY-MM-DD>'; an optional '[fields]' line carries structured "
     "answers; the rest is the player's (or parent's) own words, often from speech-to-text, so repair obvious "
     "mishearings of tennis words and names. Use the tennis-team coach skill for every message and follow TEAM.md. "
@@ -58,7 +58,7 @@ APP_MODE = (
 )
 
 FAST_MODE = (
-    "FAST REPLY MODE for the Tennis Team app. Do NOT edit files and do NOT use skills; your teammates update the "
+    "FAST REPLY MODE for the Pocket Tennis Team app. Do NOT edit files and do NOT use skills; your teammates update the "
     "journal and plan right after you. Read _system/state.json first (the player's current plan, flags, events, "
     "tournaments, coach); read TEAM.md only if you need a rule. The message starts with '[app] kind=... mode=... "
     "today=...', may have '[fields]' (structured answers) and '[recent]' (the last messages), then the player's words "
@@ -80,7 +80,7 @@ FAST_MODE = (
     "team-manager, journal-keeper, coach-analyst, progress-coordinator, strategy-coach, tournament-coach."
 )
 BOOK_MODE = (
-    "BOOKKEEPING MODE for the Tennis Team app. The player has ALREADY been answered; the '[replied]' line holds that "
+    "BOOKKEEPING MODE for the Pocket Tennis Team app. The player has ALREADY been answered; the '[replied]' line holds that "
     "reply and its next steps. Do the team's full work for this message with the tennis-team coach skill and TEAM.md: "
     "journal it, update patterns, decisions, flags, events, tournaments, coach notes, next steps (use the replied next "
     "steps), _system/state.json and _system/plan-data.js, so the app matches what the player was told. For kind=source, "
@@ -332,9 +332,9 @@ class App:
         write_json(self.data / "workspaces.json", w)
 
     def write_launcher(self):
-        """Double-clickable 'Open Tennis Team.command' inside the workspace (macOS)."""
+        """Double-clickable 'Open Pocket Tennis Team.command' inside the workspace (macOS)."""
         try:
-            f = self.ws("Open Tennis Team.command")
+            f = self.ws("Open Pocket Tennis Team.command")
             f.write_text('#!/bin/bash\ncd "$(dirname "$0")"\npython3 "%s" --open --dir "$(pwd)"\n' % (APP_DIR / "launch.py"), encoding="utf-8")
             f.chmod(0o755)
         except OSError:
@@ -706,10 +706,10 @@ def make_handler(app):
             if u.path == "/api/ping":
                 return self._send(200, {"ok": True})
             if not self._ok(q):
-                return self._send(403, "Open Tennis Team from Claude or the launcher in your Tennis folder.", "text/plain")
+                return self._send(403, "Open Pocket Tennis Team from Claude or the launcher in your Tennis folder.", "text/plain")
             if u.path == "/":
                 if not PAGE.exists():
-                    return self._send(503, "The Tennis Team app page is missing. Reinstall the plugin.", "text/plain")
+                    return self._send(503, "The Pocket Tennis Team app page is missing. Reinstall the plugin.", "text/plain")
                 html = PAGE.read_text(encoding="utf-8")
                 boot = "<script>window.TT_BOOT = " + json.dumps(app.boot()).replace("</", "<\\/") + ";</script>"
                 i = html.find("<script")
@@ -813,7 +813,7 @@ def make_handler(app):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Tennis Team app server")
+    ap = argparse.ArgumentParser(description="Pocket Tennis Team app server")
     ap.add_argument("--workspace")
     ap.add_argument("--here")
     ap.add_argument("--port", type=int, default=8787)

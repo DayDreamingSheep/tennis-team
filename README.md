@@ -1,7 +1,9 @@
-# 🎾 Tennis Team
+# 🎾 Pocket Tennis Team
 
 **A whole professional tennis team behind every player: a Head Coach you can talk to, backed by six specialists, running on Claude.**
 
+> **New name:** Pocket Tennis Team (formerly Tennis Team). The plugin ID, repo and install commands stay `tennis-team`.
+>
 > **v0.2 Preview.** Early version, built and tested end to end, with some rough edges. Feedback is very welcome.
 
 After a practice or match, just talk. Your Head Coach listens, the team remembers everything, spots your patterns, and keeps a small, evidence-based plan: at most three things to work on each week, plus one fitness block. Every item comes with a **Why?** that quotes your own words.
@@ -12,7 +14,7 @@ After a practice or match, just talk. Your Head Coach listens, the team remember
 
 ## Why I built it
 
-Club and junior players get advice from everywhere: lessons, YouTube, teammates, parents. Almost none of it is remembered, connected or turned into a plan. A pro player has a coach, an analyst, a fitness coach and someone tracking every match. Tennis Team gives an everyday player the same structure. It's voice-first for people who'd never open a spreadsheet, and parent-operated for junior players.
+Club and junior players get advice from everywhere: lessons, YouTube, teammates, parents. Almost none of it is remembered, connected or turned into a plan. A pro player has a coach, an analyst, a fitness coach and someone tracking every match. Pocket Tennis Team gives an everyday player the same structure. It's voice-first for people who'd never open a spreadsheet, and parent-operated for junior players.
 
 ## Highlights
 
@@ -42,7 +44,7 @@ Joining later: Player Scout (learn from a pro you admire), Fitness, Nutrition an
 
 ```mermaid
 flowchart LR
-  P["Player or parent<br/>(voice or text)"] --> APP["Tennis Team app<br/>local web page"]
+  P["Player or parent<br/>(voice or text)"] --> APP["Pocket Tennis Team app<br/>local web page"]
   APP --> SRV["Local server<br/>127.0.0.1 + secret token"]
   SRV -->|"1. fast reply, read-only (~20 s)"| FAST["Claude: Head Coach"]
   SRV -->|"2. background bookkeeping"| TEAM["Claude + 7 skills"]
@@ -86,7 +88,7 @@ Then start Claude. The app opens by itself:
 2. Have a 2-minute interview with your Head Coach.
 3. Talk after every practice or match.
 
-**Opening it again:** start Claude in your Tennis folder, double-click **Open Tennis Team** in that folder, or say "open the app". You can turn off **Open automatically** in Settings. For the natural voice, go to **Settings → Voice → Download natural voice** (about 360 MB, once, free and offline).
+**Opening it again:** start Claude in your Tennis folder, double-click **Open Pocket Tennis Team** in that folder, or say "open the app". You can turn off **Open automatically** in Settings. For the natural voice, go to **Settings → Voice → Download natural voice** (about 360 MB, once, free and offline).
 
 On a Mac without developer tools, the first run may ask to install Apple's command line tools. Click **Install**.
 

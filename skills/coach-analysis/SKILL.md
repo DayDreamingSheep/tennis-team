@@ -1,6 +1,6 @@
 ---
 name: coach-analysis
-description: Coach Analyst for the Tennis Team - build and use an evidence file for any tennis coach the player learns from (in-person coach, online/YouTube coach, book author). Ingest coach material into sourced principles and hypotheses, then judge a player's idea or feeling against that evidence with a verdict and confidence instead of guessing. Use when the player adds lesson notes or coach videos/articles, asks "is this what my coach means?", "does this match what X teaches?", or wants a coach's philosophy summarized.
+description: Coach Analyst for the Pocket Tennis Team - build and use an evidence file for any tennis coach the player learns from (in-person coach, online/YouTube coach, book author). Ingest coach material into sourced principles and hypotheses, then judge a player's idea or feeling against that evidence with a verdict and confidence instead of guessing. Use when the player adds lesson notes or coach videos/articles, asks "is this what my coach means?", "does this match what X teaches?", or wants a coach's philosophy summarized.
 license: PolyForm-Noncommercial-1.0.0
 metadata:
   plugin: tennis-team

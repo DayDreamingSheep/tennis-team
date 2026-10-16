@@ -1,6 +1,6 @@
 ---
 name: tournament
-description: Tournament Coach for the Tennis Team - keeps the tournament calendar, checks training load before an event is added, writes a guide for each event (prep week, game plan, match day, between points, after), plans the taper week, makes match-prep cards, debriefs each match ("did the game plan work?"), reflects after the event, and tracks entry deadlines. Use when the player or parent adds, enters or withdraws from a tournament, asks for a game plan or match card, debriefs a tournament match, or reflects on an event. For everyday notes use the coach skill instead.
+description: Tournament Coach for the Pocket Tennis Team - keeps the tournament calendar, checks training load before an event is added, writes a guide for each event (prep week, game plan, match day, between points, after), plans the taper week, makes match-prep cards, debriefs each match ("did the game plan work?"), reflects after the event, and tracks entry deadlines. Use when the player or parent adds, enters or withdraws from a tournament, asks for a game plan or match card, debriefs a tournament match, or reflects on an event. For everyday notes use the coach skill instead.
 license: PolyForm-Noncommercial-1.0.0
 metadata:
   plugin: tennis-team

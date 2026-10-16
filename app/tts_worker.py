@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Kokoro text-to-speech worker for the Tennis Team app.
+"""Kokoro text-to-speech worker for the Pocket Tennis Team app.
 
 Runs inside the natural-voice virtualenv (Python 3.10+, kokoro-onnx, misaki, soundfile).
 Loads the model once, then reads JSON requests from stdin, one per line:

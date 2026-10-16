@@ -1,6 +1,6 @@
 ---
 name: weekly-review
-description: Progress Coordinator for the Tennis Team - run the player's weekly tennis progress review - read the week's journal evidence, judge each active assignment against its success signal, decide keep/progress/reduce/pause/replace/validate, set next week's small assignment set and planned sessions (rest days and load limits included), and update the cycle, summary and the app's plan. Use when the player asks for a weekly review, "what should I work on next week", "how is my progress", or at the end of a training cycle.
+description: Progress Coordinator for the Pocket Tennis Team - run the player's weekly tennis progress review - read the week's journal evidence, judge each active assignment against its success signal, decide keep/progress/reduce/pause/replace/validate, set next week's small assignment set and planned sessions (rest days and load limits included), and update the cycle, summary and the app's plan. Use when the player asks for a weekly review, "what should I work on next week", "how is my progress", or at the end of a training cycle.
 license: PolyForm-Noncommercial-1.0.0
 metadata:
   plugin: tennis-team

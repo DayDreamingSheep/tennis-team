@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Create or repair a Tennis Team workspace, the private folder that acts as the player's long-term coaching memory, with the least possible effort from the player, and turn the Tennis Team app's onboarding answers into the first real plan. Usually started by the coach skill (including the app's "[app] kind=onboarding" job). Use directly when the player says "start my tennis team", "set up my tennis coach", or when another tennis-team skill cannot find TEAM.md.
+description: Create or repair a Pocket Tennis Team workspace, the private folder that acts as the player's long-term coaching memory, with the least possible effort from the player, and turn the Pocket Tennis Team app's onboarding answers into the first real plan. Usually started by the coach skill (including the app's "[app] kind=onboarding" job). Use directly when the player says "start my tennis team", "set up my tennis coach", or when another tennis-team skill cannot find TEAM.md.
 license: PolyForm-Noncommercial-1.0.0
 allowed-tools: Bash(python3:*)
 metadata:

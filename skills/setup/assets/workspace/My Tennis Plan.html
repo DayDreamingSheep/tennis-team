@@ -6,7 +6,7 @@
 <title>My Tennis Plan</title>
 <!--
   This page is generated once by setup and never edited. Its content comes from
-  _system/plan-data.js, which the Tennis Team rewrites after each update.
+  _system/plan-data.js, which the Pocket Tennis Team rewrites after each update.
 -->
 <script src="_system/plan-data.js"></script>
 <style>
@@ -102,7 +102,7 @@
     var steps = (d.next_steps || []).filter(Boolean).map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("");
     document.getElementById("app").innerHTML =
       "<header>" +
-        '<div class="eyebrow"><span class="dot"></span>Tennis Team plan</div>' +
+        '<div class="eyebrow"><span class="dot"></span>Pocket Tennis Team plan</div>' +
         "<h1>" + (d.player ? esc(d.player) + "&rsquo;s week" : "Your week") + (d.week_of ? " of " + esc(d.week_of) : "") + "</h1>" +
         (d.focus ? '<p class="focus">' + esc(d.focus) + "</p>" : "") +
         (d.cycle_progress ? '<div class="meta">' + esc(d.cycle_progress) + "</div>" : "") +

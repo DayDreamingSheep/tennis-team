@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tennis Team</title>
-<!-- Tennis Team v0.2 app. Served by app/server.py with window.TT_BOOT injected; open with ?demo=1 (or standalone) for the demo.
+<title>Pocket Tennis Team</title>
+<!-- Pocket Tennis Team v0.2 app. Served by app/server.py with window.TT_BOOT injected; open with ?demo=1 (or standalone) for the demo.
      Built from prototypes/app-v3.html. PROTOTYPE notes below are kept for history.
      PROTOTYPE v2: app-first, task-first. Fictional demo data (Sam; Mei coaching Alex in parent-operated mode).
      Background jobs are simulated (a real run is `claude -p`); speech-to-text and read-aloud are real when the browser allows,
@@ -732,7 +732,7 @@
 </style>
 </head>
 <body>
-<noscript><p style="padding:24px;font:16px/1.5 system-ui,sans-serif">Tennis Team needs JavaScript. Please open it in Chrome, Edge or Safari.</p></noscript>
+<noscript><p style="padding:24px;font:16px/1.5 system-ui,sans-serif">Pocket Tennis Team needs JavaScript. Please open it in Chrome, Edge or Safari.</p></noscript>
 <!-- First-run onboarding (what the SessionStart hook opens) -->
 <div class="flow" id="ob"><div class="ob-in" id="obIn"></div></div>
 <!-- Guided voice templates -->
@@ -742,7 +742,7 @@
   <header>
     <div class="bar">
       <div class="ball" aria-hidden="true"></div>
-      <div class="brand"><b id="brandName">Your Tennis Team</b><button class="team-pres" id="brandSub" type="button" aria-label="Open your team">Your team · 6 coaches</button></div>
+      <div class="brand"><b id="brandName">Your Pocket Tennis Team</b><button class="team-pres" id="brandSub" type="button" aria-label="Open your team">Your team · 6 coaches</button></div>
       <button class="icon-btn" id="openSettings" aria-label="Settings">⚙︎</button>
     </div>
     <nav class="tabs" id="tabs"></nav>
@@ -1702,7 +1702,7 @@ function seedEvents(days, lessons, coach, lessonDay) {
   for (var i = 0; i < 35; i++) {
     var d = addDays(TODAY, i), dn = DOW[dOf(d).getDay()], what = days[dn];
     if ((!what || what === "—") && dn === ld) what = "Lesson";
-    if (dOf(d).getDay() === 0) ev.push({ d: d, t: "review", title: "Weekly check-in", state: "planned", plan: "Runs on its own when you open Tennis Team on Sunday" });
+    if (dOf(d).getDay() === 0) ev.push({ d: d, t: "review", title: "Weekly check-in", state: "planned", plan: "Runs on its own when you open Pocket Tennis Team on Sunday" });
     if (!what || what === "—") continue;
     if (what === "Lesson") {
       if (lessons === "Now and then" || lessons === "No lessons") continue;
@@ -1829,7 +1829,7 @@ var EVENTS_ALEX_SRC = [
   { d: "2026-10-15", t: "match", title: "Challenge match vs. J. Park", state: "done" },
   { d: "2026-10-16", t: "logistics", title: "Email Ms. Rivera: Friday absence", state: "planned", plan: "School note for Friday afternoon" },
   { d: "2026-10-16", t: "practice", title: "Easy hit, 30 min", state: "planned", plan: "Serves at 5-5, early night" },
-  { d: "2026-10-18", t: "review", title: "Weekly check-in", state: "planned", plan: "Runs on its own when you open Tennis Team on Sunday" },
+  { d: "2026-10-18", t: "review", title: "Weekly check-in", state: "planned", plan: "Runs on its own when you open Pocket Tennis Team on Sunday" },
   { d: "2026-10-20", t: "practice", title: "Academy group", state: "planned", plan: "Inside-out forehand patterns" },
   { d: "2026-10-21", t: "lesson", title: "Private with Coach Daniel", state: "planned", plan: "Bring: second serve at 5-5 numbers" },
   { d: "2026-10-22", t: "logistics", title: "Physio check: heel", state: "planned", plan: "Routine check, 4:30 pm" },
@@ -1891,10 +1891,10 @@ function setMode(mode) {
   syncGlobals();
   var n = pname();
   if (mode === "parent") {
-    $("brandName").textContent = n + "'s Tennis Team";
+    $("brandName").textContent = n + "'s Pocket Tennis Team";
     $("brandSub").textContent = (S.parent || "Parent") + " (parent) · coaching " + n + (S.data && OB.level && !S.demo ? " · " + OB.level : S.demo ? " · UTR 7.4" : "");
   } else {
-    $("brandName").textContent = (n ? n + "'s" : "Your") + " Tennis Team";
+    $("brandName").textContent = (n ? n + "'s" : "Your") + " Pocket Tennis Team";
     var lv = S.intro && S.intro.level ? S.intro.level.replace("NTRP ", "") : "";
     $("brandSub").textContent = "6 team members" + (lv ? " · " + lv + (S.nextLevel ? " → " + S.nextLevel : "") : S.demo ? " · 3.5 → 4.0" : "");
   }
@@ -1927,7 +1927,7 @@ function showTab(id) {
   document.querySelector("main").scrollTop = 0;
   clearBadge();
 }
-function clearBadge() { if (!document.hidden) document.title = "Tennis Team"; }
+function clearBadge() { if (!document.hidden) document.title = "Pocket Tennis Team"; }
 document.addEventListener("visibilitychange", clearBadge);
 window.addEventListener("focus", clearBadge);
 document.addEventListener("pointerdown", clearBadge);
@@ -2106,7 +2106,7 @@ function drawOB() {
   var nong = function (x) { return x !== "gotit"; };
   var pos = f.slice(1, OB.i + 1).filter(nong).length - 1;
   var dots = OB.i > 0 ? '<div class="dots">' + f.slice(1).filter(nong).map(function (x, i) { return '<i class="' + (i <= pos ? "on" : "") + '"></i>'; }).join("") + "</div>" : "";
-  var top = '<div class="ob-top"><div class="ball"></div><b>Tennis Team</b>' + dots + "</div>";
+  var top = '<div class="ob-top"><div class="ball"></div><b>Pocket Tennis Team</b>' + dots + "</div>";
   var body = "", next = "Next", skip = "Skip", back = OB.i > 0, after = null;
 
   if (s === "welcome") {
@@ -2301,7 +2301,7 @@ function finishJob(j) {
   j.state = "done";
   JOBS.forEach(function (x) { if (x !== j && x.state === "done") x.old = true; });
   chime();
-  if (document.hidden) document.title = "(1) Your coach replied · Tennis Team";
+  if (document.hidden) document.title = "(1) Your coach replied · Pocket Tennis Team";
   if (S) renderAll(); else renderActivity();
   if ($("ob").classList.contains("on") || $("guide").classList.contains("on")) j.pendingSpeak = true; else speakReply(j.reply);
   pump();
@@ -2401,7 +2401,7 @@ function renderActivity() {
   var live = JOBS.filter(function (j) { return j.state !== "done"; });
   var latest = JOBS.filter(function (j) { return j.state === "done"; }).slice(-1);
   var h = "";
-  if (SHOW_TIP) h += '<div class="tipcard">💡 <span>Next time, open <b>Tennis Team</b> from your Tennis folder or Dock.</span><button class="x" id="tipX" aria-label="Dismiss">✕</button></div>';
+  if (SHOW_TIP) h += '<div class="tipcard">💡 <span>Next time, open <b>Pocket Tennis Team</b> from your Tennis folder or Dock.</span><button class="x" id="tipX" aria-label="Dismiss">✕</button></div>';
   h += live.map(jobCard).join("") + latest.map(function (j) { return replyCard(j, live.length > 0); }).join("");
   el.innerHTML = h;
   if ($("tipX")) $("tipX").onclick = function () { SHOW_TIP = false; renderActivity(); };
@@ -3250,7 +3250,7 @@ document.querySelectorAll("[data-dev]").forEach(function (b) { b.onclick = funct
   $("dev").classList.remove("open");
   if (k === "restart") startOnboarding(); else jumpTo(k);
 }; });
-$("autoOpen").onclick = function () { this.classList.toggle("on"); toast(this.classList.contains("on") ? "Tennis Team will open when you start Claude in your tennis folder." : "Won't open on its own. Open it from your Tennis folder or Dock anytime."); };
+$("autoOpen").onclick = function () { this.classList.toggle("on"); toast(this.classList.contains("on") ? "Pocket Tennis Team will open when you start Claude in your tennis folder." : "Won't open on its own. Open it from your Tennis folder or Dock anytime."); };
 
 
 /* =====================================================================
@@ -3732,7 +3732,7 @@ function renderAll() {
 }
 function paintBrand() {
   var b = $("brandSub"); if (!b) return;
-  $("brandName").textContent = (pname() ? pname() + "'s" : "Your") + " Tennis Team";
+  $("brandName").textContent = (pname() ? pname() + "'s" : "Your") + " Pocket Tennis Team";
   var extra = S.mode === "parent" ? (S.parent ? S.parent + " (parent)" : "Parent") + " · " + pname() : (S.intro && S.intro.level ? S.intro.level.replace("NTRP ", "") + (S.nextLevel ? " → " + S.nextLevel : "") : S.demo ? "3.5 → 4.0" : "");
   b.innerHTML = '<span class="stack">' + TEAM.slice(0, 5).map(function (m) { return av(m, true); }).join("") + '</span><span class="tp-t">Your team · 6 coaches</span>' + (extra ? '<span class="tp-x"> · ' + esc(extra) + "</span>" : "");
 }
@@ -3771,7 +3771,7 @@ function renderFeed() {
   });
   var p = prompts()[0];
   if (p) h += nudgeHTML(p);
-  if (SHOW_TIP) h += '<div class="tipcard">💡 <span>Next time, open <b>Tennis Team</b> from your Tennis folder or Dock.</span><button class="x" id="tipX" aria-label="Dismiss">✕</button></div>';
+  if (SHOW_TIP) h += '<div class="tipcard">💡 <span>Next time, open <b>Pocket Tennis Team</b> from your Tennis folder or Dock.</span><button class="x" id="tipX" aria-label="Dismiss">✕</button></div>';
   el.innerHTML = h;
   wireReplies(el);
   el.querySelectorAll('.plan-msg [data-goto="home"]').forEach(function (b) { b.onclick = function () { tileAct("brief"); }; });
@@ -4478,7 +4478,7 @@ function renderFeed0() {
   });
   var p = INL ? null : prompts()[0];
   if (p) h += nudgeHTML(p);
-  if (SHOW_TIP && !INL) h += '<div class="tipcard">💡 <span>Next time, open <b>Tennis Team</b> from your Tennis folder or Dock.</span><button class="x" id="tipX" aria-label="Dismiss">✕</button></div>';
+  if (SHOW_TIP && !INL) h += '<div class="tipcard">💡 <span>Next time, open <b>Pocket Tennis Team</b> from your Tennis folder or Dock.</span><button class="x" id="tipX" aria-label="Dismiss">✕</button></div>';
   el.innerHTML = h;
   wireReplies(el);
   el.querySelectorAll('.plan-msg [data-goto="home"], [data-goto="home"]').forEach(function (b) { b.onclick = function () { tileAct("brief"); }; });
@@ -4807,7 +4807,7 @@ function pollJob(job, onDone, onStep) {
     if (steps.length && steps.length !== job.steps.length) { job.steps = steps; job.i = steps.length - 1; job.lastAt = Date.now(); if (onStep) onStep(job); else renderFeed(); }
     if (r.done) {
       if (r.error) { failJob(job); }
-      else { job.state = "done"; job.reply = toReplyFrom(r); chime(); if (document.hidden) document.title = "(1) Your coach replied · Tennis Team"; if (!onStep) speakReply(job.reply); }
+      else { job.state = "done"; job.reply = toReplyFrom(r); chime(); if (document.hidden) document.title = "(1) Your coach replied · Pocket Tennis Team"; if (!onStep) speakReply(job.reply); }
       PENDING = PENDING.filter(function (p) { return p.job !== job || job.failed; });
       if (onDone) onDone(job, r);
       if (r.bookkeeping === "pending" || r.bookkeeping === "running") pollBook(job.serverId);
@@ -5008,13 +5008,13 @@ function startOnboarding() {
 /* ---------- settings: auto-open, Whisper (coming soon) ---------- */
 $("autoOpen").onclick = function () {
   this.classList.toggle("on"); var on = this.classList.contains("on");
-  toast(on ? "Tennis Team will open when you start Claude in your tennis folder." : "Won't open on its own. Use /tennis-team:open or your Tennis folder anytime.");
+  toast(on ? "Pocket Tennis Team will open when you start Claude in your tennis folder." : "Won't open on its own. Use /tennis-team:open or your Tennis folder anytime.");
   if (REAL) api("POST", "/api/settings", { autoOpen: on }).catch(function () { toast("Couldn't save that setting just now."); });
 };
 function noAutoOpen() {
   $("autoOpen").classList.remove("on");
   if (REAL) api("POST", "/api/settings", { autoOpen: false }).catch(function () {});
-  toast("Got it. Tennis Team won't open on its own. Open it from your Tennis folder anytime.");
+  toast("Got it. Pocket Tennis Team won't open on its own. Open it from your Tennis folder anytime.");
 }
 
 /* ---------- boot ---------- */
@@ -5035,7 +5035,7 @@ function bootReal() {
       startOnboarding();
       if (r.ready || BOOT.workspace) { OB.i = 1; drawOB(); }   // the folder already exists: go straight to "Who is this for?"
     }
-  }).catch(function () { startOnboarding(); toast("Can't reach the Tennis Team app server. Is Claude still running?"); });
+  }).catch(function () { startOnboarding(); toast("Can't reach the Pocket Tennis Team app server. Is Claude still running?"); });
 }
 
 /* ---------- boot ---------- */

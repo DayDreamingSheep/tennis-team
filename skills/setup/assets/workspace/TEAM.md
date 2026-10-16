@@ -1,4 +1,4 @@
-# Tennis Team workspace
+# Pocket Tennis Team workspace
 
 Created {{DATE}}. This folder is the player's coaching memory. Every tennis-team skill reads this file first and follows these rules.
 
@@ -87,7 +87,7 @@ _system/coach/                  Template copied for each new coach
     - No weight, diet or body-shape goals. Fueling advice stays general (meal 2-3 hours before, water, snacks).
 16. **Wellbeing pause.** Signs of distress, burnout, hopelessness, self-harm or disordered eating, from the player or about the player, pause tennis coaching for that reply. Reply warmly and plainly, without tennis advice: it is OK to take a break, please talk to a trusted adult (parent, coach, school counselor, doctor), and if anyone is in danger right now, call the local emergency number (in the US, call or text 988). Record only a flag `{part: "wellbeing", level: 3, status: "paused"}` with no quote, pause all assignments, and log no journal entry with the details.
 17. **App mode and `state.json`.**
-    - A message that starts with `[app] kind=<kind> mode=<adult|parent> today=<YYYY-MM-DD>` comes from the Tennis Team app. Use that `today`. An optional `[fields] {...}` line holds structured answers; the rest is the player's (or parent's) words.
+    - A message that starts with `[app] kind=<kind> mode=<adult|parent> today=<YYYY-MM-DD>` comes from the Pocket Tennis Team app. Use that `today`. An optional `[fields] {...}` line holds structured answers; the rest is the player's (or parent's) words.
     - In app mode nobody can answer a follow-up question during the run: never ask one that blocks the work. Write `unknown`, pick the safe default, and finish.
     - `_system/state.json` is the app's current picture; markdown files stay the history. After any change to the plan, cues, patterns, flags, events, goals or tournaments, update `state.json` and regenerate `_system/plan-data.js` (coach skill, `references/state-json.md`).
     - Each member writes only its own parts of `state.json`: setup (Team Manager) the first version; log-note (Journal Keeper) done events, flags, improving/watching, next steps; coach-analysis (Coach Analyst) cue changes; weekly-review (Progress Coordinator) assignments, week, block and planned training events; strategy (Strategy Coach) goal and roadmap; tournament (Tournament Coach) tournaments and their events; coach (Head Coach) the team section. Exception: any member applies rules 9 and 16 to assignment `status` right away. Every member updates its own line in `team.latest` and appends one row to `_system/team_log.csv`.

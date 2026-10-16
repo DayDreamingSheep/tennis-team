@@ -1,6 +1,6 @@
 ---
 name: log-note
-description: Journal Keeper for the Tennis Team - process a raw tennis note (typed, pasted, voice transcript, or an app log, body check or parent sideline note) into the workspace - classify it, store a clean entry, update repeating patterns and body flags, decide what happens to each affected weekly assignment, update the app's calendar and next steps, and return at most three next actions. Usually started by the coach skill; use directly whenever the player shares anything about a practice, match, tournament, lesson, pre-match plan, or video review, even without asking to "log" it.
+description: Journal Keeper for the Pocket Tennis Team - process a raw tennis note (typed, pasted, voice transcript, or an app log, body check or parent sideline note) into the workspace - classify it, store a clean entry, update repeating patterns and body flags, decide what happens to each affected weekly assignment, update the app's calendar and next steps, and return at most three next actions. Usually started by the coach skill; use directly whenever the player shares anything about a practice, match, tournament, lesson, pre-match plan, or video review, even without asking to "log" it.
 license: PolyForm-Noncommercial-1.0.0
 metadata:
   plugin: tennis-team
