@@ -32,6 +32,8 @@ All keys are optional except `version` and `mode`. Dates are ISO `YYYY-MM-DD`. K
   "knowledge": [ { "id": "PRIYA-P-001", "text": "", "label": "coach", "from": "Priya", "src": "Lesson · Oct 9",
                    "cue": "", "in_plan": true, "status": "active",
                    "test": { "how": "", "target": "", "need": 2, "results": [ { "d": "2026-10-11", "ok": true, "note": "7/10" } ] } } ],
+  "fitness": { "limits": [ { "id": "FIT-2026-10-15-01", "text": "", "part": "", "by": "", "since": "", "until": "until cleared", "status": "active" } ],
+               "watch": [], "program": { "name": "", "days": [], "src": "" }, "felt": [] },
   "coach_questions": [ { "id": "", "text": "", "about": "PRIYA-P-001", "added": "2026-10-15", "asked": false } ],
   "team": { "active": ["head-coach", "journal-keeper", "progress-coordinator", "strategy-coach"],
             "latest": { "journal-keeper": "Logged your practice · Oct 15" } },
@@ -59,6 +61,7 @@ All keys are optional except `version` and `mode`. Dates are ISO `YYYY-MM-DD`. K
   - `public`: from public material only (study notes). Background reading; never changes the plan alone.
   - `general`: general tennis knowledge.
   `from` = the coach or channel name, `src` = a short plain source ("Lesson · Oct 9", "Your takeaway from an Olivari video", "Study notes"). `cue` = the cue words when it is one of the active cues; `in_plan` = true when an assignment uses it. `status`: `active`, `dropped` (tested and it didn't work for this player, kept for history) or `removed` (the player said it's wrong; never use it again). `test` (for `testing` and `proven`): `how` = what to count, `target` = e.g. "7/10", `need` = good sessions to prove it (2), `results` = one per session that tried it. Owners: coach-analysis adds, relabels and removes items; log-note appends `test.results` and makes the promotion (TEAM.md rule 18); weekly-review checks it.
+- `fitness`: owned by the fitness skill (shape and rules there). `limits` with `status: "active"` bind every teammate: weekly-review, tournament and log-note never plan or suggest work that breaks one.
 - `coach_questions`: questions to bring to the next lesson. The page adds them ("Ask my coach about this"); skills add one when a test clearly misses. Set `asked: true` once a lesson note answers it.
 
 ## 3. IDs inside state

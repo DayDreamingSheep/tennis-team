@@ -33,6 +33,7 @@ Some members **learn from you** (you teach them), some **follow your style** (a 
 | Team member | Kind | What they do |
 |---|---|---|
 | 🎾 **Head Coach** | Learns from you | Your front door. Learns from your lesson notes, the videos and links you follow, and what works on court. Brings in the right teammate |
+| 💪 **Fitness Coach** | Learns from you | Learns from your physio or doctor notes, old injuries, gym program and how your body felt; its limits bind every teammate |
 | 🔍 Coach Analyst | Behind the Head Coach | Keeps your coaches' teaching straight, studies saved links, checks your ideas against it |
 | 🧰 **Team Manager** | Automatic | Interviews you and sets up your team and starter plan |
 | 📓 **Journal Keeper** | Follows your style | Turns messy notes into a clean training diary and spots repeating patterns |
@@ -40,7 +41,7 @@ Some members **learn from you** (you teach them), some **follow your style** (a 
 | 🏆 **Tournament Coach** | Follows your style | Calendar, entry deadlines, guides, game plans, debriefs and reflections |
 | 📈 **Progress Coordinator** | Automatic | Each week decides what to keep, level up, simplify, rest or swap, on fixed rules you can read |
 
-Joining later: Fitness Coach (learns from your physio notes and gym program), Player Scout, Nutrition and Stats. See the [roadmap](ROADMAP.md).
+Joining later: Player Scout, Nutrition and Stats. Settings for the Planner, Journal Keeper and Tournament Coach ("make my plan more aggressive") live on their Adjust pages, or just say them. See the [roadmap](ROADMAP.md).
 
 ## How it works
 

@@ -15,7 +15,7 @@
     --accent: #2f6d3a; --accent-ink: #fff; --accent-soft: #e2eee1; --ball: #c9d72f; --rec: #c2412d;
     --warn: #9a5b00; --warn-soft: #fbf0dd; --shadow: 0 1px 2px rgba(20,30,25,.06), 0 6px 20px rgba(20,30,25,.06);
     --m-head: #2f6d3a; --m-journal: #2a5db0; --m-analyst: #7a4fb5; --m-progress: #c26a1c;
-    --m-strategy: #0f7d78; --m-tournament: #b23a54; --m-manager: #5f6964;
+    --m-strategy: #0f7d78; --m-tournament: #b23a54; --m-manager: #5f6964; --m-fitness: #8a6d12;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -23,7 +23,7 @@
       --accent: #7cc489; --accent-ink: #0f1a12; --accent-soft: #213327; --ball: #d6e24a; --rec: #f07a66;
       --warn: #f0b85c; --warn-soft: #3a2f1c; --shadow: none;
       --m-head: #7cc489; --m-journal: #8db4f2; --m-analyst: #c2a1ef; --m-progress: #f0a463;
-      --m-strategy: #5fd0c8; --m-tournament: #f08aa0; --m-manager: #a0aaa4;
+      --m-strategy: #5fd0c8; --m-tournament: #f08aa0; --m-manager: #a0aaa4; --m-fitness: #e2c35e;
     }
   }
   * { box-sizing: border-box; }
@@ -272,6 +272,8 @@
   .status.needs { background: var(--warn-soft); color: var(--warn); }
   .status.set { background: var(--surface-2, var(--bg)); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
   .status.auto { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
+  .set-row.wrap { flex-wrap: wrap; } .pace-note { flex-basis: 100%; font-size: 12.5px; color: var(--muted); margin: -2px 0 6px; }
+  .seg button[disabled] { opacity: .4; cursor: not-allowed; }
   .tm .kind { display: block; color: var(--muted); font-size: 12px; font-weight: 500; margin-top: 3px; }
   .tm .kind .status { font-size: 11.5px; padding: 2px 8px; }
   .coach-row { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
@@ -789,7 +791,7 @@
   <header>
     <div class="bar">
       <div class="ball" aria-hidden="true"></div>
-      <div class="brand"><b id="brandName">Your Pocket Tennis Team</b><button class="team-pres" id="brandSub" type="button" aria-label="Open your team">Your team · 5 members</button></div>
+      <div class="brand"><b id="brandName">Your Pocket Tennis Team</b><button class="team-pres" id="brandSub" type="button" aria-label="Open your team">Your team · 6 members</button></div>
       <button class="icon-btn" id="openSettings" aria-label="Settings">⚙︎</button>
     </div>
     <nav class="tabs" id="tabs"></nav>
@@ -877,6 +879,7 @@ document.getElementById("noScript").remove();
 /* ---------- Reused from prototypes/team-app.html (data, renderers, voice, team panels, library, calendar) ---------- */
 var TEAM = [
   { id: "head-coach", mode: "teach", name: "Head Coach", e: "🎾", c: "--m-head", role: "Learns from your coaches, the videos you follow and what works for you on court.", ask: "What should I work on?", last: "Answered your question about second serves · Oct 15" },
+  { id: "fitness-coach", mode: "teach", name: "Fitness Coach", e: "💪", c: "--m-fitness", role: "Learns from your physio notes, injury history and gym program, and keeps one fitness block a week that serves your tennis.", ask: "What fitness should I do this week?", last: "Waiting for your body notes" },
   { id: "journal-keeper", mode: "adjust", name: "Journal Keeper", e: "📓", c: "--m-journal", role: "Turns your messy notes into a clean training diary and spots patterns.", ask: "Here's how practice went...", last: "Logged your doubles match (won 6-4) · Oct 15" },
   { id: "progress-coordinator", mode: "auto", name: "Progress Coordinator", e: "📈", c: "--m-progress", role: "Each week decides what to keep, level up, simplify, or swap.", ask: "How am I doing?", last: "Weekly review: second serve → test in real points · Oct 13" },
   { id: "strategy-coach", mode: "adjust", name: "Planner", e: "🗺", c: "--m-strategy", role: "Plans when and how much: your goal, your timeline and how hard each week is.", ask: "Is my long-term plan still right?", last: "Drew your 12-month roadmap to 4.0 · Oct 6" },
@@ -884,7 +887,6 @@ var TEAM = [
   { id: "coach-analyst", mode: "teach", hidden: true, name: "Coach Analyst", e: "🔍", c: "--m-analyst", role: "Remembers what your coaches teach and checks your ideas against it.", ask: "Is this what Maria means?", last: "Added Maria's short-ball advice · Oct 14" }
 ];
 var SOON = [
-  { name: "Fitness Coach", e: "💪", role: "Learns from your physio notes, injury history and gym program. One fitness block a week that serves your tennis.", mode: "Teach" },
   { name: "Nutrition Coach", e: "🥗", role: "Match-day fueling and hydration routines." },
   { name: "Stats Analyst", e: "📊", role: "Turns SwingVision or match stats into patterns." },
   { name: "Player Scout", e: "⭐", role: "Studies a pro you admire and what you can borrow." }
@@ -998,15 +1000,33 @@ function renderTournaments() {
 }
 
 // Teach members learn from real material; Adjust members follow a few choices; Automatic members run on fixed rules.
+var PACE_NOTE = {
+  Gentle: "Level up after 3 good sessions, at most 2 focuses, an extra easy day after matches.",
+  Steady: "Level up after 2 good sessions. The usual pace.",
+  Aggressive: "Level up after 1 strong session, bigger target steps, milestones brought forward. Health rules and the 3 + 1 limit never change."
+};
+var SET_GROUP = { "head-coach": "coach", "journal-keeper": "journal", "strategy-coach": "planner", "tournament-coach": "tournament" };
+function saveTeamSetting(id, k, v) {
+  var g = SET_GROUP[id]; if (!g || !REAL) return;
+  var t = {}; t[g] = {}; t[g][k] = v;
+  api("POST", "/api/settings", { team: t }).then(function (r) { SETTINGS = r || SETTINGS; }).catch(function () { toast("Couldn't save that setting. Try again."); });
+}
+function applyTeamSettings() {
+  var t = (SETTINGS && SETTINGS.team) || null; if (!t) return;
+  Object.keys(SET_GROUP).forEach(function (id) { var g = t[SET_GROUP[id]]; if (g) SETUP[id].values = Object.assign({}, SETUP[id].values || {}, g); });
+  if (t.coach) { STYLE.tone = t.coach.tone || STYLE.tone; STYLE.length = t.coach.length || STYLE.length; }
+}
 var MODE_ORDER = { teach: 0, adjust: 1, auto: 2 };
 var KIND_LABEL = { teach: "Learns from you", adjust: "Follows your style", auto: "Automatic" };
 function memberStatus(m) {
   if (m.mode === "auto") return { cls: "auto", label: "Reviews " + ((SETUP["strategy-coach"].values || {}).day || "Sunday") + "s" };
   if (m.mode === "adjust") {
     var v = SETUP[m.id].values || {};
-    var lab = { "strategy-coach": (v.pace || "Steady") + " pace", "tournament-coach": "Eases off " + (v.taper || "1 week") + " before", "journal-keeper": "Standard notes" }[m.id] || "Standard";
+    var lab = { "strategy-coach": (v.pace || "Steady") + " pace", "tournament-coach": "Eases off " + (v.taper || "1 week") + " before", "journal-keeper": (v.focus || ["Technique"]).join(" + ") + " focus" }[m.id] || "Standard";
     return { cls: "set", label: lab };
   }
+  if (m.id === "fitness-coach") { var f = fitData(), fn = f.limits.filter(function (x) { return x.status !== "ended"; }).length + f.watch.length + (f.program && f.program.name ? 1 : 0) + f.felt.length;
+    return fn ? { cls: "ready", label: f.limits.some(function (x) { return x.status === "active"; }) ? "Limit in force" : "Knows " + fn + " thing" + (fn === 1 ? "" : "s") } : { cls: "needs", label: "Needs you" }; }
   var d = memberData(m.id), n = knowList().filter(function (k) { return k.status !== "removed" && k.status !== "dropped"; }).length + (SOURCES[m.id] || []).reduce(function (a, x) { return a + (x.learned || 0); }, 0);
   return SETUP["coach-analyst"].status.ok || n > 2 ? { cls: "ready", label: "Knows " + n + " thing" + (n === 1 ? "" : "s") } : { cls: "needs", label: "Needs you" };
 }
@@ -1026,7 +1046,7 @@ function memberData(id) {
 function renderTeam() {
   $("team").innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px"><h2 class="sec" style="margin:0">Your team</h2><button class="btn" id="rerun">✨ Team setup</button></div>' +
-    '<p class="muted" style="margin:0 0 14px">Talk to your Head Coach about anything. Teach your Head Coach with lesson notes, videos and what happens on court. Adjust the others to your style. The Progress Coordinator runs on its own.</p>' +
+    '<p class="muted" style="margin:0 0 14px">Talk to your Head Coach about anything. Teach your Head Coach with lesson notes, videos and what happens on court, and your Fitness Coach with what your body needs. Adjust the others to your style. The Progress Coordinator runs on its own.</p>' +
     '<div class="team-grid">' + TEAM.filter(function (m) { return !m.hidden; }).sort(function (a, b) { return MODE_ORDER[a.mode] - MODE_ORDER[b.mode]; }).map(function (m) {
       var st = memberStatus(m), btn = { teach: "Teach", adjust: "Adjust", auto: "See how it decides" }[m.mode];
       return '<div class="card tm"><div class="tm-top">' + av(m) + '<div style="flex:1"><b>' + esc(m.name) + '</b><small class="kind">' + esc(KIND_LABEL[m.mode]) + ' · <span class="status ' + st.cls + '">' + esc(st.label) + "</span></small></div></div><p>" + esc(m.role) + '</p><div class="last">Latest: ' + esc(m.last) + '</div><div class="row2"><button class="btn ' + (m.mode === "teach" ? "primary" : "") + '" data-member="' + m.id + '">' + btn + '</button><button class="btn" data-ask="' + esc(m.ask) + '">Ask</button></div></div>';
@@ -1131,7 +1151,7 @@ var SETUP = {
     settings: [
       { k: "tone", label: "Coaching style", hint: "How they talk to you", type: "seg", options: ["Encouraging", "Balanced", "Straight-talking"] },
       { k: "length", label: "Reply length", hint: "Spoken replies stay short either way", type: "seg", options: ["Short", "Detailed"] },
-      { label: "Ask for a score after practice", hint: "One gentle reminder when a note has no numbers", type: "switch", on: true }
+      { k: "ask_score", label: "Ask for a score after practice", hint: "One gentle reminder when a note has no numbers", type: "switch", on: true }
     ],
     knows: [ { t: "Prefers short, direct replies", src: "From your feedback · Oct 15" }, { t: "Plays Tue / Thu / Sat, about 90 minutes", src: "From your notes" }, { t: "Mild left calf tightness after long matches", src: "From setup · keeping an eye on it" } ],
     teach: [ ["💬", "Tell them about you", "Schedule, life, what motivates you"], ["🎙", "Record a voice intro", "2 minutes about your tennis story"] ],
@@ -1141,8 +1161,11 @@ var SETUP = {
     status: { ok: true, label: "Ready" },
     intro: "Turns anything you say into a clean diary entry and keeps track of repeating patterns.",
     settings: [
-      { label: "Pick up notes from my Inbox folder", hint: "Voice memos and notes from your phone", type: "switch", on: true },
-      { label: "Keep my exact words", hint: "Stores your original note next to the clean version", type: "switch", on: true }
+      { k: "focus", label: "Pay most attention to", hint: "Each note gets a line on these", type: "multi", options: ["Technique", "Tactics", "Mental side", "Body"] },
+      { k: "followup", label: "After a note", hint: "Questions are always optional", type: "seg", options: ["Just save it", "One follow-up", "Dig deeper"] },
+      { k: "tone", label: "Tone", hint: "How the feedback reads", type: "seg", options: ["Short and direct", "Encouraging"] },
+      { k: "inbox", label: "Pick up notes from my Inbox folder", hint: "Voice memos and notes from your phone", type: "switch", on: true },
+      { k: "exact", label: "Keep my exact words", hint: "Stores your original note next to the clean version", type: "switch", on: true }
     ],
     knows: [ { t: "7 notes logged since Oct 6", src: "Practice 4 · Match 2 · Lesson 1" }, { t: "Moving in on short balls is improving", src: "Pattern · seen in 3 notes" }, { t: "Double faults when serving for a set", src: "Pattern · seen in 2 matches" } ],
     teach: [ ["📥", "Import old notes", "Paste or upload your old journal"], ["📱", "Connect phone notes", "Point to your iCloud / Drive Inbox"] ],
@@ -1156,6 +1179,13 @@ var SETUP = {
     teach: [ ["📝", "Paste lesson notes", "What your coach said today"], ["🔗", "Add a video or article", "YouTube, blog, course"], ["📄", "Upload a file", "PDF, doc, or photo of notes"], ["➕", "Add another coach", "In person, online, or a book"] ],
     rules: ["Your coach's direct advice beats videos and general tips", "Says “Maria taught you” only with a lesson on record", "Unsure ideas stay “to test”, never presented as fact"],
     needs: "Add notes from your next lesson with Maria so I can check your ideas against her teaching."
+  },
+  "fitness-coach": {
+    status: { ok: false, label: "Needs you" },
+    intro: "Keeps your body able to play. Teach them with what your physio or doctor said, old injuries, your gym program, and how your body felt after tennis. Their limits come before every other teammate. Not medical advice.",
+    knows: [],
+    teach: [],
+    rules: ["What a physio or doctor said beats every other teammate", "Tightness: keep an eye on it. Pain: rest that work. Limping: stop now", "Never diagnoses or suggests treatment", "One fitness block a week, fitted around your tennis"]
   },
   "progress-coordinator": {
     status: { ok: true, label: "Ready" },
@@ -1172,9 +1202,10 @@ var SETUP = {
     settings: [
       { k: "pace", label: "Intensity", hint: "Aggressive moves faster; health limits never change", type: "seg", options: ["Gentle", "Steady", "Aggressive"] },
       { k: "drills", label: "Tennis focuses per week", hint: "Fewer is easier to stick to", type: "seg", options: ["1", "2", "3"] },
+      { k: "days", label: "Tennis days a week", hint: "Lessons and matches count", type: "seg", options: ["2", "3", "4", "5+"] },
       { k: "day", label: "Weekly review", hint: "Runs when you next talk to your team", type: "seg", options: ["Sunday", "Monday"] },
       { k: "check", label: "Roadmap check-in", hint: "A short “are we on track?” talk", type: "seg", options: ["Monthly", "Every block"] },
-      { label: "Include a fitness block", hint: "One short block that supports your tennis", type: "switch", on: true }
+      { k: "fitness", label: "Include a fitness block", hint: "One short block that supports your tennis", type: "switch", on: true }
     ],
     knows: [ { t: "Roadmap: 4 phases from serve to competing at 4.0", src: "Drawn Oct 6" }, { t: "Phase 1 about 40% done", src: "From your last two reviews" } ],
     teach: [ ["⭐", "A player I want to play like", "Your Player Scout joins soon"], ["🎯", "Change my goal", "Goals can change, and that's fine"] ],
@@ -1185,8 +1216,10 @@ var SETUP = {
     intro: "Keeps your tournament calendar, writes a guide for each event, eases training before it, and reflects with you after.",
     settings: [
       { k: "taper", label: "Ease off training", hint: "How long before an event", type: "seg", options: ["3 days", "5 days", "1 week"] },
-      { label: "Help me scout opponents", hint: "Adds a scouting checklist to each guide", type: "switch", on: true },
-      { label: "Ask how it went the day after", hint: "So the reflection gets logged", type: "switch", on: true }
+      { k: "remind", label: "Remind me about entry deadlines", hint: "Counted back from the deadline", type: "seg", options: ["1 week", "2 weeks", "1 month"] },
+      { k: "plans", label: "Match game plans", hint: "A short card before you play", type: "seg", options: ["Before every match", "Tournaments only"] },
+      { k: "scout", label: "Help me scout opponents", hint: "Adds a scouting checklist to each guide", type: "switch", on: true },
+      { k: "ask_after", label: "Ask how it went the day after", hint: "So the reflection gets logged", type: "switch", on: true }
     ],
     knows: [ { t: "Fall Club Championship · Nov 8 · guide ready", src: "Calendar" }, { t: "Winter Indoor Open · Jan 17", src: "Calendar" }, { t: "Nerves at 5-4 → serving-for-the-set routine", src: "From your match notes" } ],
     teach: [ ["➕", "Add a tournament", "Name, date, format, your goal"], ["🧾", "Reflect on a match", "Tell them how it went"] ],
@@ -1204,8 +1237,9 @@ var SOURCES = {
   "strategy-coach": [],
   "tournament-coach": [ { kind: "web", title: "Fall Club Championship – draw & rules", where: "clubsite.com", learned: 2, synced: "Checked yesterday", sync: true } ]
 };
-SETUP["strategy-coach"].values = { pace: "Steady", drills: "3", day: "Sunday", check: "Monthly" };
-SETUP["tournament-coach"].values = { taper: "1 week" };
+SETUP["strategy-coach"].values = { pace: "Steady", drills: "3", days: "4", day: "Sunday", check: "Monthly", fitness: true };
+SETUP["journal-keeper"].values = { focus: ["Technique"], followup: "One follow-up", tone: "Short and direct", inbox: true, exact: true };
+SETUP["tournament-coach"].values = { taper: "1 week", remind: "2 weeks", plans: "Before every match", scout: true, ask_after: true };
 renderTeam();
 
 function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove("on"); }, 2600); }
@@ -1328,26 +1362,71 @@ function wireTeach3() {
     };
   }; });
 }
+/* ---------------- Fitness Coach: limits, watch list, program, how the body felt ---------------- */
+var DEMO_FIT = null;
+function demoFit() { return DEMO_FIT = DEMO_FIT || { limits: [ { id: "F-1", text: "No jumping or sprint drills", part: "left calf", by: "Physio", since: "2026-10-10", until: "Oct 24", status: "active" } ],
+  watch: [ { id: "F-2", text: "Ankle: 5-minute balance warm-up before matches", part: "right ankle", src: "Rolled it in 2024" } ],
+  program: { name: "Gym: legs Mon, upper body Thu", days: ["Mon", "Thu"], src: "Your gym program" },
+  felt: [ { d: "2026-10-14", part: "left calf", level: 1, note: "tight after a long match" } ] }; }
+function fitData() { var f = REAL ? ((S && S.fitness) || {}) : demoFit(); return { limits: f.limits || [], watch: f.watch || [], program: f.program || null, felt: f.felt || [] }; }
+function fitHTML() {
+  var f = fitData(), h = "";
+  var act = f.limits.filter(function (x) { return x.status === "active"; });
+  if (!act.length && !f.watch.length && !(f.program && f.program.name) && !f.felt.length)
+    return '<div class="empty-src" style="margin-top:12px">Nothing yet. Start with anything a physio or doctor told you, or an old injury, so every teammate plans around it.</div>';
+  if (act.length) h += '<h2 class="sec">Limits in force</h2><div class="kn-group">' + act.map(function (x) { return '<div class="kn"><div class="kn-t"><p>' + esc(x.text) + '</p><span class="kb coach">' + esc(x.by || "Professional") + "</span></div><small>" + esc([x.part, "since " + shortD(x.since), x.until ? "until " + x.until : ""].filter(Boolean).join(" · ")) + " · every teammate follows this</small></div>"; }).join("") + "</div>";
+  if (f.watch.length) h += '<h2 class="sec">Watch list</h2><div class="kn-group">' + f.watch.map(function (x) { return '<div class="kn"><div class="kn-t"><p>' + esc(x.text) + '</p><span class="kb general">' + esc(x.part || "") + "</span></div><small>" + esc(x.src || "") + "</small></div>"; }).join("") + "</div>";
+  if (f.program && f.program.name) h += '<h2 class="sec">Your program</h2><div class="kn"><div class="kn-t"><p>' + esc(f.program.name) + '</p><span class="kb general">' + esc((f.program.days || []).join(" · ")) + "</span></div><small>Your fitness block is fitted around it. No heavy legs the day before a match.</small></div>";
+  if (f.felt.length) h += '<h2 class="sec">How your body felt</h2><ul class="qs">' + f.felt.slice(-5).reverse().map(function (x) { return "<li>" + esc(shortD(x.d) + " · " + x.part + ": " + x.note) + "</li>"; }).join("") + "</ul>";
+  return h + '<p class="muted" style="font-size:12px">Not medical advice. Tightness: keep an eye on it. Pain: rest that work and see a professional. Limping: stop now.</p>';
+}
+function wireFit() {
+  var HINT = { physio: ["🩺 What did your physio or doctor say?", "e.g. Physio says no jumping or sprints for two weeks; calf raises every day."],
+    history: ["🤕 Tell me about an old injury", "e.g. Rolled my right ankle in 2024, fine now but it feels weak on wide balls."],
+    program: ["🏋️ What's your gym program?", "e.g. Gym Mondays (legs) and Thursdays (upper body), about 45 minutes."],
+    felt: ["💤 How did your body feel?", "e.g. Left calf tight after Sunday's long match, fine walking."] };
+  document.querySelectorAll("[data-f4]").forEach(function (b) { b.onclick = function () {
+    var k = b.getAttribute("data-f4"), t = HINT[k];
+    $("f4Box").innerHTML = '<div class="teach-box"><b>' + t[0] + '</b><textarea class="input" id="f4Text" rows="3" placeholder="' + esc(t[1]) + '"></textarea><div class="row" style="justify-content:flex-end"><button class="btn primary" id="f4Go">Tell my Fitness Coach</button></div></div>';
+    $("f4Text").focus();
+    $("f4Go").onclick = function () {
+      var v = $("f4Text").value.trim(); if (!v) { $("f4Text").focus(); return toast("Type or say it first"); }
+      if (REAL) { closeMember(); return realAsk(v, "fitness", { input: k }); }
+      var f = demoFit();
+      if (k === "physio") f.limits.unshift({ id: "F-" + Date.now(), text: trimQ(v, 90), part: "", by: "Physio", since: TODAY, until: "until cleared", status: "active" });
+      if (k === "history") f.watch.unshift({ id: "F-" + Date.now(), text: trimQ(v, 90), part: "", src: "You told them · just now" });
+      if (k === "program") f.program = { name: trimQ(v, 80), days: [], src: "Your gym program" };
+      if (k === "felt") f.felt.push({ d: TODAY, part: "body", level: 1, note: trimQ(v, 80) });
+      $("f4Box").innerHTML = ""; $("fitView").innerHTML = fitHTML(); renderTeam(); toast("Fitness Coach saved it · every teammate will plan around it");
+    };
+  }; });
+}
 function openMember(id) {
   if (id === "coach-analyst") id = "head-coach";
   var m = byId(id), d = memberData(id), vals = d.values || {};
   var h = '<div class="panel-head">' + av(m) + '<div class="t"><b>' + esc(m.name) + "</b><small>" + esc(m.role) + '</small></div><button class="icon-btn" id="closePanel" aria-label="Close">✕</button></div><div class="panel-body">';
   h += '<p class="muted" style="margin:14px 0 0">' + esc(d.intro2 || d.intro) + "</p>";
   if (d.needs) h += '<div class="tip" style="margin-top:12px">👋 ' + esc(d.needs) + "</div>";
-  var auto = m.mode === "auto", hc = id === "head-coach";
+  var auto = m.mode === "auto", hc = id === "head-coach", fc = id === "fitness-coach";
+  if (fc) h += '<div class="teach3"><button class="btn primary" data-f4="physio">🩺 What my physio or doctor said</button><button class="btn" data-f4="history">🤕 An old injury</button><button class="btn" data-f4="program">🏋️ My gym program</button><button class="btn" data-f4="felt">💤 How my body felt</button></div><div id="f4Box"></div><div id="fitView">' + fitHTML() + "</div>";
   if (hc) h += '<div class="teach3"><button class="btn primary" data-t3="lesson">📝 After a lesson</button><button class="btn" data-t3="link">▶️ Add a video or link</button><button class="btn" data-t3="court">🎾 What happened on court</button></div><div id="t3Box"></div>' +
     '<h2 class="sec">What I know</h2><div id="knowList">' + knowHTML() + "</div>" + '<div id="qList">' + questionsHTML() + "</div>";
 
   if (d.form) h += '<h2 class="sec">Your goal</h2><div class="grid">' + d.form.map(function (f) { return '<label class="field">' + esc(f.label) + '<input class="input" value="' + esc(f.value) + '"></label>'; }).join("") + "</div>";
   if (d.coaches) h += '<h2 class="sec">Your coaches</h2><div class="grid">' + d.coaches.map(function (c) { return '<div class="coach-row"><span class="av sm" style="--c:var(--m-analyst)">👤</span><div class="t"><b>' + esc(c.name) + "</b><small>" + esc(c.how) + " · " + esc(c.n) + '</small></div><button class="btn" data-t3="lesson">Add notes</button></div>'; }).join("") + "</div>";
   if (d.settings) h += '<h2 class="sec">How they work</h2><div class="card" style="padding:4px 14px">' + d.settings.map(function (st, i) {
-    var ctl = st.type === "switch" ? '<button class="switch' + (st.on ? " on" : "") + '" data-switch="' + i + '" aria-label="' + esc(st.label) + '"></button>'
-      : '<div class="seg" data-seg="' + esc(st.k) + '">' + st.options.map(function (o) { return '<button class="' + (vals[st.k] === o ? "on" : "") + '">' + esc(o) + "</button>"; }).join("") + "</div>";
-    return '<div class="set-row"><div class="l"><b>' + esc(st.label) + "</b><small>" + esc(st.hint) + "</small></div>" + ctl + "</div>";
+    var on = st.k && typeof vals[st.k] === "boolean" ? vals[st.k] : st.on, junior = id === "strategy-coach" && st.k === "pace" && S && S.mode === "parent";
+    var ctl = st.type === "switch" ? '<button class="switch' + (on ? " on" : "") + '" data-switch="' + i + '" data-k="' + esc(st.k || "") + '" aria-label="' + esc(st.label) + '" aria-pressed="' + !!on + '"></button>'
+      : '<div class="seg' + (st.type === "multi" ? " multi" : "") + '" data-seg="' + esc(st.k) + '">' + st.options.map(function (o) {
+          var sel = st.type === "multi" ? (vals[st.k] || []).indexOf(o) >= 0 : vals[st.k] === o;
+          return '<button class="' + (sel ? "on" : "") + '"' + (junior && o === "Aggressive" ? ' disabled title="Junior players stay at Steady at most"' : "") + ">" + esc(o) + "</button>"; }).join("") + "</div>";
+    var extra = id === "strategy-coach" && st.k === "pace" ? '<div class="pace-note" id="paceNote">' + esc(PACE_NOTE[vals.pace || "Steady"]) + (junior ? " Junior players stay at Steady at most." : "") + "</div>" : "";
+    return '<div class="set-row' + (extra ? " wrap" : "") + '"><div class="l"><b>' + esc(st.label) + "</b><small>" + esc(st.hint) + "</small></div>" + ctl + extra + "</div>";
   }).join("") + "</div>";
   if (id === "head-coach") h += '<div class="sample" id="sample" style="margin-top:10px"></div>';
-  h += '<h2 class="sec">' + (auto ? "Recent decisions" : hc ? "About you" : "What they know") + '</h2><div class="know" id="know">' + d.knows.map(kItem).join("") + "</div>";
-  if (!auto) h += '<h2 class="sec">Teach them</h2><div class="lib-in">' +
+  if (id === "strategy-coach") h += '<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" id="replanNow">Re-plan this week with these settings</button></div>';
+  if (!fc) h += '<h2 class="sec">' + (auto ? "Recent decisions" : hc ? "About you" : "What they know") + '</h2><div class="know" id="know">' + d.knows.map(kItem).join("") + "</div>";
+  if (!auto && !fc) h += '<h2 class="sec">Teach them</h2><div class="lib-in">' +
     '<div class="link-row"><input class="input" id="linkIn" placeholder="Paste a link: YouTube, Loom, Google Doc, Drive, website…"><button class="btn primary" id="linkGo">Add</button></div>' +
     '<div class="detect" id="detect">They study what\'s public about a link (pages, docs, video titles and descriptions), then write notes for your Head Coach. Your own takeaway counts most.</div>' +
     '<label class="drop" id="drop"><input type="file" id="fileIn" hidden multiple accept="video/*,audio/*,.pdf,.doc,.docx,.txt,.md,.csv,image/*"><b>⬆ Upload or drop files</b><br>Match videos, lesson recordings, PDFs, photos of notes, stats exports' +
@@ -1355,24 +1434,39 @@ function openMember(id) {
     '<div class="alt"><button class="btn" id="pasteBtn">📝 Paste text</button><button class="btn" id="sayBtn">🎙 Say it</button></div>' +
     (hc ? "" : '<div><div class="muted" style="font-size:12px;margin-bottom:6px">Ideas for ' + esc(m.name) + '</div><div class="ideas">' + d.teach.map(function (t, i) { return '<button data-teach="' + i + '">' + t[0] + " " + esc(t[1]) + "</button>"; }).join("") + "</div></div>") +
     '</div><div id="teachBox"></div>';
-  if (!auto) h += '<h2 class="sec">Sources they learn from</h2><div class="grid" id="srcList" data-member="' + esc(id) + '">' + ((SOURCES[id] || []).length ? SOURCES[id].map(srcRow).join("") : '<div class="empty-src">Nothing linked yet. Add a doc, video, or file above.</div>') + "</div>";
+  if (!auto && !fc) h += '<h2 class="sec">Sources they learn from</h2><div class="grid" id="srcList" data-member="' + esc(id) + '">' + ((SOURCES[id] || []).length ? SOURCES[id].map(srcRow).join("") : '<div class="empty-src">Nothing linked yet. Add a doc, video, or file above.</div>') + "</div>";
   h += '<h2 class="sec">' + (auto ? "How they decide" : "Rules they follow") + '</h2><ul style="margin:0;padding-left:20px">' + d.rules.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>";
   h += '<p class="muted" style="font-size:13px;margin-top:18px">Everything they know lives in your own tennis folder. Remove anything that\'s wrong — they\'ll stop using it.</p></div>';
   $("panel").innerHTML = h; $("panel").classList.add("on"); $("panelShade").classList.add("on"); $("panel").scrollTop = 0;
   $("closePanel").onclick = closeMember;
-  $("panel").querySelectorAll(".switch").forEach(function (b) { b.onclick = function () { b.classList.toggle("on"); toast(m.name + " updated"); }; });
+  $("panel").querySelectorAll(".switch").forEach(function (b) { b.onclick = function () {
+    var on = b.classList.toggle("on"); b.setAttribute("aria-pressed", on); var k = b.getAttribute("data-k");
+    if (k) { vals[k] = on; d.values = vals; saveTeamSetting(id, k, on); } toast(m.name + " updated"); }; });
   $("panel").querySelectorAll(".seg").forEach(function (seg) {
     seg.querySelectorAll("button").forEach(function (b) { b.onclick = function () {
-      seg.querySelectorAll("button").forEach(function (x) { x.classList.remove("on"); }); b.classList.add("on");
-      vals[seg.getAttribute("data-seg")] = b.textContent; d.values = vals;
-      if (id === "head-coach") { STYLE[seg.getAttribute("data-seg")] = b.textContent; sample(); }
-      toast(m.name + ": " + b.textContent.toLowerCase()); renderTeam();
+      var k = seg.getAttribute("data-seg"), v;
+      if (seg.classList.contains("multi")) {
+        b.classList.toggle("on");
+        v = [].map.call(seg.querySelectorAll("button.on"), function (x) { return x.textContent; });
+        if (!v.length) { b.classList.add("on"); return toast("Pick at least one"); }
+      } else { seg.querySelectorAll("button").forEach(function (x) { x.classList.remove("on"); }); b.classList.add("on"); v = b.textContent; }
+      vals[k] = v; d.values = vals; saveTeamSetting(id, k, v);
+      if (id === "head-coach") { STYLE[k] = b.textContent; sample(); }
+      if (k === "pace" && $("paceNote")) $("paceNote").textContent = PACE_NOTE[v];
+      toast(m.name + ": " + (Array.isArray(v) ? v.join(", ") : v).toLowerCase()); renderTeam();
     }; });
   });
   $("panel").querySelectorAll("[data-teach]").forEach(function (b) { b.onclick = function () { teachBox(id, d.teach[+b.getAttribute("data-teach")]); }; });
-  if (!auto) wireLibrary(id);
-  wireKnow(m);
+  if (!auto && !fc) wireLibrary(id);
+  if (!fc) wireKnow(m); else wireFit();
   if (hc) { wireKnowledge(); wireTeach3(); }
+  if ($("replanNow")) $("replanNow").onclick = function () {
+    var v = SETUP["strategy-coach"].values || {};
+    var words = "Re-plan this week with my Planner settings: " + (v.pace || "Steady") + " pace, " + (v.drills || "3") + " focuses, " + (v.days || "4") + " tennis days.";
+    closeMember();
+    if (REAL) return realAsk(words, "progress");
+    toast("Planner re-planned this week · " + (v.pace || "Steady").toLowerCase() + " pace");
+  };
   if (id === "head-coach") sample();
 }
 function kItem(k) { return '<div class="k-item' + (k.isNew ? " new" : "") + '"><div class="k-t">' + esc(k.t) + "<small>" + esc(k.src) + '</small></div><button class="x" aria-label="Forget this">✕</button></div>'; }
@@ -2083,8 +2177,10 @@ function applyTeam() {
   }
   SETUP["coach-analyst"].knows = (S.learned || []).concat(SETUP["coach-analyst"].knows || []);
   SETUP["progress-coordinator"].values = { day: "Sunday", drills: "3" };
-  SETUP["strategy-coach"].values = Object.assign({ pace: "Steady", drills: "3", day: "Sunday", check: "Monthly" }, SETUP["strategy-coach"].values || {}); SETUP["tournament-coach"].values = { taper: "1 week" };
-  SETUP["head-coach"].values = { tone: STYLE.tone, length: STYLE.length };
+  SETUP["strategy-coach"].values = Object.assign({ pace: "Steady", drills: "3", days: "4", day: "Sunday", check: "Monthly", fitness: true }, SETUP["strategy-coach"].values || {});
+  SETUP["tournament-coach"].values = Object.assign({ taper: "1 week", remind: "2 weeks", plans: "Before every match", scout: true, ask_after: true }, SETUP["tournament-coach"].values || {});
+  SETUP["head-coach"].values = Object.assign({ ask_score: true }, SETUP["head-coach"].values || {}, { tone: STYLE.tone, length: STYLE.length });
+  applyTeamSettings();
   Object.keys(S.latest || {}).forEach(function (id) { var m = byId(id); if (m) m.last = S.latest[id]; });
   SOON[1].role = parent ? "General fueling only for juniors. Never weight or diet goals." : "Match-day fueling and hydration routines.";
 }
@@ -3948,7 +4044,7 @@ function paintBrand() {
   var b = $("brandSub"); if (!b) return;
   $("brandName").textContent = (pname() ? pname() + "'s" : "Your") + " Pocket Tennis Team";
   var extra = S.mode === "parent" ? (S.parent ? S.parent + " (parent)" : "Parent") + " · " + pname() : (S.intro && S.intro.level ? S.intro.level.replace("NTRP ", "") + (S.nextLevel ? " → " + S.nextLevel : "") : S.demo ? "3.5 → 4.0" : "");
-  b.innerHTML = '<span class="stack">' + TEAM.filter(function (m) { return !m.hidden; }).map(function (m) { return av(m, true); }).join("") + '</span><span class="tp-t">Your team · 5 members</span>' + (extra ? '<span class="tp-x"> · ' + esc(extra) + "</span>" : "");
+  b.innerHTML = '<span class="stack">' + TEAM.filter(function (m) { return !m.hidden; }).map(function (m) { return av(m, true); }).join("") + '</span><span class="tp-t">Your team · 6 members</span>' + (extra ? '<span class="tp-x"> · ' + esc(extra) + "</span>" : "");
 }
 function stripHTML() {
   var evs = EVENTS.filter(function (e) { return e.d === TODAY && e.t !== "review"; }), planned = evs.filter(function (e) { return e.state === "planned"; }), logged = evs.filter(function (e) { return e.note; });
@@ -4975,7 +5071,7 @@ function fromContract(st) {
     var sc = P.score(e.note), r = P.result(e.note, sc); return { iso: e.d, name: e.title || "Match", result: (r === "W" ? "Won " : r === "L" ? "Lost " : "") + (sc || ""), reflection: sc ? "" : trimQ(e.note, 80) };
   });
   return {
-    knowledge: st.knowledge || null, questions: st.coach_questions || [],
+    knowledge: st.knowledge || null, questions: st.coach_questions || [], fitness: st.fitness || null,
     mode: st.mode || "adult", demo: false, player: st.player || "", parent: st.parent || "", coach: st.coach || "", academy: st.academy || "",
     data: { player: st.player || "", goal: { dream: g.dream || "", target: nl ? "Reach " + nl : tgt, by: byToLabel(g.by), measure: g.measure || "", three_month: g.three_month || "", progress: 5, journey: "", why: g.why || null },
             roadmap: st.roadmap && st.roadmap.length ? st.roadmap : [{ when: "Now", title: "Build the base", focus: tennis.map(function (a) { return a.area.split("· ")[1] || a.title; }).join(", "), status: "now" }],
@@ -5027,7 +5123,7 @@ function planReply() {
 
 /* ---------- jobs: pending card → real steps → real reply ---------- */
 var ACKS = {
-  log: ["Logging your note", "journal-keeper", "Writing it into your journal"], knowledge: ["Updating what I know", "coach-analyst", "Checking your coach notes"], lesson: ["Saving your lesson", "coach-analyst", "Reading the lesson notes"],
+  log: ["Logging your note", "journal-keeper", "Writing it into your journal"], fitness: ["Checking your body notes", "fitness-coach", "Reading what you shared"], knowledge: ["Updating what I know", "coach-analyst", "Checking your coach notes"], lesson: ["Saving your lesson", "coach-analyst", "Reading the lesson notes"],
   "match-prep": ["Your match card", "tournament-coach", "Planning the match"], debrief: ["The match debrief", "tournament-coach", "Listening to the debrief"],
   sideline: ["Saving your sideline note", "journal-keeper", "Saving your observer note"], "car-talk": ["What to say in the car", "head-coach", "Listening"],
   brief: ["This week's brief", "progress-coordinator", "Pulling this week together"], progress: ["Your progress check", "progress-coordinator", "Reading your recent notes"],
@@ -5091,7 +5187,7 @@ function refreshState() {
   if (!REAL) return Promise.resolve();
   return api("GET", "/api/state").then(function (r) {
     if (r.state) { var keepChk = S && S.chk; S = fromContract(r.state); if (keepChk) S.chk = keepChk; }
-    SETTINGS = r.settings || SETTINGS;
+    SETTINGS = r.settings || SETTINGS; applyTeamSettings();
     window.SERVER_SOURCES = r.sources || []; serverSourcesInto();
     convToFeed(r.conversation || []);
     MODE = S.mode; setMode(S.mode);
@@ -5281,7 +5377,7 @@ function bootReal() {
   $("dev").style.display = "none";
   var go = $("sttGo"); if (go) { go.textContent = "Coming soon"; go.disabled = true; go.classList.remove("primary"); $("sttSub").textContent = "Better recognition of tennis words and names, on your Mac. Coming in a later version."; }
   api("GET", "/api/state").then(function (r) {
-    SETTINGS = r.settings || {};
+    SETTINGS = r.settings || {}; applyTeamSettings();
     if (SETTINGS.autoOpen === false) $("autoOpen").classList.remove("on");
     if (r.ready && r.state) {
       S = fromContract(r.state); MODE = S.mode; convToFeed(r.conversation || []);

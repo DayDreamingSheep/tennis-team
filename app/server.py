@@ -41,6 +41,37 @@ INSTALLED = Path(os.environ.get("CLAUDE_PLUGIN_ROOT") or "/nonexistent").resolve
 INIT_SCRIPT = PLUGIN_ROOT / "skills" / "setup" / "scripts" / "init_workspace.py"
 TOKEN = secrets.token_urlsafe(18)
 ALLOWED_TOOLS = "Read Write Edit Glob Grep Skill"
+# How each teammate works (Adjust pages). Saved under "team" in _system/settings.json; every job gets them.
+TEAM_SETTINGS = {
+    "planner": {"pace": ["Gentle", "Steady", "Aggressive"], "drills": ["1", "2", "3"], "days": ["2", "3", "4", "5+"],
+                "day": ["Sunday", "Monday"], "check": ["Monthly", "Every block"], "fitness": [True, False]},
+    "journal": {"focus": ["Technique", "Tactics", "Mental side", "Body"], "followup": ["Just save it", "One follow-up", "Dig deeper"],
+                "tone": ["Short and direct", "Encouraging"], "inbox": [True, False], "exact": [True, False]},
+    "tournament": {"taper": ["3 days", "5 days", "1 week"], "remind": ["1 week", "2 weeks", "1 month"],
+                   "plans": ["Before every match", "Tournaments only"], "scout": [True, False], "ask_after": [True, False]},
+    "coach": {"tone": ["Encouraging", "Balanced", "Straight-talking"], "length": ["Short", "Detailed"], "ask_score": [True, False]},
+}
+TEAM_DEFAULTS = {
+    "planner": {"pace": "Steady", "drills": "3", "days": "4", "day": "Sunday", "check": "Monthly", "fitness": True},
+    "journal": {"focus": ["Technique"], "followup": "One follow-up", "tone": "Short and direct", "inbox": True, "exact": True},
+    "tournament": {"taper": "1 week", "remind": "2 weeks", "plans": "Before every match", "scout": True, "ask_after": True},
+    "coach": {"tone": "Balanced", "length": "Short", "ask_score": True},
+}
+
+
+def clean_team_settings(raw):
+    """Keep only known groups, keys and values."""
+    out = {}
+    for g, keys in TEAM_SETTINGS.items():
+        for k, allowed in keys.items():
+            v = ((raw or {}).get(g) or {}).get(k)
+            if k == "focus" and isinstance(v, list):
+                v = [x for x in v if x in allowed] or None
+            elif v not in allowed:
+                v = None
+            if v is not None:
+                out.setdefault(g, {})[k] = v
+    return out
 STUDY_TOOLS = ALLOWED_TOOLS + " WebSearch WebFetch"   # saved links: read public text about them
 MAX_BODY = 2_000_000
 
@@ -64,6 +95,16 @@ FAST_MODE = (
     "tournaments, coach); read TEAM.md only if you need a rule. The message starts with '[app] kind=... mode=... "
     "today=...', may have '[fields]' (structured answers) and '[recent]' (the last messages), then the player's words "
     "(often speech-to-text: repair obvious mishearings). Reply as their Head Coach, crediting teammates where useful.\n"
+    "Follow '[team settings]': coach.tone and coach.length set how you talk; journal.followup 'One follow-up' or 'Dig "
+    "deeper' lets you end with one optional question about journal.focus (never one that blocks anything). If the player "
+    "asks to change how a teammate works ('make my plan more aggressive', 'only two things a week', 'ask me fewer "
+    "questions', 'remind me a month before entries'), put the change in tt-meta \"settings\" using only these values: "
+    "planner.pace Gentle|Steady|Aggressive, planner.drills 1|2|3, planner.days 2|3|4|5+, planner.day Sunday|Monday, "
+    "planner.fitness true|false, journal.focus [Technique, Tactics, Mental side, Body], journal.followup Just save it|One "
+    "follow-up|Dig deeper, journal.tone Short and direct|Encouraging, tournament.taper 3 days|5 days|1 week, "
+    "tournament.remind 1 week|2 weeks|1 month, tournament.plans Before every match|Tournaments only, coach.tone "
+    "Encouraging|Balanced|Straight-talking, coach.length Short|Detailed; then say in the reply what will change, "
+    "crediting the Planner, Journal Keeper or Tournament Coach. Juniors (mode=parent) stay at Steady at most; say so. "
     "Rules: health first. Tightness or soreness = keep an eye on it; pain = rest that work and see a professional; "
     "limping or pain during a match = stop playing now. Juniors (mode=parent) with growth pain such as Sever's: less "
     "impact, physio before the next event, withdrawing is OK. Signs of distress, burnout, self-harm or disordered "
@@ -80,11 +121,12 @@ FAST_MODE = (
     "exactly what to count next practice and the target, in one or two sentences. In parent mode speak to the parent "
     "about the junior by name. Plain language, no IDs or file names, no tables or headings, under 110 words, at most "
     "3 next steps, in the player's language. End with a fenced block exactly like:\n```tt-meta\n{\"members\": "
-    "[\"head-coach\"], \"next_steps\": [\"...\"], \"say\": \"...\", \"state_changed\": false}\n```\n"
+    "[\"head-coach\"], \"next_steps\": [\"...\"], \"say\": \"...\", \"state_changed\": false, \"settings\": {}}\n```\n"
     "\"say\" is the same message written to be spoken aloud by a warm coach: under 70 words, contractions, "
     "no lists, symbols or emoji, numbers and scores as words (\"six out of ten\", \"four-six\"), uses the player's "
     "name once, sounds like talking not reading, and ends with a short question or nudge.\nMember ids: head-coach, "
-    "team-manager, journal-keeper, coach-analyst, progress-coordinator, strategy-coach, tournament-coach. Names the player "
+    "team-manager, journal-keeper, coach-analyst, progress-coordinator, strategy-coach, tournament-coach, fitness-coach. "
+    "Active state.fitness.limits bind every suggestion. Names the player "
     "sees: strategy-coach is 'the Planner' (never 'Strategy Coach'); coach-analyst is 'Coach Analyst', who works behind the "
     "Head Coach."
 )
@@ -92,7 +134,9 @@ BOOK_MODE = (
     "BOOKKEEPING MODE for the Pocket Tennis Team app. The player has ALREADY been answered; the '[replied]' line holds that "
     "reply and its next steps. Do the team's full work for this message with the tennis-team coach skill and TEAM.md: "
     "journal it, update patterns, decisions, flags, events, tournaments, coach notes, next steps (use the replied next "
-    "steps), _system/state.json and _system/plan-data.js, so the app matches what the player was told. For kind=source, "
+    "steps), _system/state.json and _system/plan-data.js, so the app matches what the player was told. Follow "
+    "'[team settings]' as TEAM.md rule 19 and the coach skill's references/team-settings.md describe; if this message "
+    "changed a setting (the reply says so), re-plan what it affects now. For kind=source, "
     "study the saved link with the coach-analysis skill, Mode D (study a saved link): public text only, written up as "
     "study notes for the Head Coach, and the matching _system/sources.json item updated by its id. Do not "
     "contradict the reply; if the evidence clearly requires a different decision, record it and add one short next "
@@ -103,12 +147,13 @@ BOOK_MODE = (
 SKILL_MEMBER = {
     "coach": "head-coach", "setup": "team-manager", "log-note": "journal-keeper",
     "coach-analysis": "coach-analyst", "weekly-review": "progress-coordinator",
-    "strategy": "strategy-coach", "tournament": "tournament-coach",
+    "strategy": "strategy-coach", "tournament": "tournament-coach", "fitness": "fitness-coach",
 }
 MEMBER_STEP = {
     "head-coach": "Listening", "team-manager": "Setting up your team", "journal-keeper": "Writing it into your journal",
     "coach-analyst": "Checking your coach's advice", "progress-coordinator": "Reviewing your plan",
     "strategy-coach": "Checking your long-term plan", "tournament-coach": "Working on your tournaments",
+    "fitness-coach": "Checking your body and fitness",
 }
 FILE_STEPS = [   # (path fragment, step text, team member who owns that file; None = keep the active member)
     ("state.json", "Updating your app", None), ("plan-data", "Updating your plan page", "head-coach"),
@@ -120,6 +165,7 @@ FILE_STEPS = [   # (path fragment, step text, team member who owns that file; No
     ("profile", "Updating your player profile", "team-manager"), ("onboarding", "Reading your answers", "team-manager"),
     ("goals", "Setting your goal", "strategy-coach"), ("roadmap", "Drawing your roadmap", "strategy-coach"),
     ("tournaments/", "Updating your tournaments", "tournament-coach"), ("study-notes", "Writing study notes", "coach-analyst"),
+    ("health.md", "Updating your body notes", "fitness-coach"), ("fitness_program", "Fitting your gym program in", "fitness-coach"),
     ("sources.json", "Saving what they learned", "coach-analyst"), ("coaches/", "Updating your coach notes", "coach-analyst"),
     ("TEAM.md", "Reading your team rules", None),
 ]
@@ -317,7 +363,30 @@ class App:
     def settings(self):
         s = read_json(self.ws("_system", "settings.json"), {}) if self.workspace else {}
         s["autoOpen"] = not (self.data / "no-autoopen").exists()
+        s["team"] = self.team_settings()
         return s
+
+    def team_settings(self):
+        saved = clean_team_settings((read_json(self.ws("_system", "settings.json"), {}) if self.workspace else {}).get("team"))
+        out = {g: dict(v, **saved.get(g, {})) for g, v in TEAM_DEFAULTS.items()}
+        st = self.read_state() or {}
+        if st.get("mode") == "parent" or (isinstance(st.get("age"), int) and st["age"] < 18):
+            if out["planner"]["pace"] == "Aggressive":
+                out["planner"]["pace"] = "Steady"      # junior guardrail (TEAM.md rule 15)
+                out["planner"]["junior_cap"] = True
+        return out
+
+    def save_team_settings(self, change):
+        change = clean_team_settings(change)
+        if not change or not self.workspace:
+            return False
+        s = read_json(self.ws("_system", "settings.json"), {})
+        team = s.get("team") or {}
+        for g, v in change.items():
+            team.setdefault(g, {}).update(v)
+        s["team"] = team
+        write_json(self.ws("_system", "settings.json"), s)
+        return True
 
     def ready(self):
         return bool(self.workspace and self.ws("TEAM.md").exists())
@@ -526,7 +595,8 @@ class App:
         mode = fields.get("mode") or st.get("mode") or "adult"
         header = f"[app] kind={job.kind} mode={mode} today={today_iso()}"
         clean = {k: v for k, v in fields.items() if k != "mode"}
-        return header + ("\n[fields] " + json.dumps(clean, ensure_ascii=False) if clean else "") + extra + "\n" + text
+        team = "\n[team settings] " + json.dumps(self.team_settings(), ensure_ascii=False)
+        return header + ("\n[fields] " + json.dumps(clean, ensure_ascii=False) if clean else "") + team + extra + "\n" + text
 
     def _claude(self, job, message, system, tools, plugin=True, track=True):
         """Run one claude -p pass; returns (result_text or None, error or None)."""
@@ -573,6 +643,8 @@ class App:
         job.next_steps = [x for x in meta.get("next_steps", []) if isinstance(x, str)][:3]
         job.state_changed = bool(meta.get("state_changed", True))
         job.say = str(meta.get("say") or "").strip() or None
+        if isinstance(meta.get("settings"), dict) and self.save_team_settings(meta["settings"]):
+            job.settings_changed = True
         self.append_convo({"role": "team", "kind": job.kind, "text": reply, "say": job.say, "members": job.members,
                            "next_steps": job.next_steps, "job": job.id})
 
@@ -884,8 +956,10 @@ def make_handler(app):
                     else:
                         flag.write_text(now_iso(), encoding="utf-8")
                 if app.workspace:
+                    if isinstance(b.get("team"), dict):
+                        app.save_team_settings(b["team"])
                     s = read_json(app.ws("_system", "settings.json"), {})
-                    s.update({k: v for k, v in b.items() if k != "autoOpen"})
+                    s.update({k: v for k, v in b.items() if k not in ("autoOpen", "team")})
                     write_json(app.ws("_system", "settings.json"), s)
                 return self._send(200, app.settings())
             if not app.workspace and u.path != "/api/onboarding":

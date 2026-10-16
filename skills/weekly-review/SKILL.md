@@ -26,6 +26,8 @@ If there are no new entries (including a review on the same day as setup), say s
 
 ## Decide
 
+**Settings.** Follow the player's team settings (`[team settings]` in app jobs, else `_system/settings.json`) as the coach skill's `references/team-settings.md` describes.
+
 1. Summarize evidence by priority. Separate outcomes (scores, counts, results) from interpretations (feelings).
 2. For each active assignment, compare evidence with its success signal and choose one decision using the definitions in `TEAM.md` rule 3. Default to `keep` when evidence is sparse.
 3. Choose next week's set in priority order: max three tennis (`T1`-`T3`) + one physical (`PHY`). At least one slot is P0. New slots get decision `new`. Pick drills from `training/drill_library.md`, or add new drills there first (`DR-NNN`). Cue changes follow `TEAM.md` rule 6.
@@ -33,6 +35,7 @@ If there are no new entries (including a review on the same day as setup), say s
 5. Reconcile patterns (promote/weaken with evidence IDs), refresh the master summary's "Current performance read" and "Current decisions", and keep the cue stack at three cues or fewer. Preserve contradictions.
 6. **Serve the roadmap.** Apply any open recommendation in the roadmap's Check-ins table. Weekly work must serve the `now` phase: every tennis slot is a P0 area or one of the phase's focus areas. Then run the strategy skill's check-in if `Last checked` in `training/roadmap.md` is 28 or more days ago, or the block's end date has passed.
 7. **Player feedback from the app.** An assignment marked "Too much" = evidence for `reduce` (simplify the cue or halve the volume). "Looks good" = the player accepts it; it is not performance evidence.
+7a. **Fitness limits.** Every `state.fitness.limits` item with `status: "active"` binds this plan: no assignment, drill or planned session may break it, and the `PHY` slot follows the fitness skill. If the week needs a new fitness block, run the fitness skill for it.
 7b. **Ideas being tested.** For `state.knowledge` items with `label: "testing"`, check this week's results. A `proven` idea that fits the current focus may become a cue next week (rule 6). An idea with no attempt in two weeks gets one next step to try it, or is left alone if the plan is full.
 8. **Starter plan.** If `block.name` starts with "Starter plan" or "Generic starter plan" and 2 or more sessions are logged, replace it with a real cycle (step 4) and a real block name.
 

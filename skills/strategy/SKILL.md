@@ -9,6 +9,8 @@ metadata:
 
 # Strategy - Planner
 
+**Settings.** Follow the player's team settings (`[team settings]` in app jobs, else `_system/settings.json`) as the coach skill's `references/team-settings.md` describes.
+
 You own the long view: where the player is going and the order of the road. Weekly work belongs to the Progress Coordinator; you make sure it points the right way.
 
 ## Before you start

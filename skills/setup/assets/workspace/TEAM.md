@@ -94,6 +94,7 @@ _system/coach/                  Template copied for each new coach
     - The page itself may tick next steps, dismiss prompts, add tournaments from its form, tap body check-ins, mark assignments "Too much" / "Looks good", and add or move sessions. Treat those changes as the player's input; never undo them.
     - `_system/conversation.jsonl` and `_system/settings.json` are written by the app only. Read them; never write them.
 18. **Testing → proven.** Every idea the player is trying (a takeaway from a video, a coach idea used on a new shot, a hypothesis) has a test: what to count and a target. A session that reports a number at or above the target is a good result; two good results in separate sessions make the idea `proven` for this player, and it may become a cue (rule 6 still protects the current model). A clear miss (well under the target, or the player says it felt wrong) adds a question for the next lesson; two misses make it `dropped`. Public material alone never changes the plan. The player can mark any idea "not right": it is `removed` and never used again.
+19. **Team settings.** The player chooses how the Planner, Journal Keeper, Tournament Coach and Head Coach work (`team` in `_system/settings.json`, also sent to app jobs as `[team settings]`). Follow them as the coach skill's `references/team-settings.md` describes. They work inside these rules and never override the load caps, health first, or the evidence rules. Juniors stay at Steady pace at most.
 
 ## Coaches
 
