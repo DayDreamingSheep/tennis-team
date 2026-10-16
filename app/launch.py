@@ -46,6 +46,10 @@ def find_workspace(start):
     return None
 
 
+def plugin_version():
+    return (read_json(APP_DIR.parent / ".claude-plugin" / "plugin.json", {}) or {}).get("version", "")
+
+
 def alive(info):
     """True when server.json points at a running Pocket Tennis Team server."""
     if not info or not info.get("pid") or not info.get("port"):
@@ -108,6 +112,10 @@ def main():
         # not onboarded yet: first run opens Welcome wherever Claude started
 
     running = alive(info)
+    if running and info.get("version") != plugin_version():
+        stop(info)                       # the plugin was updated: restart the app on the new code
+        time.sleep(0.3)
+        running = False
     if running:
         same = (info.get("workspace") or None) == (str(workspace) if workspace else None)
         if same or (not workspace and not info.get("workspace")):

@@ -131,6 +131,10 @@ def data_dir(arg=None):
     return d
 
 
+def plugin_version():
+    return (read_json(PLUGIN_ROOT / ".claude-plugin" / "plugin.json", {}) or {}).get("version", "")
+
+
 def find_claude():
     found = shutil.which("claude")
     if found:
@@ -320,7 +324,7 @@ class App:
                 "today": today_iso(), "folders": self.folders(), "claude": bool(self.claude)}
 
     def record_server(self, port):
-        write_json(self.data / "server.json", {"pid": os.getpid(), "port": port, "token": TOKEN,
+        write_json(self.data / "server.json", {"pid": os.getpid(), "port": port, "token": TOKEN, "version": plugin_version(),
                                                 "workspace": str(self.workspace) if self.workspace else None, "started": now_iso()})
 
     def remember_workspace(self):
