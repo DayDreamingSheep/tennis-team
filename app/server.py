@@ -678,8 +678,18 @@ def make_handler(app):
         def log_message(self, *a):
             pass
 
+        def _local(self):
+            """Only this computer's own pages may talk to the app (blocks DNS-rebinding and cross-site requests)."""
+            host = (self.headers.get("Host") or "").split(":")[0]
+            if host not in ("127.0.0.1", "localhost"):
+                return False
+            origin = self.headers.get("Origin")
+            return not origin or urlparse(origin).hostname in ("127.0.0.1", "localhost")
+
         def _ok(self, q):
-            return q.get("t", [""])[0] == TOKEN or self.headers.get("X-Token") == TOKEN
+            if not self._local():
+                return False
+            return secrets.compare_digest(q.get("t", [""])[0] or self.headers.get("X-Token") or "", TOKEN)
 
         def _send(self, status, body, ctype="application/json"):
             data = body if isinstance(body, bytes) else (body if isinstance(body, str) else json.dumps(body, ensure_ascii=False)).encode("utf-8")
@@ -688,6 +698,9 @@ def make_handler(app):
             self.send_header("Content-Length", str(len(data)))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Referrer-Policy", "no-referrer")          # the URL holds the token: never leak it to other sites
+            self.send_header("X-Frame-Options", "DENY")
+            self.send_header("Content-Security-Policy", "frame-ancestors 'none'")
             self.end_headers()
             self.wfile.write(data)
 

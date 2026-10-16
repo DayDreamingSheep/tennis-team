@@ -43,7 +43,14 @@ def main():
     OUT.mkdir()
     shutil.copy(ROOT / "site" / "index.html", OUT / "index.html")
     (OUT / "demo").mkdir()
-    shutil.copy(ROOT / "app" / "web" / "index.html", OUT / "demo" / "index.html")
+    demo = (ROOT / "app" / "web" / "index.html").read_text(encoding="utf-8")
+    # The public demo talks to nothing: no server, no API, no third parties. This policy enforces it in the browser
+    # (connect-src 'none' blocks every fetch/XHR/WebSocket), so the page can't be abused to send data anywhere.
+    csp = ('<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; '
+           'style-src \'unsafe-inline\'; img-src data: blob:; media-src blob: data:; font-src data:; connect-src \'none\'; '
+           'base-uri \'none\'; form-action \'none\'">\n<meta name="referrer" content="no-referrer">')
+    demo = demo.replace("<head>", "<head>\n" + csp, 1)
+    (OUT / "demo" / "index.html").write_text(demo, encoding="utf-8")
     wrap(ROOT / "design" / "flow-report.html", OUT / "case-study" / "index.html", MERMAID)
     wrap(ROOT / "design" / "timeline.html", OUT / "timeline" / "index.html")
     (OUT / "voice").mkdir()

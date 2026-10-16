@@ -3976,9 +3976,9 @@ function drawComposer(q) {
 }
 function ivSend(q) {
   stopAll();
-  $("ivComp").querySelectorAll("button,textarea").forEach(function (b) { b.disabled = true; }); $("ivComp").classList.add("busy");
   var text = ($("ivText").value || "").trim(), tags = (OB.iv.tags || []).slice();
-  if (!text && !tags.length) { toast("Say or type an answer, tap a chip, or Skip question."); return; }
+  if (!text && !tags.length) { toast("Say or type an answer, tap a chip, or Skip question."); $("ivText").focus(); return; }   // check first, so nothing gets locked
+  $("ivComp").querySelectorAll("button,textarea").forEach(function (b) { b.disabled = true; }); $("ivComp").classList.add("busy");
   var v = tags.concat(text ? [text] : []).join(" · ");
   OB.iv.tagsBy = OB.iv.tagsBy || {}; OB.iv.textBy = OB.iv.textBy || {};
   OB.iv.tagsBy[q.k] = tags; OB.iv.textBy[q.k] = text; OB.iv.ans[q.k] = v;
