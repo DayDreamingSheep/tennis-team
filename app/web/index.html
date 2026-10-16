@@ -708,7 +708,6 @@
   .iv-comp.away { display: none; }
   .iv-comp.enter { animation: ivIn .22s ease-out; }
   @keyframes ivIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-  .iv-chips .grp-next { outline: 2px dashed var(--accent); outline-offset: 3px; border-radius: 999px; }
   @media (prefers-reduced-motion: reduce) { .iv-comp.enter { animation: none; } }
   #feed3 > * { scroll-margin-top: 80px; }
   .strip { box-shadow: 0 6px 10px -8px rgba(0,0,0,.25); }
@@ -3984,29 +3983,13 @@ function drawComposer(q) {
     b.classList.toggle("on", i < 0); paintTags();
     autoSendSoon();
   }; });
-  // A tapped pill IS the answer and sends at once. Questions with two kinds of pill (goal + "by when",
-  // years + level) send as soon as both kinds are picked; Send skips the second. Days (multi-pick) and
-  // typed answers wait for Send.
-  var multi = (q.chips || []).some(function (x) { return DAYCHIPS.indexOf(x) >= 0; }), autoT = null;
-  var TIME = /\b(years?|months?|weeks?)\b/i;
-  function kind(v) { return TIME.test(v) ? "time" : "what"; }
-  var kinds = {}; (q.chips || []).forEach(function (x) { if (!/^Send: /.test(x)) kinds[kind(ivFill(x))] = true; });
-  var twoKinds = kinds.time && kinds.what;
-  function cancelAuto() { clearTimeout(autoT); autoT = null; c.querySelectorAll(".grp-next").forEach(function (x) { x.classList.remove("grp-next"); }); }
+  // A tapped pill IS the answer: it goes straight into the conversation (with anything typed so far)
+  // and the input hides until the next question. Only the days question (pick several) waits for Send.
+  var multi = (q.chips || []).some(function (x) { return DAYCHIPS.indexOf(x) >= 0; });
+  function cancelAuto() {}
   function autoSendSoon() {
-    cancelAuto();
     if (!OB.iv.tags.length) { $("ivHint").textContent = "Tap the mic, or type. Tap a pill to answer."; return; }
     if (multi) { $("ivHint").textContent = "Tap all that apply, then Send."; return; }
-    if (ta.value.trim()) { $("ivHint").textContent = "Added. Tap Send when you're ready."; return; }
-    if (twoKinds) {
-      var have = {}; OB.iv.tags.forEach(function (t) { have[kind(t)] = true; });
-      if (!(have.time && have.what)) {
-        var need = have.time ? "what" : "time";
-        c.querySelectorAll("[data-ivc]").forEach(function (b) { var v = b.getAttribute("data-ivc"); if (!/^Send: /.test(v) && kind(v) === need) b.classList.add("grp-next"); });
-        $("ivHint").textContent = need === "time" ? (q.k === "goal" ? "And by when? Tap one, or Send to skip." : "And how long have you played? Tap one, or Send.") : (q.k === "level" ? "And your level? Tap one, or Send." : "Tap one more, or Send.");
-        return;
-      }
-    }
     ivSend(q);
   }
   if (multi) $("ivHint").textContent = "Tap all the days that apply, then Send.";
