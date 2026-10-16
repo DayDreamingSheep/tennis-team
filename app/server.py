@@ -41,6 +41,7 @@ INSTALLED = Path(os.environ.get("CLAUDE_PLUGIN_ROOT") or "/nonexistent").resolve
 INIT_SCRIPT = PLUGIN_ROOT / "skills" / "setup" / "scripts" / "init_workspace.py"
 TOKEN = secrets.token_urlsafe(18)
 ALLOWED_TOOLS = "Read Write Edit Glob Grep Skill"
+STUDY_TOOLS = ALLOWED_TOOLS + " WebSearch WebFetch"   # saved links: read public text about them
 MAX_BODY = 2_000_000
 
 APP_MODE = (
@@ -69,8 +70,12 @@ FAST_MODE = (
     "eating: pause coaching, reply warmly, encourage talking to a trusted adult, mention crisis resources. Always say "
     "'This isn't medical advice' when giving health guidance. React to their numbers versus the current targets and "
     "cues. kind=car-talk: give 2 things to say, 1 to avoid, 1 question for later. kind=source: the player saved training "
-    "material (a link). You have NOT seen its content and must not pretend you have or invent what it says; thank them, "
-    "say who will keep it (Coach Analyst), and ask them to watch it and tell you the one thing they're taking from it. In parent mode speak to the parent "
+    "material (a link). You have NOT seen its content and must not pretend you have or invent what it says; thank them "
+    "and say Coach Analyst is studying it now (reading public information about it) and will have study notes ready on "
+    "that teammate's page in a few minutes; ask them to tell you the one thing they take from it after they watch or "
+    "read it, since their own takeaway counts most. When a question touches a coach or channel the player learns from, "
+    "you may read coaches/<slug>/study-notes.md and principles.md and use them, saying they come from public material "
+    "and haven't been checked against the player's own lessons yet. In parent mode speak to the parent "
     "about the junior by name. Plain language, no IDs or file names, no tables or headings, under 110 words, at most "
     "3 next steps, in the player's language. End with a fenced block exactly like:\n```tt-meta\n{\"members\": "
     "[\"head-coach\"], \"next_steps\": [\"...\"], \"say\": \"...\", \"state_changed\": false}\n```\n"
@@ -84,9 +89,8 @@ BOOK_MODE = (
     "reply and its next steps. Do the team's full work for this message with the tennis-team coach skill and TEAM.md: "
     "journal it, update patterns, decisions, flags, events, tournaments, coach notes, next steps (use the replied next "
     "steps), _system/state.json and _system/plan-data.js, so the app matches what the player was told. For kind=source, "
-    "record the link as a PUB source in the right coaches/<slug>/sources.md (a channel is a coach the player follows; "
-    "create the coach folder if needed) using only the title, author and link; never invent its content; add no "
-    "principles until the player shares their takeaway. Do not "
+    "study the saved link with the coach-analysis skill, Mode D (study a saved link): public text only, written up as "
+    "study notes for the Head Coach, and the matching _system/sources.json item updated by its id. Do not "
     "contradict the reply; if the evidence clearly requires a different decision, record it and add one short next "
     "step that explains the change. Your final text is not shown to anyone: end with just 'done'."
 )
@@ -111,7 +115,8 @@ FILE_STEPS = [   # (path fragment, step text, team member who owns that file; No
     ("patterns", "Looking for patterns", "journal-keeper"), ("master_summary", "Updating your big picture", "journal-keeper"),
     ("profile", "Updating your player profile", "team-manager"), ("onboarding", "Reading your answers", "team-manager"),
     ("goals", "Setting your goal", "strategy-coach"), ("roadmap", "Drawing your roadmap", "strategy-coach"),
-    ("tournaments/", "Updating your tournaments", "tournament-coach"), ("coaches/", "Updating your coach notes", "coach-analyst"),
+    ("tournaments/", "Updating your tournaments", "tournament-coach"), ("study-notes", "Writing study notes", "coach-analyst"),
+    ("sources.json", "Saving what they learned", "coach-analyst"), ("coaches/", "Updating your coach notes", "coach-analyst"),
     ("TEAM.md", "Reading your team rules", None),
 ]
 
@@ -391,15 +396,27 @@ class App:
 
     def add_source(self, url, member):
         src = describe_link(url)
-        src.update({"member": member or "coach-analyst", "added": today_iso(), "id": uuid.uuid4().hex[:8]})
+        src.update({"member": member or "coach-analyst", "added": today_iso(), "id": uuid.uuid4().hex[:8],
+                    "status": "studying"})
         items = [x for x in self.sources() if x.get("url") != url]
         items.insert(0, src)
         write_json(self.ws("_system", "sources.json"), items)
-        what = {"youtube-channel": "a YouTube channel I learn from", "youtube-video": "a YouTube video", "web": "a web page"}[src["kind"]]
+        what = {"youtube-channel": "a YouTube channel I learn from", "youtube-video": "a YouTube video",
+                "doc": "a document", "web": "a web page"}[src["kind"]]
         text = (f"Add {what} to my training material: {src['title']}" + (f" by {src['author']}" if src["author"] else "")
-                + f" ({url}). I haven't summarised it yet.")
-        job = self.enqueue_ask(text, "source", {k: src[k] for k in ("url", "kind", "title", "author", "member")})
+                + f" ({url}). Please study it.")
+        job = self.enqueue_ask(text, "source", {k: src[k] for k in ("id", "url", "kind", "title", "author", "member")})
+        job.source_id = src["id"]
         return src, job
+
+    def finish_study(self, sid, ok):
+        """After the study pass: make sure the card never stays 'studying'."""
+        items = self.sources()
+        for x in items:
+            if x.get("id") == sid and x.get("status") == "studying":
+                x["status"] = "studied" if ok else "error"
+                write_json(self.ws("_system", "sources.json"), items)
+                return
 
     # -- queues: fast replies (read-only, parallel to writes) and one serialized writer
     def enqueue_ask(self, text, kind, fields=None, log_user=True):
@@ -538,7 +555,11 @@ class App:
         """Pass 2: the team updates journal, plan, calendar and state.json in the background."""
         job.bookkeeping = "running"
         extra = "\n[replied] " + json.dumps({"reply": job.reply or "", "next_steps": job.next_steps}, ensure_ascii=False)
-        result, err = self._claude(job, self._message(job, text, fields, extra), BOOK_MODE, ALLOWED_TOOLS)
+        sid = getattr(job, "source_id", None)
+        result, err = self._claude(job, self._message(job, text, fields, extra), BOOK_MODE,
+                                   STUDY_TOOLS if sid else ALLOWED_TOOLS)
+        if sid:
+            self.finish_study(sid, not err)
         if err:
             job.bookkeeping = "error"
             self._save_unanswered(text)
@@ -593,6 +614,10 @@ class App:
                     job.step(label, member)
                     return
             job.step("Saving your updates")
+        elif name in ("WebSearch", "WebFetch"):
+            job.member("coach-analyst")
+            job.step("Reading public information about it" if name == "WebFetch" else "Searching for what they teach",
+                     "coach-analyst")
         elif name in ("Read", "Glob", "Grep"):
             if "TEAM.md" in path:
                 job.step("Reading your team rules")
@@ -644,6 +669,10 @@ def describe_link(url):
         raise ValueError("That doesn't look like a link. Paste the full address (https://…).")
     host = u.netloc.lower()
     src = {"url": url, "kind": "web", "title": host, "author": "", "thumb": ""}
+    if host in ("docs.google.com", "drive.google.com"):
+        src.update(kind="doc", title="Google " + ("Drive file" if host.startswith("drive") else
+                                                    "Sheet" if "/spreadsheets/" in u.path else "Doc"))
+        return src
     if host in YT_HOSTS:
         path = u.path.rstrip("/")
         if path.startswith("/@") or path.startswith("/channel/") or path.startswith("/c/") or path.startswith("/user/"):

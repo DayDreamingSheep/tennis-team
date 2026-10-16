@@ -52,6 +52,30 @@ Reply:
 
 Produce a one-page summary of the coach's model from `principles.md` (high confidence first), then open hypotheses, then what the evidence does *not* cover. Useful as input to roadmap planning.
 
+## Mode D - Study a saved link
+
+Input: a link the player saved in the app (`[app] kind=source`, with `[fields]` `{id, url, kind, title, author, member}`), or "study this channel / video / doc". Goal: within a few minutes, turn the link into study notes the Head Coach can use, so the player doesn't have to summarise it first.
+
+**What you may read: public text only.**
+- Web search for the coach, channel or video. Use the coach's own site, articles, interviews, course pages, and the video titles and descriptions that search results show.
+- Fetch the link itself when it is a web page or a Google Doc or Drive file shared publicly. For a Doc, try `https://docs.google.com/document/d/<id>/export?format=txt`.
+- Never download video or audio. Never fetch captions or transcripts, or use any tool or site that extracts them. Never log in, and never get around a paywall or a sharing setting. If a Doc isn't public, say so in the notes and stop there.
+- Keep it short: up to about 6 searches and 8 fetches. Prefer the coach's own material over third-party write-ups.
+
+**Write the evidence** (folder `coaches/<slug>/`, created as in the intro if missing; a channel or author counts as a coach the player follows):
+1. **`sources.md`.** One `PUB` row for the saved link, plus one `PUB` row for each page you actually used, with its URL. Note "public description" when you only saw a title or summary, not the material itself.
+2. **Teachings.** Apply `references/evidence-rules.md`. A teaching stated consistently by two or more independent public sources is a principle at `medium` confidence at most. Anything else is a hypothesis with a validation test. Say every teaching in your own words, with no long quotes.
+3. **`study-notes.md`.** Under one page, in plain language (rule 12), for the Head Coach to follow:
+   - **Who this is** and what they're known for (one or two lines).
+   - **Main ideas,** at most 6 bullets, each with its source.
+   - **Fits your plan.** Which ideas match the player's current focus and cues in `_system/state.json`, and which seem to pull another way. Public material never overrides a `DIRECT` cue (rule 6), so flag a clash and don't change the plan.
+   - **Start here.** One to three specific videos or pages to watch or read first, chosen for the player's current focus, by title and link.
+   - **How we know this.** "From public descriptions and articles, not from watching the videos. Your own takeaway counts more."
+4. **The app card.** Update the item in `_system/sources.json` whose `id` matches: `status: "studied"`, `learned`: the number of main ideas, `points`: those ideas as short plain sentences (max 6, each under 90 characters), `start`: `[{title, url}]` (max 3), `summary`: one line. If you found nothing usable, set `status: "studied"`, `learned: 0`, and a `summary` saying what was missing. Change no other item.
+5. **State.** Set `team.latest["coach-analyst"]` = "Studied <title> · <Mon D>" and append to `_system/team_log.csv`. Add one next step only if it helps, for example "Watch <start item> and tell your coach one thing you took from it".
+
+Later, when the player shares a takeaway from this source, ingest it with Mode A as `PLAYER` evidence. It outranks these notes.
+
 ## State (`_system/state.json`)
 
 After Mode A or B, following the coach skill's `references/state-json.md`:

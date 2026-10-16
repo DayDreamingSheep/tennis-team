@@ -57,6 +57,7 @@ App mode routes by `kind`. Chat mode picks the row that matches the words.
 | `free` with `[fields] {"player_intro": true}` (the player's own intro, given after a parent's setup) | journal-keeper | log-note skill as `PLAYER` evidence that outranks parent-reported facts: update profile, patterns and state; then the strategy skill to set `goal.player_goal` |
 | `log`, or shares a practice, match or pre-match note | journal-keeper | log-note skill |
 | `lesson`, or shares what a coach taught | coach-analyst | coach-analysis skill (Mode A journals it first) |
+| `source` (a saved link), or "study this channel / video / doc" | coach-analyst | coach-analysis skill, Mode D (study a saved link) |
 | `match-prep`, "match coming up", "game plan for Saturday" | tournament-coach | tournament skill, match card |
 | `debrief`, or a match result after a planned match or tournament | tournament-coach | tournament skill, debrief (it runs log-note) |
 | `sideline` (a parent watching) | journal-keeper | log-note skill, observer note |

@@ -310,6 +310,9 @@
   .src .sync { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--muted); }
   .src .sync .switch { width: 38px; height: 22px; } .src .sync .switch::after { width: 16px; height: 16px; } .src .sync .switch.on::after { left: 19px; }
   .src.working { border-color: var(--accent); }
+  .src-more { margin-top: 6px; font-size: 13px; } .src-more summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+  .src-more ul { margin: 6px 0; padding-left: 18px; } .src-more li { margin: 2px 0; } .src-more p { margin: 6px 0; }
+  .src-more .src-why { color: var(--muted); font-size: 12px; }
   .spin { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--accent); border-right-color: transparent; display: inline-block; animation: rot .8s linear infinite; }
   @keyframes rot { to { transform: rotate(360deg); } }
   .empty-src { font-size: 14px; color: var(--muted); padding: 8px 2px; }
@@ -1169,13 +1172,13 @@ function openMember(id) {
   h += '<h2 class="sec">What they know</h2><div class="know" id="know">' + d.knows.map(kItem).join("") + "</div>";
   h += '<h2 class="sec">Teach them</h2><div class="lib-in">' +
     '<div class="link-row"><input class="input" id="linkIn" placeholder="Paste a link: YouTube, Loom, Google Doc, Drive, website…"><button class="btn primary" id="linkGo">Add</button></div>' +
-    '<div class="detect" id="detect">They read docs and pages, and watch videos through their transcript.</div>' +
+    '<div class="detect" id="detect">They study what\'s public about a link (pages, docs, video titles and descriptions), then write notes for your Head Coach. Your own takeaway counts most.</div>' +
     '<label class="drop" id="drop"><input type="file" id="fileIn" hidden multiple accept="video/*,audio/*,.pdf,.doc,.docx,.txt,.md,.csv,image/*"><b>⬆ Upload or drop files</b><br>Match videos, lesson recordings, PDFs, photos of notes, stats exports' +
       '<div class="types"><span>🎥 MP4 / MOV</span><span>🎙 Voice memo</span><span>📄 PDF / Doc</span><span>📷 Photo</span><span>📊 CSV</span></div></label>' +
     '<div class="alt"><button class="btn" id="pasteBtn">📝 Paste text</button><button class="btn" id="sayBtn">🎙 Say it</button></div>' +
     '<div><div class="muted" style="font-size:12px;margin-bottom:6px">Ideas for ' + esc(m.name) + '</div><div class="ideas">' + d.teach.map(function (t, i) { return '<button data-teach="' + i + '">' + t[0] + " " + esc(t[1]) + "</button>"; }).join("") + "</div></div>" +
     '</div><div id="teachBox"></div>';
-  h += '<h2 class="sec">Sources they learn from</h2><div class="grid" id="srcList">' + ((SOURCES[id] || []).length ? SOURCES[id].map(srcRow).join("") : '<div class="empty-src">Nothing linked yet. Add a doc, video, or file above.</div>') + "</div>";
+  h += '<h2 class="sec">Sources they learn from</h2><div class="grid" id="srcList" data-member="' + esc(id) + '">' + ((SOURCES[id] || []).length ? SOURCES[id].map(srcRow).join("") : '<div class="empty-src">Nothing linked yet. Add a doc, video, or file above.</div>') + "</div>";
   h += '<h2 class="sec">Rules they follow</h2><ul style="margin:0;padding-left:20px">' + d.rules.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>";
   h += '<p class="muted" style="font-size:13px;margin-top:18px">Everything they know lives in your own tennis folder. Remove anything that\'s wrong — they\'ll stop using it.</p></div>';
   $("panel").innerHTML = h; $("panel").classList.add("on"); $("panelShade").classList.add("on"); $("panel").scrollTop = 0;
@@ -1242,14 +1245,18 @@ function srcRow(x, i) {
     : "Learned " + x.learned + " thing" + (x.learned === 1 ? "" : "s") + (x.synced ? " · " + esc(x.synced) : "");
   var sync = (x.kind === "doc" || x.kind === "web" || x.title.indexOf("Inbox") === 0) && !x.working
     ? '<div class="sync"><button class="switch' + (x.sync ? " on" : "") + '" data-sync aria-label="Keep in sync"></button>Keep in sync</div>' : "";
-  return '<div class="src' + (x.working ? " working" : "") + '"><span class="ic ' + (x.kind === "audio" || x.kind === "image" || x.kind === "sheet" ? "file" : x.kind) + '">' + ic + '</span><div class="t"><b>' + esc(x.title) + "</b><small>" + esc(x.where) + " · " + status + "</small></div>" + sync + "</div>";
+  var more = (x.points && x.points.length) ? '<details class="src-more"><summary>What they learned</summary>' + (x.summary ? "<p>" + esc(x.summary) + "</p>" : "") +
+      "<ul>" + x.points.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul>" +
+      ((x.start || []).length ? '<p class="start">Start with: ' + x.start.map(function (s) { return /^https?:\/\//.test(s.url || "") ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer">' + esc(s.title || s.url) + "</a>" : esc(s.title || ""); }).join(" · ") + "</p>" : "") +
+      '<p class="src-why">From public descriptions, not from watching the videos. Tell your coach what you take from it, since your words count most.</p></details>' : "";
+  return '<div class="src' + (x.working ? " working" : "") + '"><span class="ic ' + (x.kind === "audio" || x.kind === "image" || x.kind === "sheet" ? "file" : x.kind) + '">' + ic + '</span><div class="t"><b>' + esc(x.title) + "</b><small>" + esc(x.where) + " · " + status + "</small>" + more + "</div>" + sync + "</div>";
 }
 function detectLink(u) {
   u = u.trim();
   if (!u) return null;
-  if (/youtu\.?be/i.test(u)) return { kind: "video", where: "YouTube video", title: "YouTube video", steps: ["Getting the transcript", "Finding the coaching points"] };
-  if (/loom\.com/i.test(u)) return { kind: "video", where: "Loom recording", title: "Loom recording", steps: ["Getting the transcript", "Finding the coaching points"] };
-  if (/vimeo\.com/i.test(u)) return { kind: "video", where: "Vimeo video", title: "Vimeo video", steps: ["Getting the transcript", "Finding the coaching points"] };
+  if (/youtu\.?be/i.test(u)) return { kind: "video", where: "YouTube video", title: "YouTube video", steps: ["Reading what\'s public about it", "Finding the coaching points"] };
+  if (/loom\.com/i.test(u)) return { kind: "video", where: "Loom recording", title: "Loom recording", steps: ["Reading what\'s public about it", "Finding the coaching points"] };
+  if (/vimeo\.com/i.test(u)) return { kind: "video", where: "Vimeo video", title: "Vimeo video", steps: ["Reading what\'s public about it", "Finding the coaching points"] };
   if (/docs\.google\.com\/document/i.test(u)) return { kind: "doc", where: "Google Doc", title: "Google Doc", steps: ["Reading the doc", "Comparing with what they know"], sync: true };
   if (/docs\.google\.com\/spreadsheets/i.test(u)) return { kind: "doc", icon: "📊", where: "Google Sheet", title: "Google Sheet", steps: ["Reading the sheet", "Looking for patterns"], sync: true };
   if (/drive\.google\.com/i.test(u)) return { kind: "doc", icon: "🗂", where: "Google Drive file", title: "Drive file", steps: ["Opening the file", "Reading it"], sync: true };
@@ -1285,20 +1292,31 @@ function learnFrom(id, item) {
 // the player's own takeaway becomes the evidence.
 function srcFromServer(x) {
   var ch = x.kind === "youtube-channel", vid = x.kind === "youtube-video";
-  return { kind: ch || vid ? "video" : "web", icon: ch ? "📺" : null, title: x.title || x.url, url: x.url, saved: true,
-           where: ch ? "YouTube channel you follow" : vid ? "YouTube" + (x.author ? " · " + x.author : "") : (function () { try { return new URL(x.url).host; } catch (e) { return "Web page"; } })(),
-           note: "Saved " + (x.added ? shortD(x.added) : "") + " · tell your coach what you took from it" };
+  var o = { kind: ch || vid ? "video" : x.kind === "doc" ? "doc" : "web", icon: ch ? "📺" : null, title: x.title || x.url, url: x.url, saved: true,
+           where: ch ? "YouTube channel you follow" : vid ? "YouTube" + (x.author ? " · " + x.author : "") : (function () { try { return new URL(x.url).host; } catch (e) { return "Web page"; } })() };
+  if (x.status === "studying") o.working = "Coach Analyst is studying it…";
+  else if (x.status === "studied") { o.learned = x.learned || 0; o.points = x.points || []; o.start = x.start || []; o.summary = x.summary || "";
+    if (!o.learned) o.note = x.summary || "Studied · not much public information yet"; }
+  else if (x.status === "error") o.note = "Couldn't study it this time · it's still saved";
+  else o.note = "Saved " + (x.added ? shortD(x.added) : "") + " · tell your coach what you took from it";
+  return o;
 }
+var STUDY_T = null;
 function serverSourcesInto() {
   if (!REAL || !window.SERVER_SOURCES) return;
   Object.keys(SOURCES).forEach(function (k) { SOURCES[k] = []; });
   window.SERVER_SOURCES.forEach(function (x) { var m = x.member || "coach-analyst"; (SOURCES[m] = SOURCES[m] || []).push(srcFromServer(x)); });
+  var list = $("srcList"), id = list && list.getAttribute("data-member");
+  if (list && id && (SOURCES[id] || []).length) { list.innerHTML = SOURCES[id].map(srcRow).join(""); wireSync(); }
+  clearTimeout(STUDY_T);
+  if (window.SERVER_SOURCES.some(function (x) { return x.status === "studying"; }))
+    STUDY_T = setTimeout(function () { refreshState().catch(function () {}); }, 8000);   // update the card when the study finishes
 }
 function addSourceReal(id, url, det, input) {
   det.textContent = "Saving…";
   api("POST", "/api/source", { url: url, member: id }).then(function (r) {
     if (r.error) { det.textContent = r.error; return; }
-    input.value = ""; det.textContent = "Saved. Watch it, then tell your coach the one thing you're taking from it.";
+    input.value = ""; det.textContent = "Saved. Coach Analyst is studying it now. Notes will show up here in a few minutes.";
     var list = SOURCES[id] = SOURCES[id] || []; list.unshift(srcFromServer(r.source));
     $("srcList").innerHTML = list.map(srcRow).join(""); wireSync();
     toast("Saved " + (r.source.title || "link") + ". Your coach replied on Home.");
@@ -1322,7 +1340,7 @@ function wireLibrary(id) {
   input.oninput = function () {
     var d = detectLink(input.value);
     det.innerHTML = d ? (d.icon || KIND_IC[d.kind]) + " <b>" + esc(d.where) + "</b> detected" + (d.sync ? " · they'll keep it in sync" : d.kind === "video" ? " · they'll learn from its transcript" : "")
-      : input.value ? "Paste a full link (https://…)" : "They read docs and pages, and watch videos through their transcript.";
+      : input.value ? "Paste a full link (https://…)" : "They study what\'s public about a link (pages, docs, video titles and descriptions), then write notes for your Head Coach. Your own takeaway counts most.";
     if (REAL && d) det.innerHTML = (d.icon || KIND_IC[d.kind]) + " <b>" + esc(d.where) + "</b> detected · saved with its title and link; you tell your coach what you learned";
   };
   var add = function () {
