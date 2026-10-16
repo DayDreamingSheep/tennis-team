@@ -705,10 +705,12 @@
   .iv-tags { min-height: 20px; } .iv-tags.hidden { display: block; visibility: hidden; }
   #ivHeard { display: none !important; }
   .iv-comp.busy { opacity: .55; pointer-events: none; }
-  .iv-comp.away { display: none; }
-  .iv-comp.enter { animation: ivIn .22s ease-out; }
-  @keyframes ivIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .iv-comp.enter { animation: none; } }
+  /* After an answer the composer stays put: input and buttons grey out, the pills fade away (their space is kept). */
+  .iv-comp .iv-row, .iv-comp .iv-acts, .iv-comp .iv-chips { transition: opacity .18s ease; }
+  .iv-comp.waiting .iv-row, .iv-comp.waiting .iv-acts { opacity: .45; }
+  .iv-comp.waiting .iv-chips { opacity: 0; visibility: hidden; transition: opacity .15s ease, visibility 0s .15s; }
+  .iv-comp.waiting * { cursor: default; }
+  .iv-comp .iv-chips { min-height: var(--iv-chips-h, 0px); align-content: flex-start; }
   #feed3 > * { scroll-margin-top: 80px; }
   .strip { box-shadow: 0 6px 10px -8px rgba(0,0,0,.25); }
   #dev .pill { width: 8px !important; height: 36px !important; }
@@ -3466,7 +3468,7 @@ function ivMsg(who, text, k) {
   else { el.className = "msg me iv-a"; if (k) el.id = "ans-" + k; el.textContent = text; }
   $("ivMsgs").appendChild(el); ivScroll();
 }
-function ivScroll() { var o = $("ob"); setTimeout(function () { o.scrollTop = o.scrollHeight; }, 20); }
+function ivScroll() { var o = $("ob"); o.scrollTop = o.scrollHeight; setTimeout(function () { o.scrollTop = o.scrollHeight; }, 20); }
 function ivAsk() {
   var q = OB.iv.list[OB.iv.i];
   if (!q) return toHuddle();
@@ -3954,12 +3956,13 @@ function ivAsk() {
 }
 function drawComposer(q) {
   var c = $("ivComp"); OB.iv.tags = [];
-  c.classList.remove("busy", "away"); c.classList.remove("enter"); void c.offsetWidth; c.classList.add("enter");
+  c.classList.remove("busy", "waiting");
   c.innerHTML = '<div class="iv-row"><button class="mic" id="ivMic" type="button" aria-label="Tap to talk">' + MIC_SVG + '</button><textarea class="input" id="ivText" rows="4" placeholder="Talk or type your answer…"></textarea></div>' +
     '<div class="heard hidden" id="ivHeard"></div>' +
     '<div class="iv-tags hidden" id="ivTags"></div>' +
-    (q.chips ? '<div class="iv-chips">' + q.chips.map(function (x) { var l = ivFill(x); return '<button class="opt' + (/^Send: /.test(l) ? " send" : "") + '" type="button" data-ivc="' + esc(l) + '">' + esc(l) + "</button>"; }).join("") + "</div>" : "") +
-    '<div class="iv-foot"><span class="vhint" id="ivHint">Tap the mic, or type. Tap a pill to answer.</span><span class="iv-acts"><button class="link" id="ivSkipQ" type="button">Skip question</button><button class="btn primary" id="ivSend" type="button">Send</button></span></div>';
+    '<div class="iv-foot"><span class="vhint" id="ivHint">Tap the mic, or type. Tap a pill to answer.</span><span class="iv-acts"><button class="link" id="ivSkipQ" type="button">Skip question</button><button class="btn primary" id="ivSend" type="button">Send</button></span></div>' +
+    '<div class="iv-chips">' + ivChipsHtml(q.chips) + "</div>";
+  ivReserveChips(c);
   var ta = $("ivText"), mic = $("ivMic");
   function grow() { ta.style.height = "auto"; ta.style.height = Math.max(104, Math.min(240, ta.scrollHeight)) + "px"; }
   function paintTags() { var tg = $("ivTags"); tg.innerHTML = OB.iv.tags.length ? "Tags: " + OB.iv.tags.map(function (x) { return "<span>" + esc(x) + "</span>"; }).join(" · ") : ""; tg.classList.toggle("hidden", !OB.iv.tags.length); }
@@ -3984,7 +3987,7 @@ function drawComposer(q) {
     autoSendSoon();
   }; });
   // A tapped pill IS the answer: it goes straight into the conversation (with anything typed so far)
-  // and the input hides until the next question. Only the days question (pick several) waits for Send.
+  // and the composer waits (greyed, pills gone) until the next question. Only the days question (pick several) waits for Send.
   var multi = (q.chips || []).some(function (x) { return DAYCHIPS.indexOf(x) >= 0; });
   function cancelAuto() {}
   function autoSendSoon() {
@@ -3999,15 +4002,37 @@ function drawComposer(q) {
   $("ivSkipQ").addEventListener("click", cancelAuto);
   ta.oninput = grow;
   ta.onkeydown = function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ivSend(q); } };
-  $("ivSkipQ").onclick = function () { stopAll(); $("ivComp").classList.add("away"); OB.iv.ans[q.k] = ""; ivMsg("me", "(skipped)"); OB.iv.i++; ivAsk(); };
+  $("ivSkipQ").onclick = function () { stopAll(); ivWaiting(); OB.iv.ans[q.k] = ""; ivMsg("me", "(skipped)"); OB.iv.i++; ivAsk(); };
   grow();
   if (window.matchMedia("(min-width: 900px)").matches) ta.focus();
+}
+function ivChipsHtml(chips) {
+  return (chips || []).map(function (x) { var l = ivFill(x); return '<button class="opt" type="button" data-ivc="' + esc(l) + '">' + esc(/^Send: /.test(l) ? cap(l.slice(6)) : l) + "</button>"; }).join("");
+}
+// Reserve room for the tallest set of pills in the interview, so the input and Send never move between questions.
+function ivReserveChips(c) {
+  var w = c.clientWidth; if (!w) return;
+  if (OB.iv.chipsW !== w || OB.iv.chipsN !== OB.iv.list.length) {
+    var m = document.createElement("div"); m.className = "iv-chips"; m.style.cssText = "position:absolute;visibility:hidden;left:-9999px;width:" + w + "px";
+    c.appendChild(m); var h = 0;
+    OB.iv.list.forEach(function (x) { if (x && x.chips) { m.innerHTML = ivChipsHtml(x.chips); h = Math.max(h, m.offsetHeight); } });
+    m.remove(); OB.iv.chipsW = w; OB.iv.chipsN = OB.iv.list.length; OB.iv.chipsH = h;
+  }
+  c.style.setProperty("--iv-chips-h", OB.iv.chipsH + "px");
+}
+window.addEventListener("resize", function () { var c = $("ivComp"); if (c && OB.iv) ivReserveChips(c); });
+function ivWaiting() {
+  var c = $("ivComp"); c.classList.add("waiting");
+  c.querySelectorAll("button,textarea").forEach(function (b) { b.disabled = true; });
+  var ta = $("ivText"); if (ta) { ta.value = ""; ta.placeholder = "Your coach is replying…"; }
+  var h = $("ivHint"); if (h) h.textContent = "Sent ✓";
+  ["ivTags", "ivHeard"].forEach(function (id) { var e = $(id); if (e) e.classList.add("hidden"); });   // keep the frame from moving
 }
 function ivSend(q) {
   stopAll();
   var text = ($("ivText").value || "").trim(), tags = (OB.iv.tags || []).slice();
   if (!text && !tags.length) { toast("Say or type an answer, tap a chip, or Skip question."); $("ivText").focus(); return; }   // check first, so nothing gets locked
-  $("ivComp").querySelectorAll("button,textarea").forEach(function (b) { b.disabled = true; }); $("ivComp").classList.add("away");
+  ivWaiting();
   var v = tags.concat(text ? [text] : []).join(" · ");
   OB.iv.tagsBy = OB.iv.tagsBy || {}; OB.iv.textBy = OB.iv.textBy || {};
   OB.iv.tagsBy[q.k] = tags; OB.iv.textBy[q.k] = text; OB.iv.ans[q.k] = v;
