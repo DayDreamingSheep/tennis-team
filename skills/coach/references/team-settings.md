@@ -1,6 +1,6 @@
 # Team settings: how each teammate works
 
-The player sets these on the Adjust pages of the app (or by saying so, for example "make my plan more aggressive"). The app saves them under `team` in `_system/settings.json` and adds them to every app job as a `[team settings] {...}` line. In chat mode, read `_system/settings.json` yourself; anything missing uses the default (marked *). Never write `settings.json`; only the app does.
+The player sets these on the Adjust pages of the app (or by saying so, for example "make my plan more aggressive"). The app saves them under `team` in `_system/settings.json` and adds them to every app job as a `[team settings] {...}` line. In chat mode, read `_system/settings.json` yourself; anything missing uses the default (marked *). Never write `settings.json`; only the app does. When the player asks in words to change a setting, write the change to `_system/settings_request.json` (for example `{"planner": {"pace": "Aggressive"}}`, same keys and values as below) and the app saves it after the run.
 
 Settings change how the team works inside the rules of `TEAM.md`. They never override:
 - the caps of 3 tennis assignments and 1 fitness assignment (rule 1);

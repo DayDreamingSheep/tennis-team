@@ -5000,7 +5000,7 @@ function syncPatch(fields) {   // whole-field "set" patches for the page-patchab
 function safeKey(id) { return String(id).replace(/[.\s]+/g, "_"); }
 
 /* ---------- store ⇄ state.json (contract §7) ---------- */
-var FILE_STATUS = { new: "New", keep: "Keep going", progress: "Level up", reduce: "Lighter", pause: "Paused", replace: "New focus", validate: "Test it in real points" };
+var FILE_STATUS = { new: "New", keep: "Keep going", progress: "Level up", reduce: "Lighter", pause: "Paused", replace: "New focus", validate: "Test it in real points", "level-up": "Level up", "level up": "Level up", "keep going": "Keep going" };
 function aStatusToFile(s) { s = String(s || "").toLowerCase(); if (FILE_STATUS[s]) return s; return /paus/.test(s) ? "pause" : /light|reduc/.test(s) ? "reduce" : /level up|progress/.test(s) ? "progress" : /test|validat/.test(s) ? "validate" : /new focus|replace|changed/.test(s) ? "replace" : /keep/.test(s) ? "keep" : "new"; }
 function byToISO(label) { var m = /^([A-Z][a-z]{2}) (\d{4})$/.exec(label || ""); return m ? m[2] + "-" + pad(MON.indexOf(m[1]) + 1) : (label || ""); }
 function byToLabel(iso) { var m = /^(\d{4})-(\d{2})/.exec(iso || ""); return m ? MON[+m[2] - 1] + " " + m[1] : (iso || ""); }

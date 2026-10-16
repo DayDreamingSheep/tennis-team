@@ -136,7 +136,9 @@ BOOK_MODE = (
     "journal it, update patterns, decisions, flags, events, tournaments, coach notes, next steps (use the replied next "
     "steps), _system/state.json and _system/plan-data.js, so the app matches what the player was told. Follow "
     "'[team settings]' as TEAM.md rule 19 and the coach skill's references/team-settings.md describe; if this message "
-    "changed a setting (the reply says so), re-plan what it affects now. For kind=source, "
+    "changed a setting (the reply says so), re-plan what it affects now, and write the change to "
+    "_system/settings_request.json as {\"planner\": {\"pace\": \"Aggressive\"}} (same keys and values as the reply's "
+    "settings) so the app saves it. assignments[].status uses only new, keep, progress, reduce, pause, replace or validate. For kind=source, "
     "study the saved link with the coach-analysis skill, Mode D (study a saved link): public text only, written up as "
     "study notes for the Head Coach, and the matching _system/sources.json item updated by its id. Do not "
     "contradict the reply; if the evidence clearly requires a different decision, record it and add one short next "
@@ -676,6 +678,10 @@ class App:
                                    STUDY_TOOLS if sid else ALLOWED_TOOLS)
         if sid:
             self.finish_study(sid, not err)
+        req = self.ws("_system", "settings_request.json")
+        if req.exists():                       # a setting the player asked for in words: the app owns settings.json
+            self.save_team_settings(read_json(req, {}))
+            req.unlink(missing_ok=True)
         if err:
             job.bookkeeping = "error"
             self._save_unanswered(text)
