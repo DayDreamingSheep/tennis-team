@@ -41,7 +41,14 @@ def main():
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir()
-    shutil.copy(ROOT / "site" / "index.html", OUT / "index.html")
+    # GitHub Pages lets browsers cache pages for 10 minutes; stamping the demo link with the commit makes
+    # visitors from the landing page load the newest demo right after a deploy.
+    import os, subprocess
+    ver = os.environ.get("GITHUB_SHA") or subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                                                          capture_output=True, text=True).stdout.strip()
+    landing = (ROOT / "site" / "index.html").read_text(encoding="utf-8")
+    landing = landing.replace('href="demo/?demo=1"', f'href="demo/?demo=1&amp;v={ver[:8]}"')
+    (OUT / "index.html").write_text(landing, encoding="utf-8")
     (OUT / "demo").mkdir()
     demo = (ROOT / "app" / "web" / "index.html").read_text(encoding="utf-8")
     # The public demo talks to nothing: no server, no API, no third parties. This policy enforces it in the browser
