@@ -29,6 +29,10 @@ All keys are optional except `version` and `mode`. Dates are ISO `YYYY-MM-DD`. K
                      "guide": { "before": [], "game_plan": [], "match_day": [], "between_points": [], "after": [] } } ],
   "flags": [ { "part": "left knee", "level": 1, "iso": "2026-10-15", "status": "monitor", "by": "Sam", "note": "" } ],
   "next_steps": [ { "id": "", "text": "", "due": "2026-10-17", "done": false } ],
+  "knowledge": [ { "id": "PRIYA-P-001", "text": "", "label": "coach", "from": "Priya", "src": "Lesson · Oct 9",
+                   "cue": "", "in_plan": true, "status": "active",
+                   "test": { "how": "", "target": "", "need": 2, "results": [ { "d": "2026-10-11", "ok": true, "note": "7/10" } ] } } ],
+  "coach_questions": [ { "id": "", "text": "", "about": "PRIYA-P-001", "added": "2026-10-15", "asked": false } ],
   "team": { "active": ["head-coach", "journal-keeper", "progress-coordinator", "strategy-coach"],
             "latest": { "journal-keeper": "Logged your practice · Oct 15" } },
   "load": { "weekly_hours": { "2026-10-12": 6 } },
@@ -48,6 +52,14 @@ All keys are optional except `version` and `mode`. Dates are ISO `YYYY-MM-DD`. K
 - `team.latest`: one plain line per member, "<what> · <Mon D>", e.g. "Added the Fall Open · Oct 15".
 - `load.weekly_hours`: key = the Monday of the week; value = planned + done hours (section 4).
 - `prompts_dismissed`: written only by the page. Never edit it.
+- `knowledge`: what the Head Coach knows about the player's tennis, one item per principle or hypothesis in `coaches/<slug>/` (plus general tips the team relies on). `id` = the principle or hypothesis ID in the coach files (general tips: `GEN-NN`). `text` is one plain sentence (max 110 characters). `label`, strongest first:
+  - `coach`: taught to this player by a real coach (`DIRECT` evidence).
+  - `proven`: tested on court and it held up (see `test`).
+  - `testing`: the player's takeaway from a video, a coach idea applied somewhere new, or any hypothesis with a test running.
+  - `public`: from public material only (study notes). Background reading; never changes the plan alone.
+  - `general`: general tennis knowledge.
+  `from` = the coach or channel name, `src` = a short plain source ("Lesson · Oct 9", "Your takeaway from an Olivari video", "Study notes"). `cue` = the cue words when it is one of the active cues; `in_plan` = true when an assignment uses it. `status`: `active`, `dropped` (tested and it didn't work for this player, kept for history) or `removed` (the player said it's wrong; never use it again). `test` (for `testing` and `proven`): `how` = what to count, `target` = e.g. "7/10", `need` = good sessions to prove it (2), `results` = one per session that tried it. Owners: coach-analysis adds, relabels and removes items; log-note appends `test.results` and makes the promotion (TEAM.md rule 18); weekly-review checks it.
+- `coach_questions`: questions to bring to the next lesson. The page adds them ("Ask my coach about this"); skills add one when a test clearly misses. Set `asked: true` once a lesson note answers it.
 
 ## 3. IDs inside state
 

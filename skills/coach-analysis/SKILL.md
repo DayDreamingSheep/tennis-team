@@ -76,7 +76,21 @@ Input: a link the player saved in the app (`[app] kind=source`, with `[fields]` 
 
 Later, when the player shares a takeaway from this source, ingest it with Mode A as `PLAYER` evidence. It outranks these notes.
 
+## Mode E - Knowledge actions from the app
+
+Input: `[app] kind=knowledge` with `[fields] {action, id, text}`. The page shows the player `state.knowledge` on the Head Coach page and lets them act on one item:
+
+- `fix` ("That's not right", with their correction in `text`): if the correction is a coach's teaching, treat it like Mode A (`PLAYER` evidence citing the coach, or `DIRECT` if they report the coach's words). Mark the old principle or hypothesis as corrected in the coach files (dated note, never delete), set the old item `status: "removed"`, and add the corrected item.
+- `remove`: the page already set `status: "removed"`. Mark it rejected by the player in the coach files with the date; if it was an active cue or used by an assignment, log a `replace` or `reduce` decision and update the plan.
+- `test` ("Test it next practice"): set `label: "testing"` and fill `test` (`how`, `target`, `need: 2`, `results: []`) with something countable in one session. Add one next step ("Next practice: <how>, aim for <target>") and put the test in the next planned practice's `plan` line. Do not add it as a new assignment (rule 1); it rides along with the current work.
+- `rebuild`: build `state.knowledge` from scratch from every `coaches/*/principles.md`, `hypotheses.md` and `study-notes.md`, keeping any `status`, `test.results` and `coach_questions` already in state.
+
+Reply in one or two plain sentences: what changed and, for a test, exactly what to count next practice.
+
 ## State (`_system/state.json`)
+
+**Knowledge.** Whenever Mode A, B, D or E adds, changes or relabels a principle or hypothesis, mirror it in `state.knowledge` (shape in the coach skill's `references/state-json.md`): `DIRECT` principles → `coach`; hypotheses with a test → `testing`; `PUB`-only items → `public`. Keep at most 40 active items; the oldest `public` ones drop out of state first (they stay in the files). If `state.knowledge` is missing, build it as in Mode E `rebuild`.
+
 
 After Mode A or B, following the coach skill's `references/state-json.md`:
 

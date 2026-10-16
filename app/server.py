@@ -75,7 +75,9 @@ FAST_MODE = (
     "that teammate's page in a few minutes; ask them to tell you the one thing they take from it after they watch or "
     "read it, since their own takeaway counts most. When a question touches a coach or channel the player learns from, "
     "you may read coaches/<slug>/study-notes.md and principles.md and use them, saying they come from public material "
-    "and haven't been checked against the player's own lessons yet. In parent mode speak to the parent "
+    "and haven't been checked against the player's own lessons yet. kind=knowledge: the player acted on one idea the "
+    "Head Coach knows ([fields] action fix or test): for fix, thank them and say the team will correct it; for test, say "
+    "exactly what to count next practice and the target, in one or two sentences. In parent mode speak to the parent "
     "about the junior by name. Plain language, no IDs or file names, no tables or headings, under 110 words, at most "
     "3 next steps, in the player's language. End with a fenced block exactly like:\n```tt-meta\n{\"members\": "
     "[\"head-coach\"], \"next_steps\": [\"...\"], \"say\": \"...\", \"state_changed\": false}\n```\n"
@@ -437,6 +439,46 @@ class App:
             job.bookkeeping = "pending"
             self.fq.put((job, text, fields or {}))
         return job
+
+    def enqueue_book(self, text, kind, fields=None):
+        """Background-only work (no visible reply): the team updates files and state."""
+        job = Job(kind)
+        job.bookkeeping = "pending"
+        job.done = True
+        self.jobs[job.id] = job
+        self.q.put(("book", job, text, fields or {}))
+        return job
+
+    def knowledge_action(self, action, kid, text):
+        """The Head Coach page acts on one idea it knows (state.knowledge)."""
+        st = self.read_state() or {}
+        items = st.get("knowledge") or []
+        idx = next((i for i, k in enumerate(items) if k.get("id") == kid), None)
+        if action == "rebuild":
+            return {"job": self.enqueue_book("Rebuild what the Head Coach knows from my coach files.", "knowledge",
+                                             {"action": "rebuild"}).id}
+        if idx is None:
+            raise ValueError("That idea isn't in your team's notes any more.")
+        item = items[idx]
+        fields = {"action": action, "id": kid, "idea": item.get("text", ""), "text": text}
+        if action == "question":
+            q = {"id": "Q-" + uuid.uuid4().hex[:6], "text": text or f"Ask about: {item.get('text', '')}", "about": kid,
+                 "added": today_iso(), "asked": False}
+            done, box = self.enqueue_patch([{"op": "push", "path": "coach_questions", "value": q}])
+            done.wait(10)
+            return {"question": q}
+        if action == "remove":
+            done, box = self.enqueue_patch([{"op": "set", "path": f"knowledge.{idx}.status", "value": "removed"}])
+            done.wait(10)
+            return {"job": self.enqueue_book(f"Forget this idea, it's not right for me: {item.get('text', '')}",
+                                             "knowledge", fields).id}
+        if action == "fix":
+            words = f"That's not right: \"{item.get('text', '')}\". " + (text or "")
+        elif action == "test":
+            words = f"I want to test this next practice: {item.get('text', '')}"
+        else:
+            raise ValueError("Unknown action.")
+        return {"job": self.enqueue_ask(words, "knowledge", fields).id}
 
     def enqueue_patch(self, ops):
         done = threading.Event()
@@ -813,6 +855,14 @@ def make_handler(app):
                 self.end_headers()
                 self.wfile.write(audio)
                 return
+            if u.path == "/api/knowledge":
+                if not app.workspace:
+                    return self._send(409, {"error": "Choose a folder first."})
+                try:
+                    return self._send(200, app.knowledge_action(str(b.get("action", "")), str(b.get("id", "")),
+                                                                str(b.get("text", "")).strip()[:600]))
+                except ValueError as exc:
+                    return self._send(400, {"error": str(exc)})
             if u.path == "/api/source":
                 if not app.workspace:
                     return self._send(409, {"error": "Choose a folder first."})

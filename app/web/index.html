@@ -314,6 +314,29 @@
   .src .sync { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--muted); }
   .src .sync .switch { width: 38px; height: 22px; } .src .sync .switch::after { width: 16px; height: 16px; } .src .sync .switch.on::after { left: 19px; }
   .src.working { border-color: var(--accent); }
+  .teach3 { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .kn-group { display: grid; gap: 8px; margin-bottom: 14px; }
+  .kn-group > h4 { margin: 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .kn { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--surface); display: grid; gap: 4px; cursor: pointer; }
+  .kn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .kn-t { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; }
+  .kn-t p { margin: 0; font-size: 15px; min-width: 0; }
+  .kn small { color: var(--muted); font-size: 12px; }
+  .kn.removed { opacity: .5; } .kn.removed p { text-decoration: line-through; }
+  .kb { font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; flex: none; }
+  .kb.coach { background: var(--accent-soft); color: var(--accent); }
+  .kb.proven { background: #f1f6cf; color: #3d4a0c; box-shadow: inset 0 0 0 1px #c6d83a; }
+  .kb.testing, .kb.general { background: var(--bg); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
+  .kb.public { background: #e3ecf5; color: #2f5f8f; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .kb.proven { background: #2b3118; color: #e3eea0; } :root:not([data-theme="light"]) .kb.public { background: #1c2a38; color: #8db7e3; } }
+  :root[data-theme="dark"] .kb.proven { background: #2b3118; color: #e3eea0; } :root[data-theme="dark"] .kb.public { background: #1c2a38; color: #8db7e3; }
+  .kn-res { display: flex; gap: 4px; align-items: center; }
+  .kn-res i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: inset 0 0 0 1.5px var(--line); }
+  .kn-res i.ok { background: var(--accent); box-shadow: none; } .kn-res i.miss { background: var(--warn); box-shadow: none; }
+  .kn-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .kn-acts .btn { font-size: 13px; padding: 7px 11px; }
+  .kn-fix { display: grid; gap: 6px; margin-top: 6px; }
+  .qs { display: grid; gap: 6px; margin-bottom: 8px; } .qs li { font-size: 14px; }
   .src-more { margin-top: 6px; font-size: 13px; } .src-more summary { cursor: pointer; color: var(--accent); font-weight: 600; }
   .src-more ul { margin: 6px 0; padding-left: 18px; } .src-more li { margin: 2px 0; } .src-more p { margin: 6px 0; }
   .src-more .src-why { color: var(--muted); font-size: 12px; }
@@ -984,7 +1007,7 @@ function memberStatus(m) {
     var lab = { "strategy-coach": (v.pace || "Steady") + " pace", "tournament-coach": "Eases off " + (v.taper || "1 week") + " before", "journal-keeper": "Standard notes" }[m.id] || "Standard";
     return { cls: "set", label: lab };
   }
-  var d = memberData(m.id), n = (d.knows || []).length + (SOURCES[m.id] || []).reduce(function (a, x) { return a + (x.learned || 0); }, 0);
+  var d = memberData(m.id), n = knowList().filter(function (k) { return k.status !== "removed" && k.status !== "dropped"; }).length + (SOURCES[m.id] || []).reduce(function (a, x) { return a + (x.learned || 0); }, 0);
   return SETUP["coach-analyst"].status.ok || n > 2 ? { cls: "ready", label: "Knows " + n + " thing" + (n === 1 ? "" : "s") } : { cls: "needs", label: "Needs you" };
 }
 // The Coach Analyst works behind the Head Coach: one Teach page with the coaches, lessons and links.
@@ -995,7 +1018,7 @@ function memberData(id) {
   return Object.assign({}, h, {
     intro: "Your front door. Teach them with notes from your lessons, videos and links you learn from, and what works for you on court. Your coach's advice always comes first; the Coach Analyst keeps it straight behind the scenes.",
     coaches: a.coaches, needs: a.status.ok ? null : a.needs,
-    knows: (a.knows || []).concat(h.knows || []),
+    knows: h.knows || [],
     teach: (a.teach || []).concat(h.teach || []),
     rules: (a.rules || []).slice(0, 2).concat(h.rules || [])
   });
@@ -1187,29 +1210,150 @@ renderTeam();
 
 function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove("on"); }, 2600); }
 
+/* ---------------- Head Coach: what I know (labelled, testable ideas) ---------------- */
+var KLAB = {
+  coach: { group: "From your coaches", badge: function (k) { return "Taught by " + (k.from || "your coach"); } },
+  proven: { group: "Proven for you", badge: function () { return "Proven for you"; } },
+  testing: { group: "Testing", badge: function (k) { var t = k.test || {}; return "Testing · " + (t.results || []).filter(function (r) { return r.ok; }).length + " of " + (t.need || 2); } },
+  public: { group: "Background reading", badge: function (k) { return "From " + (k.from || "public material"); } },
+  general: { group: "General tips", badge: function () { return "General tip"; } }
+};
+var DEMO_KNOW = null;
+function demoKnow() {
+  var c = (S && S.coach) || "Maria";
+  return DEMO_KNOW = DEMO_KNOW || [
+    { id: "D-1", label: "coach", from: c, text: "Second serve: toss slightly left and brush up the back of the ball.", src: "Lesson · Oct 7", cue: "brush up", in_plan: true, status: "active" },
+    { id: "D-2", label: "coach", from: c, text: "Short balls: first step forward as soon as you see it's short.", src: "Lesson · Oct 14", status: "active" },
+    { id: "D-3", label: "proven", from: c, text: "Split step as they hit gets more returns back deep.", src: "From " + c + "'s footwork cue", status: "active",
+      test: { how: "returns back past the service line", target: "7/10", need: 2, results: [ { d: "2026-10-11", ok: true, note: "7/10" }, { d: "2026-10-14", ok: true, note: "8/10" } ] } },
+    { id: "D-4", label: "testing", from: "Olivari Tennis", text: "Load the outside leg early on wide forehands.", src: "Your takeaway from an Olivari footwork video", status: "active",
+      test: { how: "wide forehands you reach balanced", target: "6/10", need: 2, results: [ { d: "2026-10-13", ok: true, note: "6/10" } ] } },
+    { id: "D-5", label: "public", from: "Olivari Tennis", text: "Fix the mechanics first; footwork is the foundation.", src: "Study notes · public descriptions, not the videos", status: "active" },
+    { id: "D-6", label: "general", text: "Breathe out on contact to stay loose under pressure.", src: "General tennis knowledge", status: "active" },
+    { id: "D-7", label: "testing", from: "a YouTube video", text: "Hit the second serve harder so it's heavier.", src: "Your takeaway · Oct 2", status: "dropped",
+      test: { how: "second serves in at 30-30", target: "7/10", need: 2, results: [ { d: "2026-10-04", ok: false, note: "4/10" }, { d: "2026-10-08", ok: false, note: "3/10" } ] } }
+  ];
+}
+function knowList() { return REAL ? ((S && S.knowledge) || []) : demoKnow(); }
+var DEMO_Q = [ { id: "DQ-1", text: "Is the early split step too early on fast serves?", about: "D-3", added: "2026-10-14" } ];
+function knQuestions() { if (!REAL) return DEMO_Q; if (!S) return []; S.questions = S.questions || []; return S.questions; }
+function knItemHTML(k) {
+  var L = KLAB[k.label] || KLAB.general, t = k.test || {}, res = t.results || [];
+  var dots = k.label === "testing" || k.label === "proven" || res.length ? '<span class="kn-res" aria-label="Results">' + res.map(function (r) { return '<i class="' + (r.ok ? "ok" : "miss") + '" title="' + esc(shortD(r.d) + " · " + (r.note || "")) + '"></i>'; }).join("") +
+      (k.status === "active" && k.label === "testing" ? Array(Math.max(0, (t.need || 2) - res.filter(function (r) { return r.ok; }).length) + 1).join("<i></i>") : "") + "</span>" : "";
+  var meta = [k.src || ""].concat(k.cue ? ["cue “" + k.cue + "”"] : []).concat(k.in_plan ? ["in this week's plan"] : [])
+    .concat(t.how && k.status === "active" && k.label === "testing" ? ["count: " + t.how + (t.target ? ", aim for " + t.target : "")] : [])
+    .concat(res.length ? [res.map(function (r) { return (r.note || (r.ok ? "worked" : "missed")) + " on " + shortD(r.d); }).join(", ")] : []).filter(Boolean).join(" · ");
+  return '<div class="kn' + (k.status === "removed" ? " removed" : "") + '" data-kid="' + esc(k.id) + '" tabindex="0" role="button" aria-expanded="false"><div class="kn-t"><p>' + esc(k.text) + '</p><span class="kb ' + esc(k.label) + '">' + esc(L.badge(k)) + "</span></div>" +
+    "<small>" + esc(meta) + "</small>" + dots + "</div>";
+}
+function knowHTML() {
+  var list = knowList();
+  if (!list.length) return '<div class="empty-src">' + (REAL && (window.SERVER_SOURCES || []).length ? 'Nothing listed yet. <button class="link" id="knRebuild">Gather what I know from your coach notes</button>' : "Nothing yet. Tap “After a lesson” the next time your coach teaches you something, or add a video you learn from.") + "</div>";
+  var live = list.filter(function (k) { return k.status !== "dropped" && k.status !== "removed"; });
+  var h = ["coach", "proven", "testing", "public", "general"].map(function (lab) {
+    var g = live.filter(function (k) { return k.label === lab; });
+    return g.length ? '<div class="kn-group"><h4>' + KLAB[lab].group + "</h4>" + g.map(knItemHTML).join("") + "</div>" : "";
+  }).join("");
+  var gone = list.filter(function (k) { return k.status === "dropped" || k.status === "removed"; });
+  if (gone.length) h += '<details class="kn-group"><summary class="muted" style="cursor:pointer;font-size:13px">Didn\'t work for you, or you said it\'s wrong (' + gone.length + ")</summary>" + gone.map(knItemHTML).join("") + "</details>";
+  return h + '<p class="muted" style="font-size:12px;margin:2px 0 0">Tap an idea to correct it, test it next practice, or save a question for your coach. Only “From your coaches” and “Proven for you” can change your weekly plan.</p>';
+}
+function questionsHTML() {
+  var q = knQuestions().filter(function (x) { return !x.asked; });
+  return q.length ? '<h2 class="sec">Ask at your next lesson</h2><ul class="qs">' + q.map(function (x) { return "<li>" + esc(x.text) + "</li>"; }).join("") + "</ul>" : "";
+}
+function redrawKnow() { if ($("knowList")) { $("knowList").innerHTML = knowHTML(); $("qList").innerHTML = questionsHTML(); wireKnowledge(); } renderTeam(); }
+function knAct(k, action, text) {
+  if (REAL) {
+    if (action === "test" || action === "fix") {
+      closeMember();
+      return realAsk(action === "test" ? "I want to test this next practice: " + k.text : "That's not right: “" + k.text + "”. " + text, "knowledge", { action: action, id: k.id, idea: k.text, text: text || "" });
+    }
+    return api("POST", "/api/knowledge", { action: action, id: k.id, text: text || "" }).then(function (r) {
+      if (r.error) return toast(r.error);
+      if (action === "question") { knQuestions().push(r.question); toast("Saved for your next lesson"); }
+      if (action === "remove") { k.status = "removed"; toast("Your Head Coach won't use that again"); }
+      redrawKnow();
+    }).catch(function () { toast("Couldn't reach your team. Try again."); });
+  }
+  if (action === "question") { knQuestions().push({ id: "DQ-" + Date.now(), text: text || "Ask about: " + k.text, about: k.id }); toast("Saved for your next lesson"); }
+  if (action === "remove") { k.status = "removed"; toast("Your Head Coach won't use that again"); }
+  if (action === "fix") { k.text = text; k.label = "coach"; k.src = "You corrected it · just now"; toast("Corrected. Your Head Coach will use the new version"); }
+  if (action === "test") { k.label = "testing"; k.test = k.test && k.test.how ? k.test : { how: "times it works in one practice", target: "6/10", need: 2, results: [] }; toast("Next practice: count " + k.test.how + ", aim for " + k.test.target); }
+  redrawKnow();
+}
+function wireKnowledge() {
+  var rb = $("knRebuild"); if (rb) rb.onclick = function () { api("POST", "/api/knowledge", { action: "rebuild" }).then(function () { rb.parentNode.textContent = "Gathering what I know from your coach notes. This takes a few minutes."; setTimeout(function () { refreshState().then(redrawKnow); }, 120000); }); };
+  document.querySelectorAll("#knowList .kn").forEach(function (el) {
+    var k = knowList().filter(function (x) { return x.id === el.getAttribute("data-kid"); })[0];
+    if (!k || k.status === "removed") return;
+    var open = function () {
+      if (el.querySelector(".kn-acts")) { el.querySelector(".kn-acts").remove(); var f = el.querySelector(".kn-fix"); if (f) f.remove(); el.setAttribute("aria-expanded", "false"); return; }
+      el.setAttribute("aria-expanded", "true");
+      el.insertAdjacentHTML("beforeend", '<div class="kn-acts"><button class="btn" data-a="fix">That\'s not right</button>' +
+        (k.label === "testing" && k.status === "active" ? "" : '<button class="btn" data-a="test">Test it next practice</button>') +
+        '<button class="btn" data-a="question">Ask my coach about this</button><button class="btn" data-a="remove">Forget it</button></div>');
+      el.querySelectorAll("[data-a]").forEach(function (b) { b.onclick = function (e) {
+        e.stopPropagation(); var a = b.getAttribute("data-a");
+        if (a !== "fix") return knAct(k, a);
+        if (el.querySelector(".kn-fix")) return;
+        el.insertAdjacentHTML("beforeend", '<div class="kn-fix"><textarea class="input" id="knFixText" rows="2" placeholder="What\'s right? e.g. Maria said toss to the right, not the left"></textarea><div class="row" style="justify-content:flex-end"><button class="btn primary" id="knFixGo">Send correction</button></div></div>');
+        var ta = $("knFixText"); ta.onclick = function (e2) { e2.stopPropagation(); }; ta.focus();
+        $("knFixGo").onclick = function (e2) { e2.stopPropagation(); var v = ta.value.trim(); if (!v) { ta.focus(); return toast("Type what's right first"); } knAct(k, "fix", v); };
+      }; });
+    };
+    el.onclick = function (e) { if (e.target.closest(".kn-acts,.kn-fix")) return; open(); };
+    el.onkeydown = function (e) { if ((e.key === "Enter" || e.key === " ") && e.target === el) { e.preventDefault(); open(); } };
+  });
+}
+function wireTeach3() {
+  document.querySelectorAll("[data-t3]").forEach(function (b) { b.onclick = function () {
+    var t = b.getAttribute("data-t3");
+    if (t === "link") { $("linkIn").scrollIntoView({ behavior: "smooth", block: "center" }); $("linkIn").focus(); return; }
+    var lesson = t === "lesson", c = (S && S.coach) || "your coach";
+    $("t3Box").innerHTML = '<div class="teach-box"><b>' + (lesson ? "📝 What did " + esc(c) + " teach you?" : "🎾 What happened on court?") + '</b><textarea class="input" id="t3Text" rows="3" placeholder="' +
+      esc(lesson ? "e.g. " + c + " said: toss a bit more to the right and keep my head up until after contact. Cue: toss right, head up." : "e.g. Tried the early split step: 7 of 10 returns back deep. Felt rushed on the backhand side.") +
+      '"></textarea><div class="row" style="justify-content:flex-end"><button class="btn primary" id="t3Go">Tell my Head Coach</button></div></div>';
+    $("t3Text").focus();
+    $("t3Go").onclick = function () {
+      var v = $("t3Text").value.trim(); if (!v) { $("t3Text").focus(); return toast(lesson ? "Type or say what your coach taught you" : "Type or say what happened"); }
+      if (REAL) { closeMember(); return realAsk(v, lesson ? "lesson" : "log", lesson && S && S.coach ? { coach: S.coach } : {}); }
+      var list = demoKnow();
+      if (lesson) list.unshift({ id: "D-" + Date.now(), label: "coach", from: (S && S.coach) || "your coach", text: v.length > 110 ? v.slice(0, 107) + "…" : v, src: "Lesson · just now", status: "active" });
+      else { var tk = list.filter(function (k) { return k.label === "testing" && k.status === "active"; })[0], n = (v.match(/(\d+)\s*(?:of|\/|out of)\s*(\d+)/) || []);
+        if (tk) { tk.test.results.push({ d: TODAY, ok: n[1] ? +n[1] / +n[2] >= 0.6 : !/didn'?t|not|missed|worse/i.test(v), note: n[1] ? n[1] + "/" + n[2] : "today" });
+          if (tk.test.results.filter(function (r) { return r.ok; }).length >= (tk.test.need || 2)) { tk.label = "proven"; toast("That's proven for you now"); } else toast("Logged · result added to “" + trimQ(tk.text, 30) + "”"); } }
+      $("t3Box").innerHTML = ""; redrawKnow();
+    };
+  }; });
+}
 function openMember(id) {
   if (id === "coach-analyst") id = "head-coach";
   var m = byId(id), d = memberData(id), vals = d.values || {};
   var h = '<div class="panel-head">' + av(m) + '<div class="t"><b>' + esc(m.name) + "</b><small>" + esc(m.role) + '</small></div><button class="icon-btn" id="closePanel" aria-label="Close">✕</button></div><div class="panel-body">';
   h += '<p class="muted" style="margin:14px 0 0">' + esc(d.intro2 || d.intro) + "</p>";
   if (d.needs) h += '<div class="tip" style="margin-top:12px">👋 ' + esc(d.needs) + "</div>";
+  var auto = m.mode === "auto", hc = id === "head-coach";
+  if (hc) h += '<div class="teach3"><button class="btn primary" data-t3="lesson">📝 After a lesson</button><button class="btn" data-t3="link">▶️ Add a video or link</button><button class="btn" data-t3="court">🎾 What happened on court</button></div><div id="t3Box"></div>' +
+    '<h2 class="sec">What I know</h2><div id="knowList">' + knowHTML() + "</div>" + '<div id="qList">' + questionsHTML() + "</div>";
+
   if (d.form) h += '<h2 class="sec">Your goal</h2><div class="grid">' + d.form.map(function (f) { return '<label class="field">' + esc(f.label) + '<input class="input" value="' + esc(f.value) + '"></label>'; }).join("") + "</div>";
-  if (d.coaches) h += '<h2 class="sec">Your coaches</h2><div class="grid">' + d.coaches.map(function (c) { return '<div class="coach-row"><span class="av sm" style="--c:var(--m-analyst)">👤</span><div class="t"><b>' + esc(c.name) + "</b><small>" + esc(c.how) + " · " + esc(c.n) + '</small></div><button class="btn" data-teach="0">Add notes</button></div>'; }).join("") + "</div>";
+  if (d.coaches) h += '<h2 class="sec">Your coaches</h2><div class="grid">' + d.coaches.map(function (c) { return '<div class="coach-row"><span class="av sm" style="--c:var(--m-analyst)">👤</span><div class="t"><b>' + esc(c.name) + "</b><small>" + esc(c.how) + " · " + esc(c.n) + '</small></div><button class="btn" data-t3="lesson">Add notes</button></div>'; }).join("") + "</div>";
   if (d.settings) h += '<h2 class="sec">How they work</h2><div class="card" style="padding:4px 14px">' + d.settings.map(function (st, i) {
     var ctl = st.type === "switch" ? '<button class="switch' + (st.on ? " on" : "") + '" data-switch="' + i + '" aria-label="' + esc(st.label) + '"></button>'
       : '<div class="seg" data-seg="' + esc(st.k) + '">' + st.options.map(function (o) { return '<button class="' + (vals[st.k] === o ? "on" : "") + '">' + esc(o) + "</button>"; }).join("") + "</div>";
     return '<div class="set-row"><div class="l"><b>' + esc(st.label) + "</b><small>" + esc(st.hint) + "</small></div>" + ctl + "</div>";
   }).join("") + "</div>";
   if (id === "head-coach") h += '<div class="sample" id="sample" style="margin-top:10px"></div>';
-  var auto = m.mode === "auto";
-  h += '<h2 class="sec">' + (auto ? "Recent decisions" : "What they know") + '</h2><div class="know" id="know">' + d.knows.map(kItem).join("") + "</div>";
+  h += '<h2 class="sec">' + (auto ? "Recent decisions" : hc ? "About you" : "What they know") + '</h2><div class="know" id="know">' + d.knows.map(kItem).join("") + "</div>";
   if (!auto) h += '<h2 class="sec">Teach them</h2><div class="lib-in">' +
     '<div class="link-row"><input class="input" id="linkIn" placeholder="Paste a link: YouTube, Loom, Google Doc, Drive, website…"><button class="btn primary" id="linkGo">Add</button></div>' +
     '<div class="detect" id="detect">They study what\'s public about a link (pages, docs, video titles and descriptions), then write notes for your Head Coach. Your own takeaway counts most.</div>' +
     '<label class="drop" id="drop"><input type="file" id="fileIn" hidden multiple accept="video/*,audio/*,.pdf,.doc,.docx,.txt,.md,.csv,image/*"><b>⬆ Upload or drop files</b><br>Match videos, lesson recordings, PDFs, photos of notes, stats exports' +
       '<div class="types"><span>🎥 MP4 / MOV</span><span>🎙 Voice memo</span><span>📄 PDF / Doc</span><span>📷 Photo</span><span>📊 CSV</span></div></label>' +
     '<div class="alt"><button class="btn" id="pasteBtn">📝 Paste text</button><button class="btn" id="sayBtn">🎙 Say it</button></div>' +
-    '<div><div class="muted" style="font-size:12px;margin-bottom:6px">Ideas for ' + esc(m.name) + '</div><div class="ideas">' + d.teach.map(function (t, i) { return '<button data-teach="' + i + '">' + t[0] + " " + esc(t[1]) + "</button>"; }).join("") + "</div></div>" +
+    (hc ? "" : '<div><div class="muted" style="font-size:12px;margin-bottom:6px">Ideas for ' + esc(m.name) + '</div><div class="ideas">' + d.teach.map(function (t, i) { return '<button data-teach="' + i + '">' + t[0] + " " + esc(t[1]) + "</button>"; }).join("") + "</div></div>") +
     '</div><div id="teachBox"></div>';
   if (!auto) h += '<h2 class="sec">Sources they learn from</h2><div class="grid" id="srcList" data-member="' + esc(id) + '">' + ((SOURCES[id] || []).length ? SOURCES[id].map(srcRow).join("") : '<div class="empty-src">Nothing linked yet. Add a doc, video, or file above.</div>') + "</div>";
   h += '<h2 class="sec">' + (auto ? "How they decide" : "Rules they follow") + '</h2><ul style="margin:0;padding-left:20px">' + d.rules.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>";
@@ -1228,6 +1372,7 @@ function openMember(id) {
   $("panel").querySelectorAll("[data-teach]").forEach(function (b) { b.onclick = function () { teachBox(id, d.teach[+b.getAttribute("data-teach")]); }; });
   if (!auto) wireLibrary(id);
   wireKnow(m);
+  if (hc) { wireKnowledge(); wireTeach3(); }
   if (id === "head-coach") sample();
 }
 function kItem(k) { return '<div class="k-item' + (k.isNew ? " new" : "") + '"><div class="k-t">' + esc(k.t) + "<small>" + esc(k.src) + '</small></div><button class="x" aria-label="Forget this">✕</button></div>'; }
@@ -4830,6 +4975,7 @@ function fromContract(st) {
     var sc = P.score(e.note), r = P.result(e.note, sc); return { iso: e.d, name: e.title || "Match", result: (r === "W" ? "Won " : r === "L" ? "Lost " : "") + (sc || ""), reflection: sc ? "" : trimQ(e.note, 80) };
   });
   return {
+    knowledge: st.knowledge || null, questions: st.coach_questions || [],
     mode: st.mode || "adult", demo: false, player: st.player || "", parent: st.parent || "", coach: st.coach || "", academy: st.academy || "",
     data: { player: st.player || "", goal: { dream: g.dream || "", target: nl ? "Reach " + nl : tgt, by: byToLabel(g.by), measure: g.measure || "", three_month: g.three_month || "", progress: 5, journey: "", why: g.why || null },
             roadmap: st.roadmap && st.roadmap.length ? st.roadmap : [{ when: "Now", title: "Build the base", focus: tennis.map(function (a) { return a.area.split("· ")[1] || a.title; }).join(", "), status: "now" }],
@@ -4881,7 +5027,7 @@ function planReply() {
 
 /* ---------- jobs: pending card → real steps → real reply ---------- */
 var ACKS = {
-  log: ["Logging your note", "journal-keeper", "Writing it into your journal"], lesson: ["Saving your lesson", "coach-analyst", "Reading the lesson notes"],
+  log: ["Logging your note", "journal-keeper", "Writing it into your journal"], knowledge: ["Updating what I know", "coach-analyst", "Checking your coach notes"], lesson: ["Saving your lesson", "coach-analyst", "Reading the lesson notes"],
   "match-prep": ["Your match card", "tournament-coach", "Planning the match"], debrief: ["The match debrief", "tournament-coach", "Listening to the debrief"],
   sideline: ["Saving your sideline note", "journal-keeper", "Saving your observer note"], "car-talk": ["What to say in the car", "head-coach", "Listening"],
   brief: ["This week's brief", "progress-coordinator", "Pulling this week together"], progress: ["Your progress check", "progress-coordinator", "Reading your recent notes"],
