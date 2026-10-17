@@ -2259,7 +2259,7 @@ function Listener(o) {
     }, 120);
   }
   self.start = function () {
-    self.on = true; self.interim = "";
+    self.on = true; self.interim = ""; self.from = (self.finalText || "").length;
     if (SIM_ONLY) return startSim();
     try {
       rec = new SR(); rec.lang = langSel.value; rec.continuous = true; rec.interimResults = true;
@@ -2283,9 +2283,23 @@ function Listener(o) {
     if (rec) { rec.onresult = null; rec.onend = null; rec.onerror = null; try { rec.abort ? rec.abort() : rec.stop(); } catch (_) {} rec = null; }
     if (self.interim) { self.finalText += (self.finalText ? " " : "") + self.interim.trim(); self.interim = ""; }
     emit();
+    if (was && !self.sim) logVoice(self.finalText.slice(self.from || 0));
     if (was) o.onStop && o.onStop(self.finalText);
   };
   return self;
+}
+// Voice log: what the microphone heard, saved to journal/voice_log.md so the player can look back.
+function voiceWhere() {
+  var ob = $("ob"), panel = $("panel");
+  if (ob && ob.offsetParent !== null && !ob.hidden && getComputedStyle(ob).display !== "none") return "Interview";
+  if (panel && panel.classList.contains("on")) { var b = panel.querySelector(".panel-head b"); return (b ? b.textContent : "Team") + " page"; }
+  var on = document.querySelector("nav .on, .tabs .on, [role=tab][aria-selected=true]");
+  return on ? on.textContent.replace(/[^\w\s]/g, "").trim() || "Home" : "Home";
+}
+function logVoice(heard) {
+  heard = (heard || "").trim();
+  if (!REAL || !heard) return;
+  api("POST", "/api/voicelog", { where: voiceWhere(), heard: heard, lang: (typeof langSel !== "undefined" && langSel && langSel.value) || "" }).catch(function () {});
 }
 var ACTIVE = [];
 function stopAll() { ACTIVE.forEach(function (l) { if (l.on) l.stop(); }); ACTIVE = []; }

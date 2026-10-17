@@ -355,6 +355,23 @@ class App:
                 pass
         return out
 
+    def log_voice(self, where, heard, lang):
+        """Every time the player speaks: the raw words the browser heard, before clean-up or edits."""
+        heard = " ".join(str(heard or "").split())[:20000]
+        if not heard or not self.workspace:
+            return False
+        f = self.ws("journal", "voice_log.md")
+        f.parent.mkdir(parents=True, exist_ok=True)
+        if not f.exists():
+            f.write_text("# Voice log\n\nEverything you said to the app, exactly as the microphone heard it, before any clean-up or "
+                         "edits. What you finally sent is in your journal and conversation. The team doesn't process this file.\n",
+                         encoding="utf-8")
+        stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        place = " ".join(str(where or "app").split())[:60]
+        with f.open("a", encoding="utf-8") as fh:
+            fh.write(f"\n## {stamp} · {place}" + (f" · {lang}" if lang else "") + "\n\n> " + heard + "\n")
+        return True
+
     def append_convo(self, entry):
         f = self.ws("_system", "conversation.jsonl")
         f.parent.mkdir(parents=True, exist_ok=True)
@@ -933,6 +950,10 @@ def make_handler(app):
                 self.end_headers()
                 self.wfile.write(audio)
                 return
+            if u.path == "/api/voicelog":
+                if not app.workspace:
+                    return self._send(409, {"error": "Choose a folder first."})
+                return self._send(200, {"ok": app.log_voice(b.get("where"), b.get("heard"), str(b.get("lang") or "")[:12])})
             if u.path == "/api/knowledge":
                 if not app.workspace:
                     return self._send(409, {"error": "Choose a folder first."})

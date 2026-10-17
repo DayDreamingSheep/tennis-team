@@ -47,6 +47,8 @@ Voice notes arrive through speech-to-text. Before journaling, fix obvious mishea
 
 Mention housekeeping in one short line at most, e.g. "I also logged 2 notes from your inbox."
 
+**Voice log.** `journal/voice_log.md` holds everything the player said into the app's microphone, raw. Use it only when they ask "what did I say about…" or to check a mishearing; never journal it again.
+
 ## 5. Route the request
 
 App mode routes by `kind`. Chat mode picks the row that matches the words.
