@@ -355,7 +355,7 @@ class App:
                 pass
         return out
 
-    def log_voice(self, where, heard, lang):
+    def log_voice(self, where, heard, lang, session=""):
         """Every time the player speaks: the raw words the browser heard, before clean-up or edits."""
         heard = " ".join(str(heard or "").split())[:20000]
         if not heard or not self.workspace:
@@ -368,8 +368,13 @@ class App:
                          encoding="utf-8")
         stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         place = " ".join(str(where or "app").split())[:60]
+        session = str(session or "")[:40]
         with f.open("a", encoding="utf-8") as fh:
-            fh.write(f"\n## {stamp} · {place}" + (f" · {lang}" if lang else "") + "\n\n> " + heard + "\n")
+            if session and session == getattr(self, "_voice_session", None):
+                fh.write("> " + heard + "\n")          # the same recording, still going: saved as it is spoken
+            else:
+                fh.write(f"\n## {stamp} · {place}" + (f" · {lang}" if lang else "") + "\n\n> " + heard + "\n")
+        self._voice_session = session or None
         return True
 
     def append_convo(self, entry):
@@ -963,7 +968,8 @@ def make_handler(app):
             if u.path == "/api/voicelog":
                 if not app.workspace:
                     return self._send(409, {"error": "Choose a folder first."})
-                return self._send(200, {"ok": app.log_voice(b.get("where"), b.get("heard"), str(b.get("lang") or "")[:12])})
+                return self._send(200, {"ok": app.log_voice(b.get("where"), b.get("heard"), str(b.get("lang") or "")[:12],
+                                                            b.get("session"))})
             if u.path == "/api/knowledge":
                 if not app.workspace:
                     return self._send(409, {"error": "Choose a folder first."})

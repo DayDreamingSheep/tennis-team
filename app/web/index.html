@@ -2261,6 +2261,7 @@ function Listener(o) {
   }
   self.start = function () {
     self.on = true; self.interim = ""; self.from = (self.finalText || "").length; self.retries = 0;
+    self.vsid = "v" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); self.logged = self.from;
     if (SIM_ONLY) return startSim();
     try {
       rec = new SR(); rec.lang = langSel.value; rec.continuous = true; rec.interimResults = true;
@@ -2268,6 +2269,7 @@ function Listener(o) {
         var inter = "";
         for (var k = e.resultIndex; k < e.results.length; k++) { var r = e.results[k]; if (r.isFinal) self.finalText += (self.finalText ? " " : "") + r[0].transcript.trim(); else inter += r[0].transcript; }
         self.interim = inter; self.retries = 0; emit();
+        flushVoice(self, false);
       };
       rec.onerror = function (e) {
         if (!self.on || self.sim) return;
@@ -2296,7 +2298,7 @@ function Listener(o) {
     if (rec) { rec.onresult = null; rec.onend = null; rec.onerror = null; try { rec.abort ? rec.abort() : rec.stop(); } catch (_) {} rec = null; }
     if (self.interim) { self.finalText += (self.finalText ? " " : "") + self.interim.trim(); self.interim = ""; }
     emit();
-    if (was && !self.sim) logVoice(self.finalText.slice(self.from || 0));
+    if (was && !self.sim) flushVoice(self, true);
     if (was) o.onStop && o.onStop(self.finalText);
   };
   return self;
@@ -2321,11 +2323,29 @@ function voiceWhere() {
   var on = document.querySelector("nav .on, .tabs .on, [role=tab][aria-selected=true]");
   return on ? on.textContent.replace(/[^\w\s]/g, "").trim() || "Home" : "Home";
 }
-function logVoice(heard) {
+function logVoice(heard, session) {
   heard = (heard || "").trim();
   if (!REAL || !heard) return;
-  api("POST", "/api/voicelog", { where: voiceWhere(), heard: heard, lang: (typeof langSel !== "undefined" && langSel && langSel.value) || "" }).catch(function () {});
+  api("POST", "/api/voicelog", { where: voiceWhere(), heard: heard, session: session || "", lang: (typeof langSel !== "undefined" && langSel && langSel.value) || "" }).catch(function () {});
 }
+// Save what the mic heard while the player is still talking: every finished phrase within a second,
+// so nothing depends on the recording ending cleanly (a crash, an error or a closed tab loses nothing).
+function flushVoice(L, now) {
+  clearTimeout(L.vt);
+  var go = function () {
+    var upto = L.finalText.length, chunk = L.finalText.slice(L.logged || 0, upto);
+    if (chunk.trim()) { logVoice(chunk, L.vsid); L.logged = upto; }
+  };
+  if (now) go(); else L.vt = setTimeout(go, 900);
+}
+window.addEventListener("pagehide", function () {     // the tab is closing: send whatever is still unsaved
+  ACTIVE.forEach(function (L) {
+    if (!L.on || L.sim || !REAL) return;
+    var chunk = ((L.finalText || "") + (L.interim ? " " + L.interim : "")).slice(L.logged || 0).trim();
+    if (chunk && navigator.sendBeacon) navigator.sendBeacon("/api/voicelog?t=" + encodeURIComponent((window.BOOT && BOOT.token) || ""),
+      new Blob([JSON.stringify({ where: voiceWhere(), heard: chunk, session: L.vsid })], { type: "text/plain" }));
+  });
+});
 var ACTIVE = [];
 function stopAll() { ACTIVE.forEach(function (l) { if (l.on) l.stop(); }); ACTIVE = []; }
 
