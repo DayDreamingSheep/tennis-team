@@ -905,6 +905,7 @@ def make_handler(app):
                                         "onboarded": app.onboarded(), "sources": app.sources(),
                                         "state": app.read_state() if app.onboarded() else None,
                                         "conversation": app.conversation(), "settings": app.settings(),
+                                        "draft": read_json(app.ws("_system", "draft.json")) if app.workspace else None,
                                         "busy": app.busy, "today": today_iso()})
             if u.path == "/api/voice":
                 return self._send(200, app.voice.public())
@@ -950,6 +951,15 @@ def make_handler(app):
                 self.end_headers()
                 self.wfile.write(audio)
                 return
+            if u.path == "/api/draft":            # an unfinished question flow, kept so a reload never loses it
+                if not app.workspace:
+                    return self._send(409, {"error": "Choose a folder first."})
+                f = app.ws("_system", "draft.json")
+                if b.get("draft"):
+                    write_json(f, dict(b["draft"], saved=now_iso()))
+                else:
+                    f.unlink(missing_ok=True)
+                return self._send(200, {"ok": True})
             if u.path == "/api/voicelog":
                 if not app.workspace:
                     return self._send(409, {"error": "Choose a folder first."})

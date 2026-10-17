@@ -316,6 +316,7 @@
   .src .sync { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--muted); }
   .src .sync .switch { width: 38px; height: 22px; } .src .sync .switch::after { width: 16px; height: 16px; } .src .sync .switch.on::after { left: 19px; }
   .src.working { border-color: var(--accent); }
+  .draft-note { font-size: 14px; color: var(--ink); align-self: center; margin-right: 4px; }
   .teach3 { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
   .kn-group { display: grid; gap: 8px; margin-bottom: 14px; }
   .kn-group > h4 { margin: 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
@@ -4674,7 +4675,23 @@ function inlineAsk() {
   CONVO.push({ coach: fillQI(q.q) });
   renderFeed(); renderSuggestions(); $("text").placeholder = inlButtons(q) ? "Tap an answer, or say it…" : "Say or type your answer…";
 }
-function inlAdvance() { INL.i++; inlineAsk(); }
+function inlAdvance() { INL.i++; saveDraft(); inlineAsk(); }
+// Unfinished question flows are saved to the player's folder after every answer, so a reload never loses a note.
+var DRAFT = null;
+function saveDraft() {
+  if (!REAL || !INL) return;
+  var any = Object.keys(INL.a).some(function (k) { return INL.a[k]; }) || Object.keys(INL.c).length;
+  if (!any) return;
+  api("POST", "/api/draft", { draft: { key: INL.key, i: INL.i, a: INL.a, c: INL.c, w: INL.w, ctx: INL.ctx, title: fillQI(INL.t.title || "Your note") } }).catch(function () {});
+}
+function clearDraft() { DRAFT = null; if (REAL) api("POST", "/api/draft", { draft: null }).catch(function () {}); }
+function resumeDraft(send) {
+  var d = DRAFT; if (!d || !T[d.key]) return clearDraft();
+  DRAFT = null; showTab("home");
+  INL = { key: d.key, t: T[d.key], i: d.i || 0, a: d.a || {}, c: d.c || {}, w: d.w || {}, ctx: d.ctx || null, tags: [] };
+  if (send) { CONVO.push({ me: "Send my unfinished note as it is" }); return inlineFinish(); }
+  CONVO.push({ coach: "Let's finish your note. Here's where we stopped." }); inlineAsk();
+}
 function inlTapButton(label) {
   var q = inlCur(), ri = inlRi(), btns = inlButtons(q);
   INL.a[ri] = label; CONVO.push({ me: label });
@@ -4896,7 +4913,14 @@ function renderSuggestions() {
       '<button class="sg ghost" type="button" id="sgSkip">Skip</button><button class="sg ghost" type="button" id="sgCancel">Cancel</button>';
     el.querySelectorAll("[data-sg]").forEach(function (b) { b.onclick = function () { opts[+b.getAttribute("data-sg")][1](b); }; });
     $("sgSkip").onclick = function () { CONVO.push({ me: "(skip)" }); INL.step = null; inlAdvance(); };
-    $("sgCancel").onclick = function () { INL = null; CONVO.push({ coach: "No problem, cancelled. Talk or type anytime." }); $("text").placeholder = "Message your team…"; renderFeed(); renderSuggestions(); };
+    $("sgCancel").onclick = function () { INL = null; clearDraft(); CONVO.push({ coach: "No problem, cancelled. Talk or type anytime." }); $("text").placeholder = "Message your team…"; renderFeed(); renderSuggestions(); };
+    layoutComposer(); return;
+  }
+  if (DRAFT && !INL) {
+    el.innerHTML = '<span class="draft-note">📝 You have an unfinished note' + (DRAFT.saved ? " from " + DRAFT.saved.slice(11, 16) : "") + '.</span><button class="sg on" type="button" id="dfGo">Finish it</button><button class="sg" type="button" id="dfSend">Send it as it is</button><button class="sg ghost" type="button" id="dfDrop">Discard</button>';
+    $("dfGo").onclick = function () { resumeDraft(false); };
+    $("dfSend").onclick = function () { resumeDraft(true); };
+    $("dfDrop").onclick = function () { clearDraft(); toast("Discarded"); renderSuggestions(); };
     layoutComposer(); return;
   }
   var n = pname(), list = MODE === "parent"
@@ -5232,7 +5256,7 @@ function refreshState() {
     if (r.state) { var keepChk = S && S.chk; S = fromContract(r.state); if (keepChk) S.chk = keepChk; }
     SETTINGS = r.settings || SETTINGS; applyTeamSettings();
     window.SERVER_SOURCES = r.sources || []; serverSourcesInto();
-    convToFeed(r.conversation || []);
+    convToFeed(r.conversation || []); if (!INL) DRAFT = r.draft || null;
     MODE = S.mode; setMode(S.mode);
     return r;
   });
@@ -5273,7 +5297,7 @@ function routeText(t) {
 var TPL_KIND = { t1: "log", t2: "debrief", t3: "match-prep", t4: "lesson", t5: "sideline", t6: "car-talk", t7: "reflection", alexintro: "free" };
 function inlineFinish() {
   if (!REAL) return inlineFinishLocal();
-  var g = INL, t = g.t; INL = null;
+  var g = INL, t = g.t; INL = null; clearDraft();
   var qs = t.qs.filter(function (q) { return qOn(q, g.a[0]); }), answers = [];
   qs.forEach(function (q) {
     var ri = t.qs.indexOf(q), c = g.c[ri], parts = [];
@@ -5423,7 +5447,7 @@ function bootReal() {
     SETTINGS = r.settings || {}; applyTeamSettings();
     if (SETTINGS.autoOpen === false) $("autoOpen").classList.remove("on");
     if (r.ready && r.state) {
-      S = fromContract(r.state); MODE = S.mode; convToFeed(r.conversation || []);
+      S = fromContract(r.state); MODE = S.mode; convToFeed(r.conversation || []); DRAFT = r.draft || null;
       (r.jobs || []).filter(function (j) { return j && !j.done && j.id; }).forEach(function (j) {
         var job = { id: "p" + (++JOB_SEQ), serverId: j.id, real: true, state: "running", title: (ACKS[j.kind] || ACKS.free)[0], steps: [["head-coach", "Working"]], i: 0 };
         PENDING.push({ job: job }); JOBS.push(job); CONVO.push({ job: job }); pollJob(job, function () { refreshState(); });
