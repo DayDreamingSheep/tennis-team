@@ -2259,23 +2259,35 @@ function Listener(o) {
     }, 120);
   }
   self.start = function () {
-    self.on = true; self.interim = ""; self.from = (self.finalText || "").length;
+    self.on = true; self.interim = ""; self.from = (self.finalText || "").length; self.retries = 0;
     if (SIM_ONLY) return startSim();
     try {
       rec = new SR(); rec.lang = langSel.value; rec.continuous = true; rec.interimResults = true;
       rec.onresult = function (e) {
         var inter = "";
         for (var k = e.resultIndex; k < e.results.length; k++) { var r = e.results[k]; if (r.isFinal) self.finalText += (self.finalText ? " " : "") + r[0].transcript.trim(); else inter += r[0].transcript; }
-        self.interim = inter; emit();
+        self.interim = inter; self.retries = 0; emit();
       };
       rec.onerror = function (e) {
-        if (/not-allowed|service-not-allowed|network|audio-capture/.test(e.error) && self.on && !self.sim) {
+        if (!self.on || self.sim) return;
+        var err = e.error || "";
+        if (window.REAL) {
+          // The real app never falls back to a fake sample. Keep the words heard so far.
+          if (err === "network") {                 // the browser's speech service dropped (common in long recordings): retry
+            self.retries = (self.retries || 0) + 1;
+            if (self.retries <= 3) return;         // onend restarts it
+            micProblem("network"); self.stop(); return;
+          }
+          if (/not-allowed|service-not-allowed|audio-capture/.test(err)) { micProblem(err); self.stop(); }
+          return;                                  // no-speech, aborted: onend restarts quietly
+        }
+        if (/not-allowed|service-not-allowed|network|audio-capture/.test(err)) {
           SIM_ONLY = true; rec = null; toast("No microphone here, so I'm showing a sample of what someone might say."); startSim();
         }
       };
-      rec.onend = function () { if (self.on && !self.sim && rec) { try { rec.start(); } catch (_) {} } };
+      rec.onend = function () { if (self.on && !self.sim && rec) { setTimeout(function () { if (self.on && rec) { try { rec.start(); } catch (_) {} } }, self.retries ? 400 * self.retries : 0); } };
       rec.start();
-    } catch (err) { SIM_ONLY = true; startSim(); }
+    } catch (err) { if (window.REAL) { micProblem("start"); self.on = false; o.onStop && o.onStop(self.finalText); } else { SIM_ONLY = true; startSim(); } }
   };
   self.stop = function () {
     var was = self.on; self.on = false;
@@ -2287,6 +2299,18 @@ function Listener(o) {
     if (was) o.onStop && o.onStop(self.finalText);
   };
   return self;
+}
+// Plain-language help when the microphone stops; the words heard so far always stay in the box.
+function micProblem(kind) {
+  var msg = {
+    network: "The speech service dropped out. Your words so far are kept. Tap the mic to keep going.",
+    "not-allowed": "The browser blocked the microphone. Click the mic or lock icon in the address bar, choose Allow, then tap the mic again.",
+    "service-not-allowed": "The browser blocked speech recognition. Click the lock icon in the address bar, allow the microphone, then tap the mic again.",
+    "audio-capture": "No microphone found. Check that one is connected, then tap the mic again.",
+    start: "The microphone couldn't start. Wait a second, then tap the mic again."
+  }[kind] || "The microphone stopped. Tap it to try again.";
+  toast(msg);
+  if (REAL) api("POST", "/api/voicelog", { where: voiceWhere(), heard: "[microphone stopped: " + kind + "]", lang: "" }).catch(function () {});
 }
 // Voice log: what the microphone heard, saved to journal/voice_log.md so the player can look back.
 function voiceWhere() {
