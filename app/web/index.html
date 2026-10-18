@@ -5500,7 +5500,8 @@ var STT_FIXES = [
   [/\b(backhand|my) slides\b/gi, "$1 slice"], [/\bslides? (shot|return|approach)\b/gi, "slice $1"], [/\bdouble fold(s|ed)?\b/gi, "double fault$1"],
   [/\bdrop shut\b/gi, "drop shot"], [/\bover ?head smash\b/gi, "overhead smash"], [/\bdeuce court\b/gi, "deuce court"], [/\bad cord\b/gi, "ad court"],
   [/\bn t r p\b/gi, "NTRP"], [/\bntrp\b/gi, "NTRP"], [/\bu t r\b/gi, "UTR"], [/\byou t r\b/gi, "UTR"], [/\butr\b/g, "UTR"],
-  [/\bsplit stop\b/gi, "split step"], [/\bspit step\b/gi, "split step"], [/\breturn of serves\b/gi, "return of serve"], [/\bserve and returns\b/gi, "serve and return"],
+  [/\b(short |high |deep )?hi bro\b/gi, "$1high ball"], [/\bhigh bow\b/gi, "high ball"], [/\bshort bows?\b/gi, "short ball"],
+  [/\b(the|a) boat\b/gi, "$1 ball"], [/\bsplit stop\b/gi, "split step"], [/\bspit step\b/gi, "split step"], [/\breturn of serves\b/gi, "return of serve"], [/\bserve and returns\b/gi, "serve and return"],
   [/\bcoaching in no\b/gi, "coaching: no"], [/\binjured no\b/gi, "injured: no"]
 ];
 function cleanTranscript(text) {

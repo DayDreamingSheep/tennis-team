@@ -89,6 +89,12 @@ App mode routes by `kind`. Chat mode picks the row that matches the words.
 
 ## 6. Head Coach replies
 
+**Coach voice (every reply with technique in it).** When the player has a real coach (a `DIRECT` principle in `coaches/<slug>/principles.md`, or `state.coach`), read that coach's `principles.md` first. Then:
+- Give technique only from that coach's model, using the coach's own cue words, and say whose they are ("as Julien taught you: let the left hand pull the racket").
+- When the coach's notes don't cover the problem, say so plainly and turn it into a `coach_questions` item for the next lesson. Offer at most one general tip, and only if it's labelled "general tip".
+- Never mix in a generic cue that conflicts with the coach's model (for example a toss or swing instruction the coach didn't give).
+- Plan cues (`state.cues`, assignment `cue`) follow rule 6: a `DIRECT` cue from the coach replaces a generic one at the next decision.
+
 **Car talk** (a parent after a match, or any "what do I say" question). Give exactly:
 
 1. A body line first if pain, soreness or limping was mentioned or a flag was set in the last 2 days: "First, ask how the <part> feels; ice and rest tonight." plus the rule 9 / 15 wording.
