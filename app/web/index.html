@@ -3237,7 +3237,7 @@ function prompts() {
   if (!pausedF) upcoming().filter(function (t) { return daysTo(t.iso) >= 0 && daysTo(t.iso) <= 3 && !t.card && !S.cards.some(function (c) { return c.iso >= t.iso && c.iso <= t.end; }); }).slice(0, 1).forEach(function (t) {
     L.push({ id: "plan-" + t.name, t: t.name + " is " + (daysTo(t.iso) === 0 ? "today" : daysTo(t.iso) === 1 ? "tomorrow" : "in " + daysTo(t.iso) + " days") + ". Want a 2-minute game plan" + (parent ? " with " + n : "") + "?", go: "Make the plan", act: function () { openGuide("t3"); } });
   });
-  EVENTS.filter(function (e) { return e.t === "match" && e.state === "planned" && !e.card && !S.flags.some(function (f) { return f.status === "pause"; }) && daysTo(e.d) >= 0 && daysTo(e.d) <= 1; }).slice(0, 1).forEach(function (e) {
+  EVENTS.filter(function (e) { return e.t === "match" && e.state === "planned" && !hasGamePlan(e) && !S.flags.some(function (f) { return f.status === "pause"; }) && daysTo(e.d) >= 0 && daysTo(e.d) <= 1; }).slice(0, 1).forEach(function (e) {
     L.push({ id: "mplan-" + e.d, t: "Match " + (daysTo(e.d) ? "tomorrow" : "today") + ". Want a 2-minute game plan?", go: "Make the plan", act: function () { openGuide("t3"); } });
   });
   upcoming().filter(function (t) { return t.deadline && !t.entered && daysTo(t.deadline) >= 0 && daysTo(t.deadline) <= 5; }).forEach(function (t) {
@@ -4698,6 +4698,11 @@ function inlineAsk() {
 function inlAdvance() { INL.i++; saveDraft(); inlineAsk(); }
 // Unfinished question flows are saved to the player's folder after every answer, so a reload never loses a note.
 var DRAFT = null;
+// A match already has a game plan when it carries a card, was made as one, or the Tournament Coach wrote its plan.
+function hasGamePlan(e) {
+  return !!(e.card || /^card-/i.test(e.id || "") || (e.by === "tournament-coach" && /\S/.test(e.plan || "")) ||
+    ((S && S.cards) || []).some(function (c) { return c.iso === e.d; }));
+}
 function saveDraft() {
   if (!REAL || !INL) return;
   var any = Object.keys(INL.a).some(function (k) { return INL.a[k]; }) || Object.keys(INL.c).length;
