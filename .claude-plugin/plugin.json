@@ -1,7 +1,7 @@
 {
   "name": "tennis-team",
   "displayName": "Pocket Tennis Team",
-  "version": "0.2.16",
+  "version": "0.2.17",
   "description": "Your professional tennis team in an app: talk or type to a Head Coach backed by a Journal Keeper, Coach Analyst, Progress Coordinator, Planner and Tournament Coach. Opens itself, interviews you, builds a plan with reasons, and keeps it current.",
   "author": {
     "name": "Andy(Chengyuan) Ke"

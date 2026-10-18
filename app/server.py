@@ -331,6 +331,49 @@ class App:
         self.busy = False
         threading.Thread(target=self._worker, daemon=True).start()
         threading.Thread(target=self._fast_worker, daemon=True).start()
+        self.resume_pending()
+
+    # -- unfinished team jobs survive a restart (an update or a closed app restarts the server)
+    def _pending(self, job_id=None):
+        d = self.ws("_system", "pending")
+        return d / f"{job_id}.json" if job_id else d
+
+    def mark_pending(self, job, text, fields):
+        if not self.workspace:
+            return
+        try:
+            self._pending().mkdir(parents=True, exist_ok=True)
+            write_json(self._pending(job.id), {"kind": job.kind, "text": text, "fields": fields or {}, "reply": job.reply,
+                                               "next_steps": job.next_steps, "at": now_iso()})
+        except OSError:
+            pass
+
+    def clear_pending(self, job):
+        if self.workspace:
+            self._pending(job.id).unlink(missing_ok=True)
+
+    def resume_pending(self):
+        if not self.workspace or not self._pending().exists():
+            return
+        for f in sorted(self._pending().glob("*.json")):
+            p = read_json(f, {})
+            f.unlink(missing_ok=True)
+            if not p.get("text"):
+                continue
+            job = Job(p.get("kind") or "free")
+            self.jobs[job.id] = job
+            job.reply, job.next_steps = p.get("reply"), p.get("next_steps") or []
+            if job.kind == "source":
+                job.source_id = (p.get("fields") or {}).get("id")
+            self.mark_pending(job, p["text"], p.get("fields"))
+            if job.kind == "onboarding":
+                self.q.put(("full", job, p["text"], p.get("fields") or {}))
+            elif job.reply:                      # answered already: only the team's bookkeeping is left
+                job.done, job.bookkeeping = True, "pending"
+                self.q.put(("book", job, p["text"], p.get("fields") or {}))
+            else:
+                job.bookkeeping = "pending"
+                self.fq.put((job, p["text"], p.get("fields") or {}))
 
     # -- paths
     def ws(self, *p):
@@ -533,6 +576,7 @@ class App:
         self.jobs[job.id] = job
         if log_user and self.workspace:
             self.append_convo({"role": "user", "kind": kind, "text": text, "job": job.id})
+        self.mark_pending(job, text, fields)
         if kind == "onboarding":                     # the plan must exist before the review: one full pass
             self.q.put(("full", job, text, fields or {}))
         else:
@@ -546,6 +590,7 @@ class App:
         job.bookkeeping = "pending"
         job.done = True
         self.jobs[job.id] = job
+        self.mark_pending(job, text, fields)
         self.q.put(("book", job, text, fields or {}))
         return job
 
@@ -593,9 +638,11 @@ class App:
                 self._fast(job, text, fields)
             finally:
                 if not job.error:
+                    self.mark_pending(job, text, fields)       # now with the reply, so a restart only redoes the bookkeeping
                     self.q.put(("book", job, text, fields))
                 else:
                     job.bookkeeping = "skipped"
+                    self.clear_pending(job)
 
     def _worker(self):
         while True:
@@ -717,6 +764,7 @@ class App:
         else:
             job.bookkeeping = "done"
             job.state_changed = True
+        self.clear_pending(job)
 
     def _full(self, job, text, fields):
         """Onboarding: one full pass that writes the plan and the first reply."""
@@ -733,6 +781,7 @@ class App:
             job.error = err
         job.bookkeeping = "done"
         job.done = True
+        self.clear_pending(job)
 
     def _save_unanswered(self, text):
         try:
