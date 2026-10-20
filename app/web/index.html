@@ -316,6 +316,12 @@
   .src .sync { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--muted); }
   .src .sync .switch { width: 38px; height: 22px; } .src .sync .switch::after { width: 16px; height: 16px; } .src .sync .switch.on::after { left: 19px; }
   .src.working { border-color: var(--accent); }
+  .kn-stroke { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 10px 12px; margin-bottom: 8px; }
+  .kn-stroke > summary { cursor: pointer; font-size: 14.5px; list-style-position: inside; }
+  .kn-stroke[open] > summary { margin-bottom: 8px; }
+  .kn-more > summary, .kn-videos > summary { cursor: pointer; font-size: 13.5px; color: var(--accent); margin: 4px 0 8px; }
+  .kn-videos > summary { color: var(--ink); }
+  .kn.wk { cursor: default; }
   .trow.tap { cursor: pointer; } .trow.tap:hover { border-color: var(--accent); }
   .jr-tools { display: grid; gap: 10px; margin-bottom: 14px; }
   .jr-chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1295,20 +1301,72 @@ function knItemHTML(k) {
   var L = KLAB[k.label] || KLAB.general, t = k.test || {}, res = t.results || [];
   var dots = k.label === "testing" || k.label === "proven" || res.length ? '<span class="kn-res" aria-label="Results">' + res.map(function (r) { return '<i class="' + (r.ok ? "ok" : "miss") + '" title="' + esc(shortD(r.d) + " · " + (r.note || "")) + '"></i>'; }).join("") +
       (k.status === "active" && k.label === "testing" ? Array(Math.max(0, (t.need || 2) - res.filter(function (r) { return r.ok; }).length) + 1).join("<i></i>") : "") + "</span>" : "";
-  var meta = [k.src || ""].concat(k.cue ? ["cue “" + k.cue + "”"] : []).concat(k.in_plan ? ["in this week's plan"] : [])
+  var meta = [k.src || ""].concat(k._alsoVideos ? ["also in " + k._alsoVideos + " of the videos"] : []).concat(k.cue ? ["cue “" + k.cue + "”"] : []).concat(k.in_plan ? ["in this week's plan"] : [])
     .concat(t.how && k.status === "active" && k.label === "testing" ? ["count: " + t.how + (t.target ? ", aim for " + t.target : "")] : [])
     .concat(res.length ? [res.map(function (r) { return (r.note || (r.ok ? "worked" : "missed")) + " on " + shortD(r.d); }).join(", ")] : []).filter(Boolean).join(" · ");
   return '<div class="kn' + (k.status === "removed" ? " removed" : "") + '" data-kid="' + esc(k.id) + '" tabindex="0" role="button" aria-expanded="false"><div class="kn-t"><p>' + esc(k.text) + '</p><span class="kb ' + esc(k.label) + '">' + esc(L.badge(k)) + "</span></div>" +
     "<small>" + esc(meta) + "</small>" + dots + "</div>";
 }
+var KN_STROKES = [["serve", "Serve"], ["return", "Return"], ["backhand", "Backhand"], ["slice", "Slice"], ["forehand", "Forehand"], ["net", "Volley and net"], ["move", "Footwork"], ["match", "Match play"], ["other", "Other"]];
+function knStroke(t) {
+  t = String(t).toLowerCase();
+  if (/\bserves?\b|toss|kick|double fault/.test(t)) return "serve";
+  if (/return/.test(t)) return "return";
+  if (/volley|net\b|punch|approach/.test(t)) return "net";
+  if (/slice/.test(t)) return "slice";
+  if (/backhand|one-hand|left hand pull|arm.?wrestl|butt cap/.test(t)) return "backhand";
+  if (/forehand|topspin|inside-out/.test(t)) return "forehand";
+  if (/footwork|split|step|shuffle|legs?\b|knee|weight|move|balance/.test(t)) return "move";
+  if (/match|pressure|nerv|point|tactic|pattern|rally/.test(t)) return "match";
+  return "other";
+}
+var KN_STOP = /^(the|a|an|and|or|to|of|on|in|your|you|it|is|be|with|for|at|as|so|then|not|no|from|that|this|by|into|up|out|his|he|when|than|more)$/;
+function knWords(t) { return String(t).toLowerCase().replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter(function (w) { return w.length > 2 && !KN_STOP.test(w); }); }
+function knSimilar(a, b) {
+  var A = knWords(a), B = knWords(b); if (!A.length || !B.length || knStroke(a) !== knStroke(b)) return false;
+  var hit = A.filter(function (w) { return B.indexOf(w) >= 0; }).length;
+  return hit >= 3 && hit / Math.min(A.length, B.length) >= 0.4;
+}
 function knowHTML() {
   var list = knowList();
   if (!list.length) return '<div class="empty-src">' + (REAL && (window.SERVER_SOURCES || []).length ? 'Nothing listed yet. <button class="link" id="knRebuild">Gather what I know from your coach notes</button>' : "Nothing yet. Tap “After a lesson” the next time your coach teaches you something, or add a video you learn from.") + "</div>";
   var live = list.filter(function (k) { return k.status !== "dropped" && k.status !== "removed"; });
-  var h = ["coach", "proven", "testing", "public", "general"].map(function (lab) {
-    var g = live.filter(function (k) { return k.label === lab; });
-    return g.length ? '<div class="kn-group"><h4>' + KLAB[lab].group + "</h4>" + g.map(knItemHTML).join("") + "</div>" : "";
-  }).join("");
+  var by = function (lab) { return live.filter(function (k) { return k.label === lab; }); };
+  var coach = by("coach"), proven = by("proven"), testing = by("testing"), pub = by("public").concat(by("general"));
+  // Repeats: a video idea that says what the coach taught becomes a tag on the lesson card, not a second card.
+  coach.forEach(function (c) { c._alsoVideos = 0; });
+  pub.forEach(function (p) { var m = coach.filter(function (c) { return knSimilar(c.text, p.text); })[0]; p._dup = !!m; if (m) m._alsoVideos++; });
+  var more = function (items, top, label) {
+    if (items.length <= top) return items.map(knItemHTML).join("");
+    return items.slice(0, top).map(knItemHTML).join("") + '<details class="kn-more"><summary>' + esc(label || "Show " + (items.length - top) + " more") + "</summary>" + items.slice(top).map(knItemHTML).join("") + "</details>";
+  };
+  var h = "";
+  // 1. This week: the plan's cues and what to count
+  var wk = ((S && S.data && S.data.assignments) || []).filter(function (a) { return a.k !== "phy" && a.cue; });
+  if (wk.length) h += '<div class="kn-group"><h4>This week</h4>' + wk.map(function (a) { return '<div class="kn wk"><div class="kn-t"><p>“' + esc(a.cue) + '”</p><span class="kb coach">In your plan</span></div><small>' + esc(a.title + (a.target ? " · count: " + a.target : "")) + "</small></div>"; }).join("") + "</div>";
+  // 2. From your coaches, by stroke
+  if (coach.length) {
+    var groups = {}; coach.forEach(function (c) { var g = knStroke(c.text); (groups[g] = groups[g] || []).push(c); });
+    h += '<div class="kn-group"><h4>From your coaches · ' + coach.length + "</h4>" + KN_STROKES.filter(function (g) { return groups[g[0]]; }).map(function (g) {
+      var items = groups[g[0]];
+      return '<details class="kn-stroke"><summary><b>' + g[1] + "</b> " + items.length + '<span class="muted"> · ' + esc(trimQ(items[0].text, 60)) + "</span></summary>" + more(items, 3) + "</details>";
+    }).join("") + "</div>";
+  }
+  // 3. Proven for you: always visible
+  if (proven.length) h += '<div class="kn-group"><h4>' + KLAB.proven.group + " · " + proven.length + "</h4>" + proven.map(knItemHTML).join("") + "</div>";
+  // 4. Testing: active tests first
+  if (testing.length) {
+    testing.sort(function (x, y) { return ((y.test || {}).results || []).length - ((x.test || {}).results || []).length; });
+    h += '<div class="kn-group"><h4>' + KLAB.testing.group + " · " + testing.length + "</h4>" + more(testing, 3, "Show " + (testing.length - 3) + " more ideas to test") + "</div>";
+  }
+  // 5. From the videos: one folded line
+  if (pub.length) {
+    var own = pub.filter(function (p) { return !p._dup; }), dups = pub.length - own.length, vg = {};
+    own.forEach(function (p) { var g = knStroke(p.text); (vg[g] = vg[g] || []).push(p); });
+    h += '<details class="kn-group kn-videos"><summary><b>From videos and public material · ' + pub.length + " ideas</b>" + (dups ? '<span class="muted"> · ' + dups + " repeat what your coach taught you</span>" : "") + "</summary>" +
+      '<p class="muted" style="font-size:12.5px;margin:6px 0 10px">Background reading. Your team uses these when they fit, but they never change your plan on their own. <button class="link" data-cnotes="">Open the full coach notes</button></p>' +
+      KN_STROKES.filter(function (g) { return vg[g[0]]; }).map(function (g) { return '<details class="kn-stroke"><summary><b>' + g[1] + "</b> " + vg[g[0]].length + "</summary>" + vg[g[0]].map(knItemHTML).join("") + "</details>"; }).join("") + "</details>";
+  }
   var gone = list.filter(function (k) { return k.status === "dropped" || k.status === "removed"; });
   if (gone.length) h += '<details class="kn-group"><summary class="muted" style="cursor:pointer;font-size:13px">Didn\'t work for you, or you said it\'s wrong (' + gone.length + ")</summary>" + gone.map(knItemHTML).join("") + "</details>";
   return h + '<p class="muted" style="font-size:12px;margin:2px 0 0">Tap an idea to correct it, test it next practice, or save a question for your coach. Only “From your coaches” and “Proven for you” can change your weekly plan.</p>';
@@ -1338,6 +1396,7 @@ function knAct(k, action, text) {
   redrawKnow();
 }
 function wireKnowledge() {
+  document.querySelectorAll("#knowList [data-cnotes]").forEach(function (b) { b.onclick = function (e) { e.preventDefault(); openCoachNotes(""); }; });
   var rb = $("knRebuild"); if (rb) rb.onclick = function () { api("POST", "/api/knowledge", { action: "rebuild" }).then(function () { rb.parentNode.textContent = "Gathering what I know from your coach notes. This takes a few minutes."; setTimeout(function () { refreshState().then(redrawKnow); }, 120000); }); };
   document.querySelectorAll("#knowList .kn").forEach(function (el) {
     var k = knowList().filter(function (x) { return x.id === el.getAttribute("data-kid"); })[0];
