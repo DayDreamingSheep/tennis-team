@@ -5695,11 +5695,12 @@ function bootReal() {
     if (SETTINGS.autoOpen === false) $("autoOpen").classList.remove("on");
     if (r.ready && r.state) {
       S = fromContract(r.state); MODE = S.mode; convToFeed(r.conversation || []); DRAFT = r.draft || null;
+      window.SERVER_SOURCES = r.sources || [];
       (r.jobs || []).filter(function (j) { return j && !j.done && j.id; }).forEach(function (j) {
         var job = { id: "p" + (++JOB_SEQ), serverId: j.id, real: true, state: "running", title: (ACKS[j.kind] || ACKS.free)[0], steps: [["head-coach", "Working"]], i: 0 };
         PENDING.push({ job: job }); JOBS.push(job); CONVO.push({ job: job }); pollJob(job, function () { refreshState(); });
       });
-      $("ob").classList.remove("on", "iv-on"); setMode(S.mode); showTab("home");
+      $("ob").classList.remove("on", "iv-on"); setMode(S.mode); serverSourcesInto(); showTab("home");
     } else {
       startOnboarding();
       if (r.ready || BOOT.workspace) { OB.i = 1; drawOB(); }   // the folder already exists: go straight to "Who is this for?"
