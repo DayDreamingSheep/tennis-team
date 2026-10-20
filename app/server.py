@@ -405,6 +405,61 @@ class App:
                 pass
         return out
 
+    # -- read-only views for the Journal page and coach notes
+    def journal(self):
+        """Every journal entry, newest first: the app's entries plus the imported old journal."""
+        out = []
+        f = self.ws("journal", "entries.md")
+        if f.exists():
+            for chunk in re.split(r"(?m)^## (?=NOTE-)", f.read_text(encoding="utf-8"))[1:]:
+                head, _, body = chunk.partition("\n")
+                nid, _, title = head.partition(" - ")
+                date = (re.search(r"(?m)^- Date:\s*(\d{4}-\d{2}-\d{2})", body) or re.search(r"(\d{4}-\d{2}-\d{2})", nid) or [None, ""])[1]
+                kind = (re.search(r"(?m)^- Type:\s*(.+)$", body) or [None, ""])[1]
+                out.append({"id": nid.strip(), "date": date, "type": kind.strip(), "title": title.strip() or nid.strip(),
+                            "md": body.strip(), "source": "app"})
+        hist = self.ws("journal", "history")
+        if hist.exists():
+            for hf in sorted(hist.glob("*.md")):
+                if "master_summary" in hf.name:
+                    continue
+                for i, chunk in enumerate(re.split(r"(?m)^# ", hf.read_text(encoding="utf-8"))[1:]):
+                    head, _, body = chunk.partition("\n")
+                    if "[Date]" in head or re.match(r"\d\d_", head.strip()):
+                        continue                     # templates and the file title
+                    parts = [p.strip() for p in re.split(r"\s+[—–-]\s+", head.strip(), maxsplit=2)]
+                    date = next((p for p in parts if re.match(r"\d{4}-\d{2}-\d{2}$", p)), "")
+                    if not date:
+                        m = re.search(r"\d{4}-\d{2}-\d{2}", body[:600])
+                        date = m.group(0) if m else ""
+                    kind = parts[0] if parts else ""
+                    title = parts[-1] if len(parts) > 1 else head.strip()
+                    out.append({"id": f"H-{hf.stem[:2]}-{i}", "date": date, "type": kind, "title": title,
+                                "md": body.strip(), "source": "history"})
+        out.sort(key=lambda e: (e["date"] or "0000", e["id"]), reverse=True)
+        return out
+
+    def coach_notes(self, slug):
+        """A coach's file for reading: what they teach, notes from their videos, questions, and dated lessons."""
+        base = self.ws("coaches") if self.workspace else None
+        if not base or not base.exists():
+            return {"coaches": []}
+        coaches = []
+        for d in sorted(p for p in base.iterdir() if p.is_dir()):
+            first = (d / "sources.md").read_text(encoding="utf-8").splitlines()[0] if (d / "sources.md").exists() else d.name
+            coaches.append({"slug": d.name, "name": re.sub(r"^#\s*Sources\s*-\s*", "", first).strip() or d.name})
+        if not slug:
+            return {"coaches": coaches}
+        d = base / slug
+        if not d.is_dir() or "/" in slug or slug.startswith("."):
+            return {"coaches": coaches, "error": "No notes for that coach yet."}
+        read = lambda n: (d / n).read_text(encoding="utf-8") if (d / n).exists() else ""
+        lessons = [e for e in self.journal() if "lesson" in e["type"].lower()]
+        st = self.read_state() or {}
+        return {"coaches": coaches, "slug": slug, "principles": read("principles.md"), "hypotheses": read("hypotheses.md"),
+                "study": read("study-notes.md"), "lessons": lessons,
+                "questions": [x for x in st.get("coach_questions") or [] if not x.get("asked")]}
+
     def log_voice(self, where, heard, lang, session=""):
         """Every time the player speaks: the raw words the browser heard, before clean-up or edits."""
         heard = " ".join(str(heard or "").split())[:20000]
@@ -961,6 +1016,10 @@ def make_handler(app):
                 i = html.find("<script")
                 html = html[:i] + boot + "\n" + html[i:] if i >= 0 else html + boot
                 return self._send(200, html, "text/html")
+            if u.path == "/api/journal":
+                return self._send(200, {"entries": app.journal() if app.workspace else []})
+            if u.path == "/api/coach":
+                return self._send(200, app.coach_notes((q.get("slug") or [""])[0]))
             if u.path == "/api/state":
                 return self._send(200, {"ready": app.ready(), "workspace": str(app.workspace) if app.workspace else None,
                                         "onboarded": app.onboarded(), "sources": app.sources(),

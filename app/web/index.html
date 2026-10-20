@@ -316,6 +316,24 @@
   .src .sync { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--muted); }
   .src .sync .switch { width: 38px; height: 22px; } .src .sync .switch::after { width: 16px; height: 16px; } .src .sync .switch.on::after { left: 19px; }
   .src.working { border-color: var(--accent); }
+  .trow.tap { cursor: pointer; } .trow.tap:hover { border-color: var(--accent); }
+  .jr-tools { display: grid; gap: 10px; margin-bottom: 14px; }
+  .jr-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .jr-chips button { font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+  .jr-chips button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .jr-month { margin: 18px 0 8px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .jr-item { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin-bottom: 8px; }
+  .jr-item > button { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; cursor: pointer; }
+  .jr-item > button:focus-visible { outline: 2px solid var(--accent); border-radius: 12px; }
+  .jr-item .jd { text-align: center; line-height: 1.1; } .jr-item .jd b { display: block; font-size: 18px; } .jr-item .jd small { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+  .jr-item .jt { min-width: 0; } .jr-item .jt b { display: block; font-size: 15px; font-weight: 600; } .jr-item .jt small { color: var(--muted); font-size: 12.5px; }
+  .jr-tag { font-size: 11.5px; padding: 3px 9px; border-radius: 999px; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); white-space: nowrap; }
+  .jr-tag.old { color: #2f5f8f; box-shadow: inset 0 0 0 1px #c9d9ea; }
+  .jr-body { padding: 0 16px 14px 80px; font-size: 14.5px; line-height: 1.55; overflow-wrap: anywhere; }
+  .jr-body h4 { margin: 12px 0 4px; font-size: 14px; } .jr-body ul { margin: 4px 0; padding-left: 18px; } .jr-body p { margin: 6px 0; }
+  .note-md h4 { margin: 14px 0 4px; font-size: 14px; } .note-md ul { margin: 4px 0; padding-left: 18px; } .note-md p { margin: 6px 0; } .note-md { font-size: 14.5px; line-height: 1.55; overflow-wrap: anywhere; }
+  .ctabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; } .ctabs button { font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); } .ctabs button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  @media (max-width: 560px) { .jr-body { padding-left: 16px; } .jr-item > button { grid-template-columns: 44px minmax(0, 1fr); } .jr-item .jr-tag { grid-column: 2; justify-self: start; } }
   .draft-note { font-size: 14px; color: var(--ink); align-self: center; margin-right: 4px; }
   .teach3 { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
   .kn-group { display: grid; gap: 8px; margin-bottom: 14px; }
@@ -802,6 +820,7 @@
     <section class="page" id="home"></section>
     <section class="page" id="plan"></section>
     <section class="page" id="calendar"></section>
+    <section class="page" id="journal"></section>
     <section class="page" id="tournaments"></section>
     <section class="page" id="health"></section>
     <section class="page" id="team"></section>
@@ -1402,6 +1421,96 @@ function wireFit() {
     };
   }; });
 }
+/* ---------------- Journal page, full notes, coach notes ---------------- */
+// Markdown from the journal files: headings, lists, bold. Tables and quotes stay readable as plain lines.
+function jmd(src) {
+  var out = [], list = false;
+  String(src || "").replace(/<!--[\s\S]*?-->/g, "").split("\n").forEach(function (l) {
+    var h = l.match(/^#{1,6}\s+(.*)$/), li = l.match(/^\s*(?:[-*]|\d+[.)])\s+(.*)$/);
+    if (li) { if (!list) { out.push("<ul>"); list = true; } out.push("<li>" + inline(li[1]) + "</li>"); return; }
+    if (list) { out.push("</ul>"); list = false; }
+    if (h) out.push("<h4>" + inline(h[1]) + "</h4>");
+    else if (/^\s*\|?\s*-{3,}/.test(l) || /^-{3,}\s*$/.test(l.trim())) return;
+    else if (l.trim()) out.push("<p>" + inline(l.replace(/^>\s?/, "").replace(/\|/g, " · ").replace(/^ · | · $/g, "")) + "</p>");
+  });
+  if (list) out.push("</ul>");
+  return out.join("");
+}
+var JOURNAL = null, JF = { q: "", k: "all" };
+var JKIND = [["all", "All"], ["match", "Matches"], ["practice", "Practice"], ["lesson", "Lessons"], ["learning", "Learning"], ["plan", "Plans"], ["body", "Body"]];
+function jKind(e) {
+  var t = (e.type + " " + e.title).toLowerCase();
+  if (/pre-match|match card|plan/.test(t)) return "plan";
+  if (/match|tournament/.test(t)) return "match";
+  if (/lesson/.test(t)) return "lesson";
+  if (/body|health|pain/.test(t)) return "body";
+  if (/practice/.test(t)) return "practice";
+  return "learning";
+}
+function demoJournal() {
+  return EVENTS.filter(function (e) { return e.state === "done" && e.note; }).map(function (e, i) {
+    return { id: "D" + i, date: e.d, type: e.t, title: e.title, md: e.note, source: "app" };
+  }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+}
+function loadJournal() {
+  if (!REAL) { JOURNAL = demoJournal(); return Promise.resolve(JOURNAL); }
+  return api("GET", "/api/journal").then(function (r) { JOURNAL = r.entries || []; return JOURNAL; });
+}
+function renderJournal() {
+  var el = $("journal"); if (!el) return;
+  if (!JOURNAL) { el.innerHTML = '<p class="muted">Opening your journal…</p>'; loadJournal().then(renderJournal).catch(function () { el.innerHTML = '<p class="muted">Couldn\'t open your journal. Is the app still running?</p>'; }); return; }
+  var q = JF.q.toLowerCase().trim();
+  var list = JOURNAL.filter(function (e) { return (JF.k === "all" || jKind(e) === JF.k) && (!q || (e.title + " " + e.md).toLowerCase().indexOf(q) >= 0); });
+  var h = '<h2 class="sec" style="margin-top:0">Your journal</h2><p class="muted" style="margin:0 0 12px">Everything you\'ve told your team, newest first. ' + (JOURNAL.some(function (e) { return e.source === "history"; }) ? "Your old journal is included." : "") + "</p>" +
+    '<div class="jr-tools"><input class="input" id="jrQ" type="search" placeholder="Search your notes: backhand, Raj, slice…" value="' + esc(JF.q) + '" aria-label="Search your journal">' +
+    '<div class="jr-chips">' + JKIND.map(function (k) { var n = k[0] === "all" ? JOURNAL.length : JOURNAL.filter(function (e) { return jKind(e) === k[0]; }).length; return n ? '<button data-jk="' + k[0] + '" class="' + (JF.k === k[0] ? "on" : "") + '">' + k[1] + " " + n + "</button>" : ""; }).join("") + "</div></div>";
+  if (!list.length) h += '<p class="muted">' + (JOURNAL.length ? "No notes match that." : "Nothing yet. After practice or a match, just tell your coach how it went and it lands here.") + "</p>";
+  var month = "";
+  list.forEach(function (e, i) {
+    var d = e.date ? dOf(e.date) : null, m = d ? MON[d.getMonth()] + " " + d.getFullYear() : "Undated";
+    if (m !== month) { h += '<div class="jr-month">' + esc(m) + "</div>"; month = m; }
+    h += '<div class="jr-item" data-ji="' + i + '"><button type="button" aria-expanded="false"><span class="jd"><b>' + (d ? d.getDate() : "–") + "</b><small>" + (d ? MON[d.getMonth()] : "") + '</small></span><span class="jt"><b>' + esc(e.title) + "</b><small>" + esc(cap(e.type || "")) + '</small></span><span class="jr-tag' + (e.source === "history" ? " old" : "") + '">' + (e.source === "history" ? "Old journal" : esc(cap(jKind(e)))) + "</span></button></div>";
+  });
+  el.innerHTML = h;
+  var qi = $("jrQ"); qi.oninput = function () { JF.q = qi.value; var pos = qi.selectionStart; renderJournal(); var n = $("jrQ"); n.focus(); try { n.setSelectionRange(pos, pos); } catch (_) {} };
+  el.querySelectorAll("[data-jk]").forEach(function (b) { b.onclick = function () { JF.k = b.getAttribute("data-jk"); renderJournal(); }; });
+  el.querySelectorAll("[data-ji]").forEach(function (box) {
+    var b = box.querySelector("button"), e = list[+box.getAttribute("data-ji")];
+    b.onclick = function () {
+      var open = box.querySelector(".jr-body");
+      if (open) { open.remove(); b.setAttribute("aria-expanded", "false"); return; }
+      box.insertAdjacentHTML("beforeend", '<div class="jr-body">' + jmd(e.md) + "</div>"); b.setAttribute("aria-expanded", "true");
+    };
+  });
+}
+function openNote(id) {
+  var show = function () {
+    var e = (JOURNAL || []).filter(function (x) { return x.id === id; })[0];
+    if (!e) return toast("That note isn't in your journal yet. It may still be filing; try again in a minute.");
+    openInfo("📓", e.title, (e.date ? shortD(e.date) + " · " : "") + cap(e.type || "Note"), '<div class="note-md" style="margin-top:12px">' + jmd(e.md) + "</div>");
+  };
+  if (JOURNAL) return show();
+  loadJournal().then(show).catch(function () { toast("Couldn't open that note."); });
+}
+function openCoachNotes(name) {
+  if (!REAL) return openInfo("👤", name || "Your coach", "Coach notes", '<p class="muted" style="margin-top:12px">In the real app this shows your lessons by date, what your coach teaches, notes from their videos, and your questions for next time.</p>');
+  api("GET", "/api/coach").then(function (r) {
+    var cs = r.coaches || [], key = String(name || "").toLowerCase().replace(/^coach /, "");
+    var c = cs.filter(function (x) { return x.name.toLowerCase().indexOf(key) >= 0 || key.indexOf(x.slug) >= 0; })[0] || cs[0];
+    if (!c) return toast("No coach notes yet. Add notes after a lesson.");
+    return api("GET", "/api/coach?slug=" + encodeURIComponent(c.slug)).then(function (d) {
+      var tabs = [["lessons", "Lessons " + (d.lessons || []).length], ["teach", "What they teach"], ["videos", "From their videos"], ["questions", "Questions " + (d.questions || []).length]];
+      var body = function (k) {
+        if (k === "lessons") return (d.lessons || []).length ? d.lessons.map(function (e) { return '<div class="card" style="padding:12px 14px;margin-bottom:8px"><b>' + esc(e.title) + '</b><small class="muted" style="display:block">' + esc(e.date ? shortD(e.date) : "") + '</small><div class="note-md">' + jmd(e.md) + "</div></div>"; }).join("") : '<p class="muted">No lesson notes yet. Tap “Add notes” after your next lesson.</p>';
+        if (k === "teach") return '<div class="note-md">' + jmd(d.principles || "Nothing recorded yet.") + "</div>";
+        if (k === "videos") { var v = (d.study || "").split(/\n(?=## )/).filter(function (x) { return /videos/i.test(x.split("\n")[0]); }).join("\n"); return '<div class="note-md">' + jmd(v || d.study || "No video notes yet.") + "</div>"; }
+        return (d.questions || []).length ? "<ul>" + d.questions.map(function (x) { return "<li>" + esc(x.text) + "</li>"; }).join("") + "</ul>" : '<p class="muted">No questions saved. Tap an idea on the Head Coach page and choose “Ask my coach about this”.</p>';
+      };
+      openInfo("👤", c.name, "Coach notes · your lessons, their teaching, their videos", '<div class="ctabs" id="ctabs">' + tabs.map(function (t, i) { return '<button data-ct="' + t[0] + '" class="' + (i ? "" : "on") + '">' + esc(t[1]) + "</button>"; }).join("") + '</div><div id="cbody">' + body("lessons") + "</div>");
+      $("ctabs").querySelectorAll("button").forEach(function (b) { b.onclick = function () { $("ctabs").querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); }); $("cbody").innerHTML = body(b.getAttribute("data-ct")); }; });
+    });
+  }).catch(function () { toast("Couldn't open the coach notes."); });
+}
 function openMember(id) {
   if (id === "coach-analyst") id = "head-coach";
   var m = byId(id), d = memberData(id), vals = d.values || {};
@@ -1414,7 +1523,7 @@ function openMember(id) {
     '<h2 class="sec">What I know</h2><div id="knowList">' + knowHTML() + "</div>" + '<div id="qList">' + questionsHTML() + "</div>";
 
   if (d.form) h += '<h2 class="sec">Your goal</h2><div class="grid">' + d.form.map(function (f) { return '<label class="field">' + esc(f.label) + '<input class="input" value="' + esc(f.value) + '"></label>'; }).join("") + "</div>";
-  if (d.coaches) h += '<h2 class="sec">Your coaches</h2><div class="grid">' + d.coaches.map(function (c) { return '<div class="coach-row"><span class="av sm" style="--c:var(--m-analyst)">👤</span><div class="t"><b>' + esc(c.name) + "</b><small>" + esc(c.how) + " · " + esc(c.n) + '</small></div><button class="btn" data-t3="lesson">Add notes</button></div>'; }).join("") + "</div>";
+  if (d.coaches) h += '<h2 class="sec">Your coaches</h2><div class="grid">' + d.coaches.map(function (c) { return '<div class="coach-row"><span class="av sm" style="--c:var(--m-analyst)">👤</span><div class="t"><b>' + esc(c.name) + "</b><small>" + esc(c.how) + " · " + esc(c.n) + '</small></div><span class="row" style="gap:6px"><button class="btn" data-cnotes="' + esc(c.name) + '">Read notes</button><button class="btn" data-t3="lesson">Add notes</button></span></div>'; }).join("") + "</div>";
   if (d.settings) h += '<h2 class="sec">How they work</h2><div class="card" style="padding:4px 14px">' + d.settings.map(function (st, i) {
     var on = st.k && typeof vals[st.k] === "boolean" ? vals[st.k] : st.on, junior = id === "strategy-coach" && st.k === "pace" && S && S.mode === "parent";
     var ctl = st.type === "switch" ? '<button class="switch' + (on ? " on" : "") + '" data-switch="' + i + '" data-k="' + esc(st.k || "") + '" aria-label="' + esc(st.label) + '" aria-pressed="' + !!on + '"></button>'
@@ -1461,6 +1570,7 @@ function openMember(id) {
   if (!auto && !fc) wireLibrary(id);
   if (!fc) wireKnow(m); else wireFit();
   if (hc) { wireKnowledge(); wireTeach3(); }
+  $("panel").querySelectorAll("[data-cnotes]").forEach(function (b) { b.onclick = function () { openCoachNotes(b.getAttribute("data-cnotes")); }; });
   if ($("replanNow")) $("replanNow").onclick = function () {
     var v = SETUP["strategy-coach"].values || {};
     var words = "Re-plan this week with my Planner settings: " + (v.pace || "Steady") + " pace, " + (v.drills || "3") + " focuses, " + (v.days || "4") + " tennis days.";
@@ -2222,8 +2332,8 @@ function renderAll() {
 
 /* ---------------- Tabs ---------------- */
 var TABS = {
-  adult:  [ ["home", "🏠", "Home"], ["plan", "🗺", "Plan"], ["calendar", "📅", "Calendar"], ["tournaments", "🏆", "Tournaments"], ["team", "👥", "Team"] ],
-  parent: [ ["home", "🏠", "Family"], ["calendar", "📅", "Calendar"], ["tournaments", "🏆", "Tournaments"], ["health", "❤️", "Health"], ["team", "👥", "Team"] ]
+  adult:  [ ["home", "🏠", "Home"], ["plan", "🗺", "Plan"], ["calendar", "📅", "Calendar"], ["journal", "📓", "Journal"], ["tournaments", "🏆", "Tournaments"], ["team", "👥", "Team"] ],
+  parent: [ ["home", "🏠", "Family"], ["calendar", "📅", "Calendar"], ["journal", "📓", "Journal"], ["tournaments", "🏆", "Tournaments"], ["health", "❤️", "Health"], ["team", "👥", "Team"] ]
 };
 function renderTabs() {
   $("tabs").innerHTML = TABS[MODE].map(function (t) { return '<button data-tab="' + t[0] + '"><span class="ti">' + t[1] + "</span>" + t[2] + "</button>"; }).join("");
@@ -3534,7 +3644,7 @@ function renderTournaments3() {
     h += '<h2 class="sec">Travel & school · ' + esc(nt.name) + '</h2><div class="card"><ul class="chk" id="tchk">' + chk.map(function (c, i) { return '<li data-i="' + i + '" class="' + (c[1] ? "ok" : "") + '"><span class="mk">' + (c[1] ? "✓" : "") + '</span><span class="tx">' + esc(c[0]) + "</span></li>"; }).join("") + "</ul></div>";
   }
   h += '<h2 class="sec">Played</h2>' + (pastT.length ? '<div class="tlist">' + pastT.map(function (t) {
-    return '<div class="card trow"><div class="date"><b>' + dOf(t.iso).getDate() + "</b><small>" + MON[dOf(t.iso).getMonth()] + '</small></div><div class="info"><b>' + esc(t.name) + (t.result ? " · " + esc(t.result) : "") + '</b><span class="muted" style="font-size:14px">' + esc(t.reflection || "") + "</span>" +
+    return '<div class="card trow' + (t.note ? ' tap" data-note="' + esc(t.note) + '" role="button" tabindex="0' : "") + '"><div class="date"><b>' + dOf(t.iso).getDate() + "</b><small>" + MON[dOf(t.iso).getMonth()] + '</small></div><div class="info"><b>' + esc(t.name) + (t.result ? " · " + esc(t.result) : "") + '</b><span class="muted" style="font-size:14px">' + esc(t.reflection || "") + (t.note ? " Read the full note ›" : "") + "</span>" +
       (t.t && !t.t.reflected ? '<button class="btn" style="margin-top:6px" data-reflect="' + tid(t.t) + '">How did it go? Reflect</button>' : "") + "</div></div>"; }).join("") + "</div>"
     : '<p class="muted" style="margin:0">Nothing yet. After a match, ' + (parent ? "hand " + esc(n) + " the mic for a debrief" : "tap How did it go?") + " and it lands here.</p>");
   el.innerHTML = h;
@@ -3542,6 +3652,7 @@ function renderTournaments3() {
   wireTell(el);
   el.querySelectorAll("[data-tid]").forEach(function (b) { b.onclick = function () { openTournament(S.tournaments[+b.getAttribute("data-tid")]); }; });
   el.querySelectorAll("[data-reflect]").forEach(function (b) { b.onclick = function () { openGuide("t7", null, S.tournaments[+b.getAttribute("data-reflect")]); }; });
+  el.querySelectorAll("[data-note]").forEach(function (b) { b.onclick = function (e) { if (e.target.closest("button")) return; openNote(b.getAttribute("data-note")); }; b.onkeydown = function (e) { if (e.key === "Enter") openNote(b.getAttribute("data-note")); }; });
   el.querySelectorAll("#tchk li").forEach(function (li) { li.onclick = function () { var c = S.chk[+li.getAttribute("data-i")]; c[1] = !c[1]; renderTournaments3(); }; });
 }
 /* ---------------- Health & Load (parent) ---------------- */
@@ -4228,6 +4339,7 @@ function showTab(id) {
   if (id === "health" && MODE === "adult") { showTab("plan"); setTimeout(function () { var b = $("bodySec"); if (b) b.scrollIntoView({ block: "start" }); }, 30); return; }
   document.querySelectorAll("#tabs button").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-tab") === id); });
   document.querySelectorAll(".page").forEach(function (p) { p.classList.toggle("on", p.id === id); });
+  if (id === "journal") renderJournal();
   document.body.classList.toggle("home-on", id === "home");
   var m = document.querySelector("main");
   layoutComposer();
@@ -5160,7 +5272,7 @@ function fromContract(st) {
              matches: t.matches || 0, maxMatches: 4, entered: !!t.entered, deadline: t.deadline || null, opens: t.opens || "", guide: has ? gd : null, card: !!t.card };
   });
   var results = events.filter(function (e) { return e.t === "match" && e.state === "done" && e.note; }).map(function (e) {
-    var sc = P.score(e.note), r = P.result(e.note, sc); return { iso: e.d, name: e.title || "Match", result: (r === "W" ? "Won " : r === "L" ? "Lost " : "") + (sc || ""), reflection: sc ? "" : trimQ(e.note, 80) };
+    var sc = P.score(e.note), r = P.result(e.note, sc); return { iso: e.d, name: e.title || "Match", result: (r === "W" ? "Won " : r === "L" ? "Lost " : "") + (sc || ""), reflection: sc ? "" : trimQ(e.note, 80), note: e.id || "" };
   });
   return {
     knowledge: st.knowledge || null, questions: st.coach_questions || [], fitness: st.fitness || null,
@@ -5280,6 +5392,7 @@ function refreshState() {
   return api("GET", "/api/state").then(function (r) {
     if (r.state) { var keepChk = S && S.chk; S = fromContract(r.state); if (keepChk) S.chk = keepChk; }
     SETTINGS = r.settings || SETTINGS; applyTeamSettings();
+    JOURNAL = null; if ($("journal") && $("journal").classList.contains("on")) renderJournal();   // new notes show up
     window.SERVER_SOURCES = r.sources || []; serverSourcesInto();
     convToFeed(r.conversation || []); if (!INL) DRAFT = r.draft || null;
     MODE = S.mode; setMode(S.mode);
