@@ -1053,7 +1053,7 @@ function memberStatus(m) {
   }
   if (m.id === "fitness-coach") { var f = fitData(), fn = f.limits.filter(function (x) { return x.status !== "ended"; }).length + f.watch.length + (f.program && f.program.name ? 1 : 0) + f.felt.length;
     return fn ? { cls: "ready", label: f.limits.some(function (x) { return x.status === "active"; }) ? "Limit in force" : "Knows " + fn + " thing" + (fn === 1 ? "" : "s") } : { cls: "needs", label: "Needs you" }; }
-  var d = memberData(m.id), n = knowList().filter(function (k) { return k.status !== "removed" && k.status !== "dropped"; }).length + (SOURCES[m.id] || []).reduce(function (a, x) { return a + (x.learned || 0); }, 0);
+  var d = memberData(m.id), n = knowList().filter(function (k) { return k.status !== "removed" && k.status !== "dropped" && k.label !== "public" && k.label !== "general"; }).length + (SOURCES[m.id] || []).reduce(function (a, x) { return a + (x.learned || 0); }, 0);
   return SETUP["coach-analyst"].status.ok || n > 2 ? { cls: "ready", label: "Knows " + n + " thing" + (n === 1 ? "" : "s") } : { cls: "needs", label: "Needs you" };
 }
 // The Coach Analyst works behind the Head Coach: one Teach page with the coaches, lessons and links.
@@ -1317,7 +1317,7 @@ function knStroke(t) {
   if (/backhand|one-hand|left hand pull|arm.?wrestl|butt cap/.test(t)) return "backhand";
   if (/forehand|topspin|inside-out/.test(t)) return "forehand";
   if (/footwork|split|step|shuffle|legs?\b|knee|weight|move|balance/.test(t)) return "move";
-  if (/match|pressure|nerv|point|tactic|pattern|rally/.test(t)) return "match";
+  if (/match|pressure|nerv|break point|big point|tactic|pattern|rally|opponent/.test(t)) return "match";
   return "other";
 }
 var KN_STOP = /^(the|a|an|and|or|to|of|on|in|your|you|it|is|be|with|for|at|as|so|then|not|no|from|that|this|by|into|up|out|his|he|when|than|more)$/;
