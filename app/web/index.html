@@ -2358,7 +2358,7 @@ function applyTeam() {
   if (S.demo && !parent) { TEAM.forEach(function (m, i) { m.last = LAST_DEMO[i].replace("Oct 13", "Oct 11"); }); SETUP = JSON.parse(JSON.stringify(SETUP_DEMO)); SOURCES = JSON.parse(JSON.stringify(SOURCES_DEMO));
     SETUP["progress-coordinator"].knows = [ { t: "Second serve: test it in real points", src: "Weekly check-in · Oct 11" }, { t: "Short balls: ready to level up", src: "Weekly check-in · Oct 11" } ]; }
   else {
-    SETUP = JSON.parse(JSON.stringify(SETUP_DEMO)); SOURCES = {};
+    SETUP = JSON.parse(JSON.stringify(SETUP_DEMO)); SOURCES = {}; if (window.REAL && window.SERVER_SOURCES) serverSourcesInto();
     var up = upcoming();
     var last = parent && S.demo ? {
       "head-coach": "Answered your question about load · Oct 14", "journal-keeper": "Logged Alex's mobility session · Oct 14", "progress-coordinator": "Weekly check-in: reset routine is new · Oct 11",
