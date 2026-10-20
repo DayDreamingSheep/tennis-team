@@ -119,9 +119,13 @@ FAST_MODE = (
     "'This isn't medical advice' when giving health guidance. React to their numbers versus the current targets and "
     "cues. kind=car-talk: give 2 things to say, 1 to avoid, 1 question for later. kind=source: the player saved training "
     "material (a link). You have NOT seen its content and must not pretend you have or invent what it says; thank them "
-    "and say Coach Analyst is studying it now (reading public information about it) and will have study notes ready on "
-    "that teammate's page in a few minutes; ask them to tell you the one thing they take from it after they watch or "
-    "read it, since their own takeaway counts most. When a question touches a coach or channel the player learns from, "
+    "and say the team can see the coach's video list and public pages but not what is said inside the videos, so the "
+    "best way to use it is: watch one video (a channel's card on the Head Coach page shows which ones fit their current "
+    "focus) and then tell their coach the one thing they took from it; the team checks it against their real coach and "
+    "turns it into a test at the next practice. kind=takeaway: the player watched [fields] video by [fields] coach and "
+    "gives their takeaway. Say in one sentence whether it matches what their own coach taught (read "
+    "coaches/<slug>/principles.md), differs, or isn't covered yet; if [fields] test is yes, say exactly what to count at "
+    "the next practice and the target. Never invent what the video says beyond the player's words. When a question touches a coach or channel the player learns from, "
     "you may read coaches/<slug>/study-notes.md and principles.md and use them, saying they come from public material "
     "and haven't been checked against the player's own lessons yet. kind=knowledge: the player acted on one idea the "
     "Head Coach knows ([fields] action fix or test): for fix, thank them and say the team will correct it; for test, say "
@@ -594,7 +598,24 @@ class App:
 
     # -- training material links (public metadata only; see describe_link)
     def sources(self):
-        return read_json(self.ws("_system", "sources.json"), []) if self.workspace else []
+        items = read_json(self.ws("_system", "sources.json"), []) if self.workspace else []
+        if any(x.get("kind") == "youtube-channel" and "videos" not in x for x in items) and not getattr(self, "_mapping", False):
+            self._mapping = True                # channels saved before the video map existed: fill it in once, in the background
+            threading.Thread(target=self._fill_video_maps, daemon=True).start()
+        return items
+
+    def _fill_video_maps(self):
+        try:
+            items = read_json(self.ws("_system", "sources.json"), [])
+            for x in items:
+                if x.get("kind") == "youtube-channel" and "videos" not in x:
+                    try:
+                        x["videos"] = channel_videos(x["url"])
+                    except Exception:
+                        x["videos"] = []
+            write_json(self.ws("_system", "sources.json"), items)
+        finally:
+            self._mapping = False
 
     def add_source(self, url, member):
         src = describe_link(url)
@@ -915,6 +936,45 @@ def intro_markdown(answers, mode):
 YT_HOSTS = ("youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "music.youtube.com")
 
 
+VIDEO_TOPICS = [("serve", r"serve|double fault|toss|kick"), ("return", r"return"), ("backhand", r"backhand|one.hand"),
+                ("slice", r"slice"), ("forehand", r"forehand|topspin"), ("net", r"volley|net\b|approach|overhead|smash"),
+                ("move", r"footwork|movement|split|weight transfer|short ball|high short"),
+                ("match", r"\bmatch|choking|pressure|\bmental\b|nerves|strategy|tactic")]
+
+
+def video_topic(title):
+    t = (title or "").lower()
+    return next((k for k, rx in VIDEO_TOPICS if re.search(rx, t)), "other")
+
+
+def channel_videos(url):
+    """A channel's recent videos from YouTube's official public feed: titles and dates only, never the videos' content."""
+    import html as htmlmod
+    u = urlparse(url)
+    path = u.path.rstrip("/")
+    cid = path.split("/")[2] if path.startswith("/channel/") else None
+    if not cid:                                 # @handle -> channel id from the public page's canonical link
+        with net.urlopen(f"https://www.youtube.com{path or '/'}", timeout=10) as r:
+            page = r.read(3_000_000).decode("utf-8", "ignore")
+        m = re.search(r'<meta itemprop="(?:channelId|identifier)" content="(UC[\w-]{20,})"', page) or \
+            re.search(r'youtube\.com/channel/(UC[\w-]{20,})', page)
+        cid = m.group(1) if m else None
+    if not cid:
+        return []
+    with net.urlopen(f"https://www.youtube.com/feeds/videos.xml?channel_id={cid}", timeout=10) as r:
+        feed = r.read().decode("utf-8", "ignore")
+    out = []
+    for entry in re.findall(r"<entry>(.*?)</entry>", feed, re.S):
+        vid = re.search(r"<yt:videoId>([\w-]+)</yt:videoId>", entry)
+        title = re.search(r"<title>(.*?)</title>", entry, re.S)
+        pub = re.search(r"<published>(\d{4}-\d{2}-\d{2})", entry)
+        if vid and title:
+            t = htmlmod.unescape(title.group(1).strip())
+            out.append({"id": vid.group(1), "title": t, "url": f"https://www.youtube.com/watch?v={vid.group(1)}",
+                        "date": pub.group(1) if pub else "", "topic": video_topic(t)})
+    return out
+
+
 def describe_link(url):
     """Public metadata only. Videos use YouTube's official oEmbed endpoint; nothing is downloaded or scraped."""
     import urllib.request
@@ -933,6 +993,10 @@ def describe_link(url):
         if path.startswith("/@") or path.startswith("/channel/") or path.startswith("/c/") or path.startswith("/user/"):
             handle = path.split("/")[1] if path.startswith("/@") else path.split("/")[2]
             src.update(kind="youtube-channel", title=handle if handle.startswith("@") else handle, author=handle)
+            try:
+                src["videos"] = channel_videos(url)
+            except Exception:
+                src["videos"] = []
             return src
         src["kind"] = "youtube-video"
         try:

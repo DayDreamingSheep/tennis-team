@@ -1693,6 +1693,10 @@ function srcRow(x, i) {
       "<ul>" + x.points.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul>" +
       ((x.start || []).length ? '<p class="start">Start with: ' + x.start.map(function (s) { return /^https?:\/\//.test(s.url || "") ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer">' + esc(s.title || s.url) + "</a>" : esc(s.title || ""); }).join(" · ") + "</p>" : "") +
       '<p class="src-why">From public descriptions, not from watching the videos. Tell your coach what you take from it, since your words count most.</p></details>' : "";
+  if ((x.videos || []).length) {
+    var fit = videosForFocus(x.videos)[0];
+    more += '<button class="btn" style="margin-top:8px" data-vmap="' + esc(x.url || "") + '">📺 Videos ' + x.videos.length + (fit ? " · fits your focus: " + esc(trimQ(fit.title, 40)) : "") + "</button>";
+  }
   return '<div class="src' + (x.working ? " working" : "") + '"><span class="ic ' + (x.kind === "audio" || x.kind === "image" || x.kind === "sheet" ? "file" : x.kind) + '">' + ic + '</span><div class="t"><b>' + esc(x.title) + "</b><small>" + esc(x.where) + " · " + status + "</small>" + more + "</div>" + sync + "</div>";
 }
 function detectLink(u) {
@@ -1738,7 +1742,8 @@ function srcFromServer(x) {
   var ch = x.kind === "youtube-channel", vid = x.kind === "youtube-video";
   var o = { kind: ch || vid ? "video" : x.kind === "doc" ? "doc" : "web", icon: ch ? "📺" : null, title: x.title || x.url, url: x.url, saved: true,
            where: ch ? "YouTube channel you follow" : vid ? "YouTube" + (x.author ? " · " + x.author : "") : (function () { try { return new URL(x.url).host; } catch (e) { return "Web page"; } })() };
-  if (x.status === "studying") o.working = "Coach Analyst is studying it…";
+  o.videos = x.videos || []; o.author = x.author || x.title || "";
+  if (x.status === "studying") o.working = "Coach Analyst is reading what's public about it…";
   else if (x.status === "studied") { o.learned = x.learned || 0; o.points = x.points || []; o.start = x.start || []; o.summary = x.summary || "";
     if (!o.learned) o.note = x.summary || "Studied · not much public information yet"; }
   else if (x.status === "error") o.note = "Couldn't study it this time · it's still saved";
@@ -1760,7 +1765,7 @@ function addSourceReal(id, url, det, input) {
   det.textContent = "Saving…";
   api("POST", "/api/source", { url: url, member: id }).then(function (r) {
     if (r.error) { det.textContent = r.error; return; }
-    input.value = ""; det.textContent = "Saved. Coach Analyst is studying it now. Notes will show up here in a few minutes.";
+    input.value = ""; det.textContent = r.source.kind === "youtube-channel" ? "Saved. I can see the channel's video list, not what's said in the videos. Pick one that fits your focus, watch it, then tell your coach your one takeaway." : "Saved. Watch or read it, then tell your coach the one thing you took from it.";
     var list = SOURCES[id] = SOURCES[id] || []; list.unshift(srcFromServer(r.source));
     $("srcList").innerHTML = list.map(srcRow).join(""); wireSync();
     toast("Saved " + (r.source.title || "link") + ". Your coach replied on Home.");
@@ -1773,7 +1778,35 @@ function addSourceReal(id, url, det, input) {
     })();
   }).catch(function (e) { det.textContent = "Couldn't save that link. Check it and try again."; });
 }
+var V_TOPICS = [["serve", "Serve"], ["return", "Return"], ["backhand", "Backhand"], ["slice", "Slice"], ["forehand", "Forehand"], ["net", "Volley and net"], ["move", "Footwork"], ["match", "Match play"], ["other", "Other"]];
+// Which videos fit what the player is working on now (this week's assignments)
+function videosForFocus(videos) {
+  var map = { footwork: "move", return: "return", backhand: "backhand", serve: "serve", forehand: "forehand", net: "net", mental: "match" };
+  var want = ((S && S.data && S.data.assignments) || []).filter(function (a) { return a.k !== "phy"; }).map(function (a) { return map[a.k] || ""; });
+  var words = ((S && S.data && S.data.assignments) || []).map(function (a) { return (a.title + " " + (a.cue || "")).toLowerCase(); }).join(" ");
+  return (videos || []).filter(function (v) { return want.indexOf(v.topic) >= 0 || (/slice/.test(words) && v.topic === "slice"); });
+}
+function openVideoMap(src) {
+  var vids = src.videos || [], fit = videosForFocus(vids), coach = (src.author || src.title || "the coach").replace(/^@/, "");
+  var row = function (v) { return '<div class="kn" style="cursor:default"><div class="kn-t"><p><a href="' + esc(v.url) + '" target="_blank" rel="noopener noreferrer">' + esc(v.title) + '</a></p><span class="kb general">' + esc(v.date ? shortD(v.date) : "") + '</span></div><button class="btn" style="justify-self:start;margin-top:6px" data-tk="' + esc(v.id) + '">Watched it? Tell your coach</button></div>'; };
+  var h = '<p class="muted" style="margin:12px 0">Your team can see this list, not what\'s said in the videos. Watch one, then tell your coach your one takeaway. It gets checked against your real coach and tested at your next practice.</p>';
+  if (fit.length) h += '<h2 class="sec">Fits what you\'re working on</h2><div class="kn-group">' + fit.slice(0, 3).map(row).join("") + "</div>";
+  var by = {}; vids.forEach(function (v) { (by[v.topic] = by[v.topic] || []).push(v); });
+  h += '<h2 class="sec">All recent videos · ' + vids.length + "</h2>" + V_TOPICS.filter(function (t) { return by[t[0]]; }).map(function (t) { return '<details class="kn-stroke"><summary><b>' + t[1] + "</b> " + by[t[0]].length + "</summary>" + by[t[0]].map(row).join("") + "</details>"; }).join("");
+  openInfo("📺", coach + "'s videos", "Pick one that fits your focus", h);
+  $("panel").querySelectorAll("[data-tk]").forEach(function (b) { b.onclick = function () {
+    var v = vids.filter(function (x) { return x.id === b.getAttribute("data-tk"); })[0]; if (!v) return;
+    closeMember(); openGuide("tk", null, { name: v.title, url: v.url, coach: coach });
+  }; });
+}
+function wireVideoMaps(root) {
+  (root || document).querySelectorAll("[data-vmap]").forEach(function (b) { b.onclick = function () {
+    var url = b.getAttribute("data-vmap"), all = [].concat.apply([], Object.keys(SOURCES).map(function (k) { return SOURCES[k] || []; }));
+    var src = all.filter(function (x) { return x.url === url; })[0]; if (src) openVideoMap(src);
+  }; });
+}
 function wireSync() {
+  wireVideoMaps($("srcList"));
   $("srcList").querySelectorAll("[data-sync]").forEach(function (b) {
     b.onclick = function () { b.classList.toggle("on"); toast(b.classList.contains("on") ? "They'll re-read it whenever it changes" : "Sync off — they'll keep what they learned"); };
   });
@@ -3272,6 +3305,15 @@ var T = {
         reply: { credit: ["tournament-coach", "progress-coordinator"], text: lines.join("\n"), next: [train.length ? "Sunday: the weekly check-in picks up " + train[0].toLowerCase() : "Sunday: weekly check-in", "Keep the day after a tournament light"], changed: ["Reflection saved", "tournaments", "Tournaments"] },
         onDone: function () { if (res && !t.result) t.result = res; t.reflection = [best ? "Best: " + trimQ(best, 60) : "", train.length ? "Train next: " + train.join(", ") : "", handled ? "Handled it: " + handled : ""].filter(Boolean).join(" · ") || t.reflection; t.reflected = true; S.latest["tournament-coach"] = "Saved the " + t.name + " reflection · " + shortD(TODAY); } };
     } },
+  tk: { title: "Your takeaway from {tname}", who: "coach-analyst",
+    qs: [ { q: "What's the one thing he said to do in “{tname}”?", sample: "Keep the elbow under the ball and let the racket drop, then brush up." },
+          { q: "Want to test it at your next practice?", buttons: ["Yes, test it", "Just save it"] } ],
+    job: function (A) {
+      var t = A.ctx || {}, say = A.text(0), test = !/just save/i.test(A.btn(1) || "");
+      var list = demoKnow(); list.unshift({ id: "D-" + Date.now(), label: test ? "testing" : "public", from: t.coach || "the video", text: say.length > 110 ? say.slice(0, 107) + "…" : say, src: "Your takeaway from " + (t.name || "a video"), status: "active", test: test ? { how: "times it works in one practice", target: "6/10", need: 2, results: [] } : undefined });
+      return { title: "Checking your takeaway", dur: 5000, steps: [["coach-analyst", "Checking it against your coach's lessons"], ["progress-coordinator", "Adding a test to your next practice"]],
+        reply: { credit: ["coach-analyst"], text: "Saved your takeaway: " + qt(say, 90) + "." + (test ? "\nNext practice: count how often it works, aim for 6 out of 10. Two good sessions and it's proven for you." : "") , next: test ? ["Next practice: test your takeaway, count it out of 10"] : [] } };
+    } },
   alexintro: { title: "{n} meets the coach", who: "head-coach", handoff: true,
     qs: [ { q: "In your own words: what's your game?", sample: SAMPLE.alex, check: ALEX_CHECK } ],
     job: function (A) { OB.alex = A.text(0); return alexIntroJob(); } }
@@ -3388,6 +3430,12 @@ var TILES = {
 };
 function prompts() {
   var n = pname(), L = [], parent = isParent();
+  knowList().filter(function (k) { return k.label === "testing" && k.status === "active" && /takeaway/i.test(k.src || "") && !((k.test || {}).results || []).length; }).slice(0, 1).forEach(function (k) {
+    var practiced = EVENTS.some(function (e) { return e.state === "done" && (e.t === "practice" || e.t === "match") && daysTo(e.d) <= 0 && daysTo(e.d) >= -3; });
+    if (!practiced) return;
+    var tell = function (how) { return function () { var w = "Tried my takeaway “" + k.text + "”: " + how + "."; if (REAL) realAsk(w, "log", { takeaway: k.id }); else toast("Saved: " + how); }; };
+    L.push({ id: "tk-" + k.id, t: "Did your takeaway work? “" + trimQ(k.text, 60) + "”", btns: [["It worked", tell("it worked")], ["It didn't", tell("it didn't work")], ["Didn't try it yet", function () { toast("Okay. Try it next practice."); }]] });
+  });
   S.flags.filter(function (f) { return (f.status === "monitor" || f.status === "pause") && daysTo(f.iso) <= -1 && daysTo(f.iso) >= -3; }).forEach(function (f) {
     L.push({ id: "flag-" + f.part, t: "How's " + (parent ? n + "'s " : "your ") + f.part + " today?", btns: [["Better", function () { logFlag(f.part, f.level - 1, "check-in"); toast("Good to hear. Logged."); }], ["Same", function () { f.iso = TODAY; toast("Okay. Same load, we keep watching."); }], ["Worse", function () { logFlag(f.part, Math.min(3, f.level + 1), "check-in"); toast(f.level >= 3 ? "Pausing related work. Please check with a doctor or physio." : "Noted. We'll ease off if it keeps going."); }]] });
   });
@@ -5492,7 +5540,7 @@ function routeText(t) {
   if (kind === "add-tournament") return function () { CONVO.pop(); addFromText(t); OB._addText = t; };
   return function () { CONVO.pop(); realAsk(t, kind, fieldsFrom(t)); };
 }
-var TPL_KIND = { t1: "log", t2: "debrief", t3: "match-prep", t4: "lesson", t5: "sideline", t6: "car-talk", t7: "reflection", alexintro: "free" };
+var TPL_KIND = { tk: "takeaway", t1: "log", t2: "debrief", t3: "match-prep", t4: "lesson", t5: "sideline", t6: "car-talk", t7: "reflection", alexintro: "free" };
 function inlineFinish() {
   if (!REAL) return inlineFinishLocal();
   var g = INL, t = g.t; INL = null; clearDraft();
@@ -5509,7 +5557,8 @@ function inlineFinish() {
   var sore = qs.filter(function (q) { return q.where; })[0]; if (sore) { var si = t.qs.indexOf(sore), sv = g.a[si]; if (sv && sv !== inlButtons(sore)[0]) { f.pain = /hurt/i.test(sv) ? 3 : 1; if (g.w[si]) f.part = String(g.w[si]).toLowerCase(); } }
   if (g.key === "t1" && g.a[0]) f.type = String(g.a[0]).toLowerCase();
   if (g.key === "t3") { var d0 = g.a[0] ? dateFromChoice(g.a[0], g.w[0]) : ""; if (d0) f.date = d0; }
-  if (g.ctx) f.tournament = g.ctx.name;
+  if (g.ctx && g.key === "tk") { f.video = g.ctx.name; f.url = g.ctx.url; f.coach = g.ctx.coach; f.test = /just save/i.test(g.a[1] || "") ? "no" : "yes"; }
+  else if (g.ctx) f.tournament = g.ctx.name;
   if (g.key === "alexintro") f.player_intro = true;
   $("text").placeholder = "Message your team…";
   realAsk(text, TPL_KIND[g.key] || "free", f, { noMe: true });

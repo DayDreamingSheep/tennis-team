@@ -61,6 +61,7 @@ App mode routes by `kind`. Chat mode picks the row that matches the words.
 | `lesson`, or shares what a coach taught | coach-analyst | coach-analysis skill (Mode A journals it first) |
 | `source` (a saved link), or "study this channel / video / doc" | coach-analyst | coach-analysis skill, Mode D (study a saved link) |
 | `knowledge` (fix, remove, test or rebuild an idea the Head Coach knows) | coach-analyst | coach-analysis skill, Mode E |
+| `takeaway` (the player's one takeaway from a video they watched; `[fields]` video, url, coach, test) | coach-analyst | coach-analysis skill, Mode A as `PLAYER` evidence citing that coach and video; then add a `state.knowledge` item labelled `testing` (src "Your takeaway from <video>") with a countable `test` when `test` is yes (Mode E test), else `public`. Note in it whether the player's real coach agrees, differs or hasn't covered it. |
 | `fitness`, physio or doctor notes, an injury or its history, a gym program, "what fitness should I do" | fitness-coach | fitness skill (health first, rule 9) |
 | `match-prep`, "match coming up", "game plan for Saturday" | tournament-coach | tournament skill, match card |
 | `debrief`, or a match result after a planned match or tournament | tournament-coach | tournament skill, debrief (it runs log-note) |
