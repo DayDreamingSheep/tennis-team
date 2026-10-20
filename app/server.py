@@ -454,7 +454,7 @@ class App:
         if not d.is_dir() or "/" in slug or slug.startswith("."):
             return {"coaches": coaches, "error": "No notes for that coach yet."}
         read = lambda n: (d / n).read_text(encoding="utf-8") if (d / n).exists() else ""
-        lessons = [e for e in self.journal() if "lesson" in e["type"].lower()]
+        lessons = [e for e in self.journal() if re.match(r"\s*lesson", e["type"], re.I)]
         st = self.read_state() or {}
         return {"coaches": coaches, "slug": slug, "principles": read("principles.md"), "hypotheses": read("hypotheses.md"),
                 "study": read("study-notes.md"), "lessons": lessons,

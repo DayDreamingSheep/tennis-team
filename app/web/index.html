@@ -1442,7 +1442,8 @@ function jKind(e) {
   var t = (e.type + " " + e.title).toLowerCase();
   if (/pre-match|match card|plan/.test(t)) return "plan";
   if (/match|tournament/.test(t)) return "match";
-  if (/lesson/.test(t)) return "lesson";
+  if (/^\s*lesson/.test((e.type || "").toLowerCase())) return "lesson";
+  if (/import/.test(t)) return "learning";
   if (/body|health|pain/.test(t)) return "body";
   if (/practice/.test(t)) return "practice";
   return "learning";
