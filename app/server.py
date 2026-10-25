@@ -163,18 +163,17 @@ BOOK_MODE = (
 
 
 REPORT_MODE = (
-    "REPORT MODE for the Pocket Tennis Team app. The player sent a note (often a long, messy dictation) and has only had a "
-    "short acknowledgement. Do the team's full work with the tennis-team coach skill and TEAM.md (journal it, patterns, "
-    "decisions, flags, events, knowledge, next steps, _system/state.json, _system/plan-data.js), following '[team "
-    "settings]'. Then your FINAL TEXT is the report the player reads and hears: follow the coach skill's "
-    "references/report.md exactly (What I heard / What you might have missed / Working / The one fix / Next session / "
-    "Plan), in their coach's voice (coaches/<slug>/voice.md, else references/house-voice.md). Read journal/patterns.md, "
-    "recent journal entries, journal/history/ (search it) and the coach's principles before writing 'What you might have "
-    "missed'. The player's own words beat any [fields] form value. No questions unless TEAM.md rule 8 truly requires one. "
-    "End with a fenced block exactly like:\n```tt-meta\n{\"members\": [\"head-coach\"], \"next_steps\": [\"...\"], "
-    "\"say\": \"...\", \"state_changed\": true}\n```\n\"say\" is the same report for listening: 60 to 90 seconds "
-    "(about 150 to 220 words), same order, no labels or lists, numbers as words, ends on the next-session line, never a "
-    "question."
+    "REPORT MODE for the Pocket Tennis Team app. The player (or parent) sent a note, often a long messy dictation, and has "
+    "only had a short acknowledgement. Do the team's full work with the tennis-team coach skill and TEAM.md (journal it, "
+    "patterns, decisions, flags, events, knowledge, next steps, _system/state.json, _system/plan-data.js), following "
+    "'[team settings]'. Then your FINAL TEXT is the report they read and hear: follow the coach skill's "
+    "references/report.md exactly (the player report, or the parent report when mode=parent), in their coach's voice "
+    "(coaches/<slug>/voice.md, else references/house-voice.md). Search journal/patterns.md, recent journal entries, "
+    "journal/history/ and the coach's principles before writing the pattern. Their own words beat any [fields] value; "
+    "mention health only if their words describe pain, injury or limping. No questions unless TEAM.md rule 8 truly "
+    "requires one. End with a fenced block exactly like:\n```tt-meta\n{\"members\": [\"head-coach\"], \"next_steps\": "
+    "[\"...\"], \"say\": \"...\", \"state_changed\": true}\n```\n\"say\" is the spoken version from report.md: 30 to 45 "
+    "seconds, not a replay of the written report, numbers as words, no lists, ends on the action, never a question."
 )
 REPORT_KINDS = {"log", "lesson", "debrief", "sideline", "reflection", "takeaway", "match-prep"}
 
@@ -183,17 +182,43 @@ def wants_report(kind, text):
     return kind in REPORT_KINDS or (kind in ("free", "question") and len(text or "") >= 280)
 
 
-def ack_text(text, coach):
+NUM_WORDS = {"zero": "0", "love": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "six": "6", "seven": "7"}
+PAIN_RE = re.compile(r"\b(pain|painful|hurts?|hurting|injur\w*|limp\w*|sprain\w*|pulled)\b", re.I)
+NEG_RE = re.compile(r"\b(no|not|nothing|never|without|n't|isn't|doesn't|didn't|don't|wasn't|no longer|fine|gone)\b|n't\b", re.I)
+
+
+def mentions_pain(text):
+    """Real pain talk, not 'nothing hurts', 'no limping' or 'a pain in the ass'."""
+    for m in PAIN_RE.finditer(text or ""):
+        after = text[m.end():m.end() + 14].lower()
+        if re.match(r"\s+in the (ass|neck|butt)", after):
+            continue
+        before = text[max(0, m.start() - 40):m.start()]
+        clause = re.split(r"[.!?;,]|\bbut\b", before)[-1]
+        if NEG_RE.search(clause) or re.match(r"\s*(seems? |is |was )?(fine|gone|ok|okay|better)", after):
+            continue
+        return True
+    return False
+
+
+def find_score(text):
+    t = re.sub(r"\b(zero|love|one|two|three|four|five|six|seven)\b", lambda m: NUM_WORDS[m.group(1).lower()], text or "", flags=re.I)
+    m = re.search(r"\b([0-7])\s*[-–:, ]\s*([0-7])(?:[ ,]+(?:and\s+)?([0-7])\s*[-–:, ]\s*([0-7]))?\b", t)
+    if not m or (m.group(1) == m.group(2)):
+        return None
+    return "-".join(m.group(1, 2)) + (", " + "-".join(m.group(3, 4)) if m.group(3) else "")
+
+
+def ack_text(text, coach, player=None):
     """The instant reply to a note: what we got, what happens next. No advice, no questions."""
     t = text or ""
-    score = re.search(r"\b([0-7])\s*[-–:]\s*([0-7])(?:[ ,]+([0-7])\s*[-–:]\s*([0-7]))?", t)
-    what = ("your " + "-".join(score.group(1, 2)) + (", " + "-".join(score.group(3, 4)) if score.group(3) else "") + " match") \
-        if score else ("your lesson notes" if re.search(r"\blesson\b", t, re.I) else "your note")
+    score = find_score(t)
+    whose = f"{player}'s" if player else "your"
+    what = f"{whose} {score} match" if score else ("the lesson notes" if re.search(r"\blesson\b", t, re.I) else "your note")
     mins = max(1, round(len(t.split()) / 140))
-    pain = re.search(r"\b(pain|hurts?|injur\w*|limp\w*|sprain\w*)\b", t, re.I) and not re.search(r"\b(no|not|don'?t|without)\b[^.]{0,25}\b(pain|hurt)", t, re.I)
     msg = f"Got it: {what}" + (f", about {mins} minutes of talking" if len(t) > 600 else "") + ". "
     msg += f"I'm going through it with your journal{' and ' + coach + chr(39) + 's notes' if coach else ''}. Your report will be here in a few minutes."
-    if pain:
+    if mentions_pain(t):
         msg = "You mentioned pain, so the report starts with that. " + msg
     return msg
 
@@ -870,7 +895,7 @@ class App:
         if getattr(job, "report", False):
             st = self.read_state() or {}
             coach = (st.get("coach") or "").split(" ")[0]
-            job.reply = job.say = ack_text(text, coach)
+            job.reply = job.say = ack_text(text, coach, st.get("player") if st.get("mode") == "parent" else None)
             job.next_steps = []
             self.append_convo({"role": "team", "kind": "ack", "text": job.reply, "say": job.say, "members": ["head-coach"],
                                "next_steps": [], "job": job.id})
