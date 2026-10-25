@@ -54,12 +54,7 @@ Do not ask follow-up questions unless missing information blocks a safe or accur
 
 ## Reply (plain language, rule 12)
 
-Talk like a coach after practice, in this order, and keep it short:
-
-1. **Feedback** - two to four sentences on what the note shows: what is working, what broke, and why it matters for their plan.
-2. **Coach check** - one sentence, only if step 5 ran (e.g. "This matches what Maria taught you about...").
-3. **What changes** - one line per affected drill, in plain words ("Short balls: keep going, and next time test it in real points").
-4. **Next steps** - at most three (in app mode they go in the `tt-meta` block, not the text; coach skill step 8).
+Write the report exactly as the coach skill's `references/report.md` describes: What I heard / What you might have missed / Working / The one fix (in the coach's voice) / Next session / Plan. 180-260 words. No questions (rule 8), and no filing talk. Next steps (at most three) go in the `tt-meta` block in app mode.
 
 No IDs, file names, or tables. If the player asks "what did you log?", then show the details.
 

@@ -1168,7 +1168,7 @@ function md(src) {
   if (inList) out.push("</ul>");
   return out.join("");
 }
-function inline(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>"); }
+function inline(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*])\*([^*\s][^*]*?)\*(?!\*)/g, "$1<em>$2</em>"); }
 var STYLE = { tone: "Balanced", length: "Short" };
 var SETUP = {
   "head-coach": {
@@ -1264,7 +1264,7 @@ var SOURCES = {
   "tournament-coach": [ { kind: "web", title: "Fall Club Championship – draw & rules", where: "clubsite.com", learned: 2, synced: "Checked yesterday", sync: true } ]
 };
 SETUP["strategy-coach"].values = { pace: "Steady", drills: "3", days: "4", day: "Sunday", check: "Monthly", fitness: true };
-SETUP["journal-keeper"].values = { focus: ["Technique"], followup: "One follow-up", tone: "Short and direct", inbox: true, exact: true };
+SETUP["journal-keeper"].values = { focus: ["Technique"], followup: "Just save it", tone: "Short and direct", inbox: true, exact: true };
 SETUP["tournament-coach"].values = { taper: "1 week", remind: "2 weeks", plans: "Before every match", scout: true, ask_after: true };
 renderTeam();
 
@@ -1749,6 +1749,19 @@ function srcFromServer(x) {
   else if (x.status === "error") o.note = "Couldn't study it this time · it's still saved";
   else o.note = "Saved " + (x.added ? shortD(x.added) : "") + " · tell your coach what you took from it";
   return o;
+}
+var REPORT_SEEN = null;
+// The real report arrives a few minutes after a note: show it, mark the tab, and read it aloud when voice is on.
+function announceReport(lines) {
+  var last = null; (lines || []).forEach(function (l) { if (l.kind === "report") last = l; });
+  if (!last) return;
+  var key = (last.job || "") + (last.at || "");
+  if (REPORT_SEEN === null) { REPORT_SEEN = key; return; }      // first load: don't replay old reports
+  if (key === REPORT_SEEN) return;
+  REPORT_SEEN = key;
+  toast("Your report is ready");
+  if (document.hidden) document.title = "● Report ready · Pocket Tennis Team";
+  if (TALK.on || (typeof AUTO_SPEAK !== "undefined" && AUTO_SPEAK)) { try { speak(last.say || last.text); } catch (_) {} }
 }
 var STUDY_T = null;
 function serverSourcesInto() {
@@ -5503,6 +5516,7 @@ function refreshState() {
     JOURNAL = null; if ($("journal") && $("journal").classList.contains("on")) renderJournal();   // new notes show up
     window.SERVER_SOURCES = r.sources || []; serverSourcesInto();
     convToFeed(r.conversation || []); if (!INL) DRAFT = r.draft || null;
+    announceReport(r.conversation || []);
     MODE = S.mode; setMode(S.mode);
     return r;
   });
@@ -5695,6 +5709,7 @@ function bootReal() {
     if (SETTINGS.autoOpen === false) $("autoOpen").classList.remove("on");
     if (r.ready && r.state) {
       S = fromContract(r.state); MODE = S.mode; convToFeed(r.conversation || []); DRAFT = r.draft || null;
+      announceReport(r.conversation || []);   // baseline: only reports that arrive after opening are announced
       window.SERVER_SOURCES = r.sources || [];
       (r.jobs || []).filter(function (j) { return j && !j.done && j.id; }).forEach(function (j) {
         var job = { id: "p" + (++JOB_SEQ), serverId: j.id, real: true, state: "running", title: (ACKS[j.kind] || ACKS.free)[0], steps: [["head-coach", "Working"]], i: 0 };
@@ -5879,7 +5894,7 @@ function talkListen() {
   var ta = $("text");
   if (REAL && !SR) { toast("Talk mode needs Chrome, Edge or Safari with a microphone. You can type instead."); talkToggle(false); return; }
   TALK.L = Listener({ start: "", sample: TALK_SAMPLES[TALK.sample++ % TALK_SAMPLES.length],
-    onText: function (f, i) { ta.value = f + (i ? " " + i : ""); ta.oninput && ta.oninput(); if (f && !i) startCountdown(); else cancelCountdown(true); },
+    onText: function (f, i) { ta.value = f + (i ? " " + i : ""); ta.oninput && ta.oninput(); if (f && !i && f.trim().split(/\s+/).length >= 6) startCountdown(); else cancelCountdown(true); },
     onSim: function () { $("c3Hint").innerHTML = '<span class="sim">Demo: no microphone here, so this is a sample</span>'; $("c3Hint").classList.remove("hidden"); layoutComposer(); },
     onStop: function (f) { $("c3Mic").classList.remove("rec"); if (TALK.quiet) return; if ((f || ta.value).trim()) startCountdown(); else if (TALK.on) setTalkState(""); } });
   ACTIVE.push(TALK.L);
@@ -5890,9 +5905,9 @@ function startCountdown() {
   var r = $("talkRing"); r.hidden = false; r.classList.remove("run"); void r.offsetWidth; r.classList.add("run");
   var c = cleanTranscript($("text").value.trim()), h = $("c3Hint");
   if (c.fixes.length) $("text").value = c.text;
-  h.innerHTML = "<b>Here's what I heard.</b> " + (c.fixes.length ? "Fixed " + c.fixes.map(function (x) { return "<s>" + esc(x[0]) + "</s> → " + esc(x[1]); }).join(", ") + ". " : "") + "<b>Sending to your coach in 2 seconds.</b> Tap ✕ to stop, or tap 🎙 to add more.";
+  h.innerHTML = "<b>Here's what I heard.</b> " + (c.fixes.length ? "Fixed " + c.fixes.map(function (x) { return "<s>" + esc(x[0]) + "</s> → " + esc(x[1]); }).join(", ") + ". " : "") + "<b>Keep talking, or pause and it sends in a few seconds.</b> Tap ✕ to stop, or tap 🎙 to add more.";
   h.classList.remove("hidden"); layoutComposer();
-  TALK.timer = setTimeout(talkSend, 2500);
+  TALK.timer = setTimeout(talkSend, 6000);   // a long pause, not a breath: dictation shouldn't be cut into pieces
 }
 function cancelCountdown(silent) {
   clearTimeout(TALK.timer); TALK.timer = null;

@@ -52,6 +52,8 @@ Reply:
 
 Produce a one-page summary of the coach's model from `principles.md` (high confidence first), then open hypotheses, then what the evidence does *not* cover. Useful as input to roadmap planning.
 
+Mode A reply: when a lesson note arrives, reply with the report in the coach skill's `references/report.md` (What I heard = what the coach taught, in the player's words; What you might have missed = how it connects to past lessons or notes). If `voice.md` is missing or the coach now has much more material, run Mode F afterwards.
+
 ## Mode D - Study a saved link
 
 Input: a link the player saved in the app (`[app] kind=source`, with `[fields]` `{id, url, kind, title, author, member}`), or "study this channel / video / doc". Goal: within a few minutes, turn the link into study notes the Head Coach can use, so the player doesn't have to summarise it first.
@@ -75,6 +77,17 @@ Input: a link the player saved in the app (`[app] kind=source`, with `[fields]` 
 5. **State.** Set `team.latest["coach-analyst"]` = "Studied <title> · <Mon D>" and append to `_system/team_log.csv`. Add one next step only if it helps, for example "Watch <start item> and tell your coach one thing you took from it".
 
 Later, when the player shares a takeaway from this source, ingest it with Mode A as `PLAYER` evidence. It outranks these notes.
+
+## Mode F - The coach's voice (run once per coach with enough material, and refresh after big imports)
+
+Write `coaches/<slug>/voice.md` so every report can coach the way this coach does. Use only their own material: lesson notes, and their videos or transcripts if the player provided them. Under one page:
+- **How they explain:** do they start from the miss, from the body, or from a pro example? Give 2-3 short paraphrased examples.
+- **Their cause-and-effect chains:** the links they use most (e.g. "elbow on top of the ball → racket can't drop → no topspin").
+- **Their images and words:** the metaphors and short phrases they actually use (e.g. arm wrestling, catapult, motorcycle hand), each with what it means.
+- **How they build a drill:** their usual progression (e.g. no racket → shadow → bounce → feed → points).
+- **What they never do or say:** for example, they don't hedge and don't ask questions.
+
+Also make sure every item in `principles.md` has a **why**: one plain sentence of the body cause and effect behind it, taken from their material. If their material doesn't give the why, write "why: not given yet".
 
 ## Mode E - Knowledge actions from the app
 

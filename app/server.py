@@ -53,7 +53,7 @@ TEAM_SETTINGS = {
 }
 TEAM_DEFAULTS = {
     "planner": {"pace": "Steady", "drills": "3", "days": "4", "day": "Sunday", "check": "Monthly", "fitness": True},
-    "journal": {"focus": ["Technique"], "followup": "One follow-up", "tone": "Short and direct", "inbox": True, "exact": True},
+    "journal": {"focus": ["Technique"], "followup": "Just save it", "tone": "Short and direct", "inbox": True, "exact": True},
     "tournament": {"taper": "1 week", "remind": "2 weeks", "plans": "Before every match", "scout": True, "ask_after": True},
     "coach": {"tone": "Balanced", "length": "Short", "ask_score": True},
 }
@@ -85,7 +85,7 @@ APP_MODE = (
     "language, health first, no tables, no headings, no IDs or file names, at most 3 next steps. End the reply with "
     "a fenced block exactly like:\n```tt-meta\n{\"members\": [\"head-coach\"], \"next_steps\": [\"...\"], "
     "\"say\": \"...\", \"state_changed\": true}\n```\n\"say\" is the reply written to be spoken aloud by a warm coach: "
-    "under 70 words, contractions, no lists or symbols, numbers as words, ends with a short question or nudge.\nMember ids: head-coach, team-manager, journal-keeper, coach-analyst, "
+    "under 70 words, contractions, no lists or symbols, numbers as words, ends with the next thing to do, never a question.\nMember ids: head-coach, team-manager, journal-keeper, coach-analyst, "
     "progress-coordinator, strategy-coach, tournament-coach. Reply in the language the player uses."
 )
 
@@ -95,15 +95,20 @@ FAST_MODE = (
     "tournaments, coach); read TEAM.md only if you need a rule. The message starts with '[app] kind=... mode=... "
     "today=...', may have '[fields]' (structured answers) and '[recent]' (the last messages), then the player's words "
     "(often speech-to-text: repair obvious mishearings; in tennis talk 'bow', 'boat' and 'hi bro' usually mean ball and high "
-    "ball). Reply as their Head Coach, crediting teammates where useful.\n"
+    "ball). Reply as their Head Coach. The player's own words beat any [fields] form value; never infer pain or a score "
+    "from a form field their words contradict. Don't narrate which teammate files what, and don't label sources in the "
+    "reply text.\n"
+    "Questions: by default ask NONE. Ask at most one, only if something truly blocks you (a health ambiguity that changes "
+    "what to tell them, or a note you can't file at all), and never one the conversation or journal already answers. "
+    "Anything else uncertain becomes 'Next time, notice whether...' or one line saying how you read an unclear word.\n"
     "Coach voice: if the player has a real coach (state.coach, or coaches/<slug>/principles.md with DIRECT items), read that "
     "coach's principles.md before any technique advice and give instructions only from that coach's model, in that coach's "
     "own cue words, saying so ('as Julien taught you: timing before power'). Never add a generic tip that the coach's "
     "notes don't support; if they don't cover the problem, say you don't have that from the coach yet and suggest asking "
     "at the next lesson (offer one general tip only if clearly labelled as general). When the player's words are unclear "
     "(likely a mishearing), say what you think they meant in a few words instead of guessing silently.\n"
-    "Follow '[team settings]': coach.tone and coach.length set how you talk; journal.followup 'One follow-up' or 'Dig "
-    "deeper' lets you end with one optional question about journal.focus (never one that blocks anything). If the player "
+    "Follow '[team settings]': coach.tone and coach.length set how you talk; journal.followup 'Dig deeper' (and only "
+    "that) allows one optional question about journal.focus. If the player "
     "asks to change how a teammate works ('make my plan more aggressive', 'only two things a week', 'ask me fewer "
     "questions', 'remind me a month before entries'), put the change in tt-meta \"settings\" using only these values: "
     "planner.pace Gentle|Steady|Aggressive, planner.drills 1|2|3, planner.days 2|3|4|5+, planner.day Sunday|Monday, "
@@ -135,7 +140,7 @@ FAST_MODE = (
     "[\"head-coach\"], \"next_steps\": [\"...\"], \"say\": \"...\", \"state_changed\": false, \"settings\": {}}\n```\n"
     "\"say\" is the same message written to be spoken aloud by a warm coach: under 70 words, contractions, "
     "no lists, symbols or emoji, numbers and scores as words (\"six out of ten\", \"four-six\"), uses the player's "
-    "name once, sounds like talking not reading, and ends with a short question or nudge.\nMember ids: head-coach, "
+    "name once, sounds like talking not reading, and ends with the next thing to do, never a question.\nMember ids: head-coach, "
     "team-manager, journal-keeper, coach-analyst, progress-coordinator, strategy-coach, tournament-coach, fitness-coach. "
     "Active state.fitness.limits bind every suggestion. Names the player "
     "sees: strategy-coach is 'the Planner' (never 'Strategy Coach'); coach-analyst is 'Coach Analyst', who works behind the "
@@ -155,6 +160,42 @@ BOOK_MODE = (
     "contradict the reply; if the evidence clearly requires a different decision, record it and add one short next "
     "step that explains the change. Your final text is not shown to anyone: end with just 'done'."
 )
+
+
+REPORT_MODE = (
+    "REPORT MODE for the Pocket Tennis Team app. The player sent a note (often a long, messy dictation) and has only had a "
+    "short acknowledgement. Do the team's full work with the tennis-team coach skill and TEAM.md (journal it, patterns, "
+    "decisions, flags, events, knowledge, next steps, _system/state.json, _system/plan-data.js), following '[team "
+    "settings]'. Then your FINAL TEXT is the report the player reads and hears: follow the coach skill's "
+    "references/report.md exactly (What I heard / What you might have missed / Working / The one fix / Next session / "
+    "Plan), in their coach's voice (coaches/<slug>/voice.md, else references/house-voice.md). Read journal/patterns.md, "
+    "recent journal entries, journal/history/ (search it) and the coach's principles before writing 'What you might have "
+    "missed'. The player's own words beat any [fields] form value. No questions unless TEAM.md rule 8 truly requires one. "
+    "End with a fenced block exactly like:\n```tt-meta\n{\"members\": [\"head-coach\"], \"next_steps\": [\"...\"], "
+    "\"say\": \"...\", \"state_changed\": true}\n```\n\"say\" is the same report for listening: 60 to 90 seconds "
+    "(about 150 to 220 words), same order, no labels or lists, numbers as words, ends on the next-session line, never a "
+    "question."
+)
+REPORT_KINDS = {"log", "lesson", "debrief", "sideline", "reflection", "takeaway", "match-prep"}
+
+
+def wants_report(kind, text):
+    return kind in REPORT_KINDS or (kind in ("free", "question") and len(text or "") >= 280)
+
+
+def ack_text(text, coach):
+    """The instant reply to a note: what we got, what happens next. No advice, no questions."""
+    t = text or ""
+    score = re.search(r"\b([0-7])\s*[-–:]\s*([0-7])(?:[ ,]+([0-7])\s*[-–:]\s*([0-7]))?", t)
+    what = ("your " + "-".join(score.group(1, 2)) + (", " + "-".join(score.group(3, 4)) if score.group(3) else "") + " match") \
+        if score else ("your lesson notes" if re.search(r"\blesson\b", t, re.I) else "your note")
+    mins = max(1, round(len(t.split()) / 140))
+    pain = re.search(r"\b(pain|hurts?|injur\w*|limp\w*|sprain\w*)\b", t, re.I) and not re.search(r"\b(no|not|don'?t|without)\b[^.]{0,25}\b(pain|hurt)", t, re.I)
+    msg = f"Got it: {what}" + (f", about {mins} minutes of talking" if len(t) > 600 else "") + ". "
+    msg += f"I'm going through it with your journal{' and ' + coach + chr(39) + 's notes' if coach else ''}. Your report will be here in a few minutes."
+    if pain:
+        msg = "You mentioned pain, so the report starts with that. " + msg
+    return msg
 
 
 SKILL_MEMBER = {
@@ -317,7 +358,9 @@ class Job:
     def as_dict(self):
         return {"id": self.id, "kind": self.kind, "steps": self.steps, "members": self.members, "reply": self.reply,
                 "next_steps": self.next_steps, "error": self.error, "done": self.done, "state_changed": self.state_changed,
-                "bookkeeping": self.bookkeeping, "say": self.say}
+                "bookkeeping": self.bookkeeping, "say": self.say,
+                "reporting": bool(getattr(self, "report", False)), "report": getattr(self, "report_text", None),
+                "report_say": getattr(self, "report_say", None)}
 
 
 class App:
@@ -369,6 +412,7 @@ class App:
             job.reply, job.next_steps = p.get("reply"), p.get("next_steps") or []
             if job.kind == "source":
                 job.source_id = (p.get("fields") or {}).get("id")
+            job.report = wants_report(job.kind, p["text"])
             self.mark_pending(job, p["text"], p.get("fields"))
             if job.kind == "onboarding":
                 self.q.put(("full", job, p["text"], p.get("fields") or {}))
@@ -647,7 +691,16 @@ class App:
         last = getattr(self, "_last_ask", None)
         if last and last[0] == key and time.time() - last[1] < 30 and last[2].id in self.jobs:
             return last[2]                    # same message twice (double tap, mic + Send): reuse the first job
+        frag = getattr(self, "_fragment", None)
+        if frag and time.time() - frag[0] < 300 and kind in ("free", "log", "question") and frag[1] not in text:
+            text = frag[1] + " " + text           # "Okay so" then the real note: one note, not two
+        self._fragment = None
         job = Job(kind)
+        if kind in ("free", "question") and len(text.strip()) < 25 and "?" not in text:
+            job.fragment = True
+            self._fragment = (time.time(), text.strip())
+        elif wants_report(kind, text):
+            job.report = True
         self._last_ask = (key, time.time(), job)
         self.jobs[job.id] = job
         if log_user and self.workspace:
@@ -655,6 +708,9 @@ class App:
         self.mark_pending(job, text, fields)
         if kind == "onboarding":                     # the plan must exist before the review: one full pass
             self.q.put(("full", job, text, fields or {}))
+        elif getattr(job, "fragment", False):
+            self.clear_pending(job)
+            self.fq.put((job, text, fields or {}))
         else:
             job.bookkeeping = "pending"
             self.fq.put((job, text, fields or {}))
@@ -675,6 +731,9 @@ class App:
         st = self.read_state() or {}
         items = st.get("knowledge") or []
         idx = next((i for i, k in enumerate(items) if k.get("id") == kid), None)
+        if action == "voice":
+            return {"job": self.enqueue_book("Build or refresh my coaches' voice files (coach-analysis Mode F) from their lessons and "
+                                             "videos, and add the 'why' to each principle.", "knowledge", {"action": "voice"}).id}
         if action == "rebuild":
             return {"job": self.enqueue_book("Rebuild what the Head Coach knows from my coach files.", "knowledge",
                                              {"action": "rebuild"}).id}
@@ -713,7 +772,9 @@ class App:
             try:
                 self._fast(job, text, fields)
             finally:
-                if not job.error:
+                if getattr(job, "fragment", False):
+                    job.bookkeeping = "skipped"                  # "Okay so": wait for the rest of the note
+                elif not job.error:
                     self.mark_pending(job, text, fields)       # now with the reply, so a restart only redoes the bookkeeping
                     self.q.put(("book", job, text, fields))
                 else:
@@ -803,15 +864,29 @@ class App:
                            "next_steps": job.next_steps, "job": job.id})
 
     def _fast(self, job, text, fields):
-        """Pass 1: a quick, read-only reply from the current state (about 15 s)."""
+        """Pass 1: a quick reply. Notes get an instant acknowledgement; the real report comes from pass 2."""
         job.member("head-coach")
         job.step("Listening")
+        if getattr(job, "report", False):
+            st = self.read_state() or {}
+            coach = (st.get("coach") or "").split(" ")[0]
+            job.reply = job.say = ack_text(text, coach)
+            job.next_steps = []
+            self.append_convo({"role": "team", "kind": "ack", "text": job.reply, "say": job.say, "members": ["head-coach"],
+                               "next_steps": [], "job": job.id})
+            job.done = True
+            return
+        if getattr(job, "fragment", False):
+            job.reply = job.say = "I'm listening. Keep going, then tap Send when you're done."
+            self.append_convo({"role": "team", "kind": "ack", "text": job.reply, "members": ["head-coach"], "job": job.id})
+            job.done = True
+            return
         if not self.claude:
             job.error = "Claude isn't installed or signed in on this computer."
             job.done = True
             return
         recent = [c for c in self.conversation(12) if c.get("job") != job.id][-6:]
-        convo = "\n[recent] " + json.dumps([{"who": c.get("role"), "text": str(c.get("text", ""))[:400]} for c in recent], ensure_ascii=False) if recent else ""
+        convo = "\n[recent] " + json.dumps([{"who": c.get("role"), "text": str(c.get("text", ""))[:1500]} for c in recent], ensure_ascii=False) if recent else ""
         job.step("Reading your plan")
         result, err = self._claude(job, self._message(job, text, fields, convo), FAST_MODE, "Read", plugin=False, track=False)
         if result is not None:
@@ -826,8 +901,20 @@ class App:
         job.bookkeeping = "running"
         extra = "\n[replied] " + json.dumps({"reply": job.reply or "", "next_steps": job.next_steps}, ensure_ascii=False)
         sid = getattr(job, "source_id", None)
-        result, err = self._claude(job, self._message(job, text, fields, extra), BOOK_MODE,
-                                   STUDY_TOOLS if sid else ALLOWED_TOOLS)
+        if getattr(job, "report", False):
+            job.step("Writing your report")
+            result, err = self._claude(job, self._message(job, text, fields), REPORT_MODE, ALLOWED_TOOLS)
+            if result and not err:
+                body, meta = split_meta(result)
+                if body.strip():
+                    job.report_text, job.report_say = body.strip(), str(meta.get("say") or "").strip() or None
+                    self.append_convo({"role": "team", "kind": "report", "text": job.report_text, "say": job.report_say,
+                                       "members": job.members or ["head-coach"],
+                                       "next_steps": [x for x in meta.get("next_steps", []) if isinstance(x, str)][:3],
+                                       "job": job.id})
+        else:
+            result, err = self._claude(job, self._message(job, text, fields, extra), BOOK_MODE,
+                                       STUDY_TOOLS if sid else ALLOWED_TOOLS)
         if sid:
             self.finish_study(sid, not err)
         req = self.ws("_system", "settings_request.json")

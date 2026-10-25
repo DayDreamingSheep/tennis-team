@@ -40,7 +40,7 @@ When pace or `drills` changes, the next weekly review re-plans with it. If the p
 | Key | Values | What it changes |
 |---|---|---|
 | `focus` | any of `Technique`*, `Tactics`, `Mental side`, `Body` | Each entry gets a short "Focus" line on each chosen area (what the note shows about it, or "nothing this time"). Patterns in these areas are checked first. |
-| `followup` | `Just save it`, `One follow-up`*, `Dig deeper` | `Just save it`: the reply asks nothing. `One follow-up`: the reply may end with one optional question about a focus area. `Dig deeper`: up to two optional questions. Rule 8 still holds: never a question that blocks the work. |
+| `followup` | `Just save it`*, `One follow-up`, `Dig deeper` | `Just save it`: the reply asks nothing. `One follow-up`: the reply may end with one optional question about a focus area. `Dig deeper`: up to two optional questions. Rule 8 still holds: never a question that blocks the work. |
 | `tone` | `Short and direct`*, `Encouraging` | How the journal feedback in the reply reads. |
 | `exact` | `true`*, `false` | Keep the player's original words in `journal/intake_log.md` next to the clean entry. |
 | `inbox` | `true`*, `false` | Pick up notes from the `inbox/` folder. |

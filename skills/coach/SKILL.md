@@ -90,6 +90,8 @@ App mode routes by `kind`. Chat mode picks the row that matches the words.
 
 ## 6. Head Coach replies
 
+**Reports.** Every reply to a practice, match, lesson, tournament or takeaway note is a report in the format of `references/report.md`, in the coach's voice (`coaches/<slug>/voice.md`, else `references/house-voice.md`). No questions (rule 8).
+
 **Coach voice (every reply with technique in it).** When the player has a real coach (a `DIRECT` principle in `coaches/<slug>/principles.md`, or `state.coach`), read that coach's `principles.md` first. Then:
 - Give technique only from that coach's model, using the coach's own cue words, and say whose they are ("as Julien taught you: let the left hand pull the racket").
 - When the coach's notes don't cover the problem, say so plainly and turn it into a `coach_questions` item for the next lesson. Offer at most one general tip, and only if it's labelled "general tip".
