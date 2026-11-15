@@ -187,6 +187,10 @@ PAIN_RE = re.compile(r"\b(pain|painful|hurts?|hurting|injur\w*|limp\w*|sprain\w*
 NEG_RE = re.compile(r"\b(no|not|nothing|never|without|n't|isn't|doesn't|didn't|don't|wasn't|no longer|fine|gone)\b|n't\b", re.I)
 
 
+BODY_RE = re.compile(r"\b(?:my|his|her|their|the|left|right|lower|upper|sore|tight)\s+(back|knee|ankle|shoulder|elbow|wrist|hip|heel|foot|feet|calf|calves|hamstring|groin|neck|leg|arm|"
+                     r"thigh|achilles|toe|hand|ribs?|side|abs?)\b", re.I)
+
+
 def mentions_pain(text):
     """Real pain talk, not 'nothing hurts', 'no limping' or 'a pain in the ass'."""
     for m in PAIN_RE.finditer(text or ""):
@@ -197,7 +201,10 @@ def mentions_pain(text):
         clause = re.split(r"[.!?;,]|\bbut\b", before)[-1]
         if NEG_RE.search(clause) or re.match(r"\s*(seems? |is |was )?(fine|gone|ok|okay|better)", after):
             continue
-        return True
+        near = text[max(0, m.start() - 60):m.end() + 60]
+        if BODY_RE.search(near) or re.search(r"\b(limp\w*|injur\w*|sprain\w*)\b", m.group(0), re.I):
+            return True                         # a body part nearby: real pain talk, not a mishearing
+    return False
     return False
 
 
@@ -949,6 +956,13 @@ class App:
         if err:
             job.bookkeeping = "error"
             self._save_unanswered(text)
+            if getattr(job, "report", False):
+                login = re.search(r"auth|login|log in|oauth|credential|expired", err, re.I)
+                msg = ("I couldn't write your report: Claude on this computer needs you to sign in again. Open Terminal, type "
+                       "claude, then /login. Your note is saved and I'll write the report when you're back." if login else
+                       "I couldn't write your report this time. Your note is saved; send \"retry my last note\" and I'll try again.")
+                self.append_convo({"role": "team", "kind": "report-error", "text": msg, "say": msg, "members": ["head-coach"],
+                                   "job": job.id, "retry": text if login else None})
         else:
             job.bookkeeping = "done"
             job.state_changed = True
@@ -1327,6 +1341,13 @@ def main():
     ap.add_argument("--data-dir")
     args = ap.parse_args()
 
+    global TOKEN                                  # one link that keeps working across restarts
+    tf = data_dir(args.data_dir) / "token"
+    saved = tf.read_text().strip() if tf.exists() else ""
+    if len(saved) >= 20:
+        TOKEN = saved
+    else:
+        tf.write_text(TOKEN); os.chmod(tf, 0o600)
     app = App(args)
     server = None
     for port in range(args.port, args.port + 30):
