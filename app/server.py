@@ -719,6 +719,13 @@ class App:
 
     # -- queues: fast replies (read-only, parallel to writes) and one serialized writer
     def enqueue_ask(self, text, kind, fields=None, log_user=True):
+        if re.fullmatch(r"\s*(please\s+)?retry( my)?( last)?( note)?[.!]?\s*", text or "", re.I):
+            fails = [c for c in self.conversation(200) if c.get("kind") == "report-error"]
+            if fails:                               # resend the note whose report failed
+                last = fails[-1]
+                orig = [c for c in self.conversation(400) if c.get("role") == "user" and c.get("job") == last.get("job")]
+                if orig:
+                    text, kind = orig[-1].get("text", text), orig[-1].get("kind") or "log"
         key = " ".join(str(text).lower().split())
         last = getattr(self, "_last_ask", None)
         if last and last[0] == key and time.time() - last[1] < 30 and last[2].id in self.jobs:
@@ -854,6 +861,9 @@ class App:
                 cmd += ["--plugin-dir", str(PLUGIN_ROOT)]
             cmd += ["--permission-mode", "acceptEdits"]
         env = dict(os.environ, TT_JOB="1")         # tells our SessionStart hook not to start another app
+        tok = self.data / "claude.token"            # long-lived sign-in from `claude setup-token`: survives weekly expiry
+        if tok.exists() and tok.read_text().strip():
+            env["CLAUDE_CODE_OAUTH_TOKEN"] = tok.read_text().strip()
         result, err = None, None
         try:
             proc = subprocess.Popen(cmd, cwd=str(self.workspace), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -958,8 +968,9 @@ class App:
             self._save_unanswered(text)
             if getattr(job, "report", False):
                 login = re.search(r"auth|login|log in|oauth|credential|expired", err, re.I)
-                msg = ("I couldn't write your report: Claude on this computer needs you to sign in again. Open Terminal, type "
-                       "claude, then /login. Your note is saved and I'll write the report when you're back." if login else
+                msg = ("I couldn't write your report: Claude's sign-in on this computer expired. Your note is saved. To fix it "
+                       "for good, double-click 'Keep Pocket Tennis Team signed in' in your Tennis folder, then send "
+                       "'retry my last note'." if login else
                        "I couldn't write your report this time. Your note is saved; send \"retry my last note\" and I'll try again.")
                 self.append_convo({"role": "team", "kind": "report-error", "text": msg, "say": msg, "members": ["head-coach"],
                                    "job": job.id, "retry": text if login else None})

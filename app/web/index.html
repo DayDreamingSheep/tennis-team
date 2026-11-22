@@ -5504,7 +5504,7 @@ function pollBook(id) {
     api("GET", "/api/job/" + encodeURIComponent(id)).then(function (r) {
       if (r.bookkeeping === "pending" || r.bookkeeping === "running") return setTimeout(tick, 4000);
       delete BOOK_WAIT[id];
-      if (r.bookkeeping === "done") refreshState().then(function () { renderAll(); }).catch(function () {});
+      if (r.bookkeeping === "done" || r.bookkeeping === "error") refreshState().then(function () { renderAll(); }).catch(function () {});
     }).catch(function () { setTimeout(tick, 6000); });
   })();
 }
